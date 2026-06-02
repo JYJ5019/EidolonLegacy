@@ -19,8 +19,20 @@ public class CrucibleRecipeCategory implements IRecipeCategory<CrucibleRecipeWra
     private static final ResourceLocation BACKGROUND = new ResourceLocation(Reference.MOD_ID, "textures/gui/codex_crucible_page.png");
     static final int PAGE_WIDTH = 128;
     static final int PAGE_HEIGHT = 160;
-    static final int RESULT_GAP = 8;
-    static final int FLUID_GAP = 24;
+    static final int STEP_ROW_HEIGHT = 20;
+    static final int VISIBLE_STEPS = 5;
+    static final int STEP_START_Y = 30;
+    static final int FLUID_Y = 6;
+    static final int RESULT_Y = 128;
+    static final int SCROLL_X = 96;
+    static final int SCROLL_UP_Y = 135;
+    static final int SCROLL_DOWN_Y = 149;
+    static final int SCROLL_BUTTON_SIZE = 12;
+    static final int COMPACT_ITEM_SIZE = 12;
+    static final int INPUT_START_X = 22;
+    static final int INPUT_SPACING = 14;
+    static final int MAX_VISIBLE_INPUTS = 6;
+    static final int STIRRER_X = 106;
 
     private final IDrawable background;
 
@@ -51,33 +63,10 @@ public class CrucibleRecipeCategory implements IRecipeCategory<CrucibleRecipeWra
     @Override
     public void setRecipe(IRecipeLayout recipeLayout, CrucibleRecipeWrapper recipeWrapper, IIngredients ingredients) {
         int slot = 0;
-        List<CrucibleRecipe.Step> steps = recipeWrapper.getRecipe().getSteps();
-        int yStart = getStepYStart(steps.size());
-        recipeLayout.getItemStacks().init(slot, true, 24, yStart - FLUID_GAP);
+        recipeLayout.getItemStacks().init(slot, true, 24, FLUID_Y);
         setIfPresent(recipeLayout, slot, recipeWrapper.getFluidStacks());
         slot++;
-        for (int stepIndex = 0; stepIndex < steps.size(); stepIndex++) {
-            CrucibleRecipe.Step step = steps.get(stepIndex);
-            int x = 24;
-            int y = yStart + stepIndex * 20;
-            for (List<ItemStack> stacks : recipeWrapper.getDisplayStacks(step)) {
-                if (x > 104) {
-                    break;
-                }
-                recipeLayout.getItemStacks().init(slot, true, x, y + 1);
-                setIfPresent(recipeLayout, slot, stacks);
-                x += 17;
-                slot++;
-            }
-            for (int i = 0; i < step.getStirs() && x <= 104; i++) {
-                recipeLayout.getItemStacks().init(slot, true, x, y + 1);
-                setIfPresent(recipeLayout, slot, recipeWrapper.getStirrerStacks());
-                x += 17;
-                slot++;
-            }
-        }
-        int resultY = yStart + steps.size() * 20 + RESULT_GAP;
-        recipeLayout.getItemStacks().init(slot, false, 56, resultY + 11);
+        recipeLayout.getItemStacks().init(slot, false, 56, RESULT_Y + 11);
         recipeLayout.getItemStacks().set(slot, recipeWrapper.getRecipe().getResult());
     }
 
@@ -96,8 +85,7 @@ public class CrucibleRecipeCategory implements IRecipeCategory<CrucibleRecipeWra
         }
     }
 
-    static int getStepYStart(int stepCount) {
-        int height = stepCount * 20 + RESULT_GAP + 32;
-        return Math.max(FLUID_GAP, 80 - height / 2);
+    static int getMaxStepScroll(int stepCount) {
+        return Math.max(0, stepCount - VISIBLE_STEPS);
     }
 }

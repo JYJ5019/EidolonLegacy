@@ -23,6 +23,7 @@ public class CrucibleRecipeWrapper implements IRecipeWrapper {
     private static final ResourceLocation BACKGROUND = new ResourceLocation(Reference.MOD_ID, "textures/gui/codex_crucible_page.png");
 
     private final CrucibleRecipe recipe;
+    private int stepScroll;
 
     public CrucibleRecipeWrapper(CrucibleRecipe recipe) {
         this.recipe = recipe;
@@ -87,31 +88,152 @@ public class CrucibleRecipeWrapper implements IRecipeWrapper {
     @Override
     public void drawInfo(Minecraft minecraft, int recipeWidth, int recipeHeight, int mouseX, int mouseY) {
         List<CrucibleRecipe.Step> steps = recipe.getSteps();
-        int yStart = CrucibleRecipeCategory.getStepYStart(steps.size());
-        for (int i = 0; i < steps.size(); i++) {
+        stepScroll = clampStepScroll(stepScroll);
+        int visibleEnd = Math.min(steps.size(), stepScroll + CrucibleRecipeCategory.VISIBLE_STEPS);
+        for (int i = stepScroll; i < visibleEnd; i++) {
             CrucibleRecipe.Step step = steps.get(i);
-            int y = yStart + i * 20;
+            int y = CrucibleRecipeCategory.STEP_START_Y + (i - stepScroll) * CrucibleRecipeCategory.STEP_ROW_HEIGHT;
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             minecraft.getTextureManager().bindTexture(BACKGROUND);
             Gui.drawModalRectWithCustomSizedTexture(0, y, 128, 0, 128, 20, 256, 256);
-            int x = 24;
+            int x = CrucibleRecipeCategory.INPUT_START_X;
+            int inputs = 0;
             for (List<ItemStack> stacks : getDisplayStacks(step)) {
-                if (x > 104) {
+                if (inputs >= CrucibleRecipeCategory.MAX_VISIBLE_INPUTS) {
                     break;
                 }
-                Gui.drawModalRectWithCustomSizedTexture(x, y + 1, 176, 32, 16, 17, 256, 256);
-                x += 17;
+                renderCompactStack(minecraft, firstStack(stacks), x, y + 4);
+                x += CrucibleRecipeCategory.INPUT_SPACING;
+                inputs++;
             }
-            for (int j = 0; j < step.getStirs() && x <= 104; j++) {
-                Gui.drawModalRectWithCustomSizedTexture(x, y + 1, 192, 32, 16, 17, 256, 256);
-                x += 17;
+            if (step.getStirs() > 0) {
+                renderCompactStack(minecraft, firstStack(getStirrerStacks()), CrucibleRecipeCategory.STIRRER_X, y + 4);
+                minecraft.fontRenderer.drawString("x" + step.getStirs(), CrucibleRecipeCategory.STIRRER_X + 10, y + 7, 0x5b4732);
             }
             minecraft.fontRenderer.drawString((i + 1) + ".", 7, y + 7, 0x5b4732);
         }
-        int resultY = yStart + steps.size() * 20 + CrucibleRecipeCategory.RESULT_GAP;
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         minecraft.getTextureManager().bindTexture(BACKGROUND);
-        Gui.drawModalRectWithCustomSizedTexture(0, resultY, 128, 64, 128, 32, 256, 256);
+        Gui.drawModalRectWithCustomSizedTexture(0, CrucibleRecipeCategory.RESULT_Y, 128, 64, 128, 32, 256, 256);
+        drawScrollControls(minecraft, steps.size());
+    }
+
+    @Override
+    public List<String> getTooltipStrings(int mouseX, int mouseY) {
+        ItemStack hovered = getHoveredStepStack(mouseX, mouseY);
+        if (!hovered.isEmpty()) {
+            return Collections.singletonList(hovered.getDisplayName());
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean handleClick(Minecraft minecraft, int mouseX, int mouseY, int mouseButton) {
+        if (mouseButton != 0 || CrucibleRecipeCategory.getMaxStepScroll(recipe.getSteps().size()) <= 0) {
+            return false;
+        }
+        if (isIn(mouseX, mouseY, CrucibleRecipeCategory.SCROLL_X, CrucibleRecipeCategory.SCROLL_UP_Y,
+                CrucibleRecipeCategory.SCROLL_X + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE,
+                CrucibleRecipeCategory.SCROLL_UP_Y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE)) {
+            stepScroll = clampStepScroll(stepScroll - 1);
+            return true;
+        }
+        if (isIn(mouseX, mouseY, CrucibleRecipeCategory.SCROLL_X, CrucibleRecipeCategory.SCROLL_DOWN_Y,
+                CrucibleRecipeCategory.SCROLL_X + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE,
+                CrucibleRecipeCategory.SCROLL_DOWN_Y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE)) {
+            stepScroll = clampStepScroll(stepScroll + 1);
+            return true;
+        }
+        return false;
+    }
+
+    private void drawScrollControls(Minecraft minecraft, int stepCount) {
+        if (CrucibleRecipeCategory.getMaxStepScroll(stepCount) <= 0) {
+            return;
+        }
+        drawScrollButton(minecraft, CrucibleRecipeCategory.SCROLL_X, CrucibleRecipeCategory.SCROLL_UP_Y, "^", stepScroll > 0);
+        drawScrollButton(minecraft, CrucibleRecipeCategory.SCROLL_X, CrucibleRecipeCategory.SCROLL_DOWN_Y, "v",
+                stepScroll < CrucibleRecipeCategory.getMaxStepScroll(stepCount));
+    }
+
+    private void drawScrollButton(Minecraft minecraft, int x, int y, String label, boolean enabled) {
+        int fill = enabled ? 0xffd8ceb8 : 0xffb7af9e;
+        int border = enabled ? 0xff5b4732 : 0xff8f8472;
+        Gui.drawRect(x, y, x + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, fill);
+        Gui.drawRect(x, y, x + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, y + 1, border);
+        Gui.drawRect(x, y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE - 1,
+                x + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, border);
+        Gui.drawRect(x, y, x + 1, y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, border);
+        Gui.drawRect(x + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE - 1, y,
+                x + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, y + CrucibleRecipeCategory.SCROLL_BUTTON_SIZE, border);
+        minecraft.fontRenderer.drawString(label, x + 4, y + 2, enabled ? 0x2f2118 : 0x7d7366);
+    }
+
+    private void renderStack(Minecraft minecraft, ItemStack stack, int x, int y) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        minecraft.getRenderItem().renderItemAndEffectIntoGUI(stack, x, y);
+        minecraft.getRenderItem().renderItemOverlayIntoGUI(minecraft.fontRenderer, stack, x, y, null);
+        GlStateManager.disableLighting();
+        GlStateManager.disableDepth();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    private void renderCompactStack(Minecraft minecraft, ItemStack stack, int x, int y) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, 0.0F);
+        float scale = CrucibleRecipeCategory.COMPACT_ITEM_SIZE / 16.0F;
+        GlStateManager.scale(scale, scale, 1.0F);
+        renderStack(minecraft, stack, 0, 0);
+        GlStateManager.popMatrix();
+    }
+
+    private ItemStack getHoveredStepStack(int mouseX, int mouseY) {
+        List<CrucibleRecipe.Step> steps = recipe.getSteps();
+        int visibleEnd = Math.min(steps.size(), stepScroll + CrucibleRecipeCategory.VISIBLE_STEPS);
+        for (int i = stepScroll; i < visibleEnd; i++) {
+            CrucibleRecipe.Step step = steps.get(i);
+            int x = CrucibleRecipeCategory.INPUT_START_X;
+            int y = CrucibleRecipeCategory.STEP_START_Y + (i - stepScroll) * CrucibleRecipeCategory.STEP_ROW_HEIGHT;
+            int inputs = 0;
+            for (List<ItemStack> stacks : getDisplayStacks(step)) {
+                if (inputs >= CrucibleRecipeCategory.MAX_VISIBLE_INPUTS) {
+                    break;
+                }
+                if (isIn(mouseX, mouseY, x, y + 4,
+                        x + CrucibleRecipeCategory.COMPACT_ITEM_SIZE,
+                        y + 4 + CrucibleRecipeCategory.COMPACT_ITEM_SIZE)) {
+                    return firstStack(stacks);
+                }
+                x += CrucibleRecipeCategory.INPUT_SPACING;
+                inputs++;
+            }
+            if (step.getStirs() > 0) {
+                if (isIn(mouseX, mouseY, CrucibleRecipeCategory.STIRRER_X, y + 4,
+                        CrucibleRecipeCategory.STIRRER_X + CrucibleRecipeCategory.COMPACT_ITEM_SIZE,
+                        y + 4 + CrucibleRecipeCategory.COMPACT_ITEM_SIZE)) {
+                    return firstStack(getStirrerStacks());
+                }
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private int clampStepScroll(int value) {
+        return Math.max(0, Math.min(value, CrucibleRecipeCategory.getMaxStepScroll(recipe.getSteps().size())));
+    }
+
+    private ItemStack firstStack(List<ItemStack> stacks) {
+        return stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0).copy();
+    }
+
+    private boolean isIn(int mouseX, int mouseY, int left, int top, int right, int bottom) {
+        return mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom;
     }
 
     private List<ItemStack> stacksFor(Ingredient ingredient) {

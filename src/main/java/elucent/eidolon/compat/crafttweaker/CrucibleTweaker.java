@@ -21,6 +21,8 @@ import java.util.List;
 @ZenRegister
 @ZenClass("mods.eidolon.Crucible")
 public final class CrucibleTweaker {
+    private static final int MAX_INPUTS_PER_STEP = 6;
+
     private CrucibleTweaker() {
     }
 
@@ -78,6 +80,14 @@ public final class CrucibleTweaker {
         }
         List<CrucibleRecipe.Step> converted = new ArrayList<>();
         for (int i = 0; i < steps.length; i++) {
+            if (steps[i] == null) {
+                throw new IllegalArgumentException("Crucible step " + (i + 1) + " must not be null");
+            }
+            if (steps[i].length > MAX_INPUTS_PER_STEP) {
+                throw new IllegalArgumentException("Crucible step " + (i + 1) + " has " + steps[i].length
+                        + " inputs, but CraftTweaker crucible recipes support at most "
+                        + MAX_INPUTS_PER_STEP + " inputs per step");
+            }
             List<Ingredient> ingredients = new ArrayList<>();
             for (IIngredient ingredient : steps[i]) {
                 ingredients.add(TweakerUtil.ingredient(ingredient));

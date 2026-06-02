@@ -28,6 +28,7 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fluids.FluidRegistry;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -83,8 +84,20 @@ public class CodexGui extends GuiScreen {
     private static final int DETAIL_LEFT_ARROW_X = 42;
     private static final int DETAIL_RIGHT_ARROW_X = 78;
     private static final int DETAIL_ARROW_SIZE = 12;
-    private static final int CRUCIBLE_RESULT_GAP = 8;
-    private static final int CRUCIBLE_FLUID_GAP = 24;
+    private static final int CRUCIBLE_STEP_ROW_HEIGHT = 20;
+    private static final int CRUCIBLE_VISIBLE_STEPS = 5;
+    private static final int CRUCIBLE_STEP_START_Y = 30;
+    private static final int CRUCIBLE_FLUID_Y = 6;
+    private static final int CRUCIBLE_RESULT_Y = 128;
+    private static final int CRUCIBLE_SCROLL_X = 96;
+    private static final int CRUCIBLE_SCROLL_UP_Y = 135;
+    private static final int CRUCIBLE_SCROLL_DOWN_Y = 149;
+    private static final int CRUCIBLE_SCROLL_BUTTON_SIZE = 12;
+    private static final int CRUCIBLE_COMPACT_ITEM_SIZE = 12;
+    private static final int CRUCIBLE_INPUT_START_X = 22;
+    private static final int CRUCIBLE_INPUT_SPACING = 14;
+    private static final int CRUCIBLE_MAX_VISIBLE_INPUTS = 6;
+    private static final int CRUCIBLE_STIRRER_X = 106;
     private static final int ALTAR_RITUAL_RESULT_X = 56;
     private static final int ALTAR_RITUAL_RESULT_Y = 39;
     private static final int ALTAR_RITUAL_SACRIFICE_X = 56;
@@ -104,6 +117,7 @@ public class CodexGui extends GuiScreen {
     private int researchDetailPage;
     private int recipeListPage;
     private int selectedRecipeIndex;
+    private int crucibleStepScroll;
     private int indexPage;
     private int view = VIEW_INDEX;
 
@@ -645,39 +659,58 @@ public class CodexGui extends GuiScreen {
         mc.getTextureManager().bindTexture(CRUCIBLE_PAGE);
         drawModalRectWithCustomSizedTexture(x, y, 0, 0, PAGE_WIDTH, PAGE_HEIGHT, 256, 256);
         List<CrucibleRecipe.Step> steps = recipe.getSteps();
-        int height = steps.size() * 20 + CRUCIBLE_RESULT_GAP + 32;
-        int yOffset = Math.max(CRUCIBLE_FLUID_GAP, 80 - height / 2);
-        drawStack(getFluidBucket(recipe), x + 24, y + yOffset - CRUCIBLE_FLUID_GAP);
-        for (int stepIndex = 0; stepIndex < steps.size(); stepIndex++) {
+        crucibleStepScroll = clampCrucibleStepScroll(crucibleStepScroll, steps.size());
+        drawStack(getFluidBucket(recipe), x + 24, y + CRUCIBLE_FLUID_Y);
+        int visibleEnd = Math.min(steps.size(), crucibleStepScroll + CRUCIBLE_VISIBLE_STEPS);
+        for (int stepIndex = crucibleStepScroll; stepIndex < visibleEnd; stepIndex++) {
             CrucibleRecipe.Step step = steps.get(stepIndex);
             int rowX = x;
-            int rowY = y + yOffset + stepIndex * 20;
+            int rowY = y + CRUCIBLE_STEP_START_Y + (stepIndex - crucibleStepScroll) * CRUCIBLE_STEP_ROW_HEIGHT;
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             mc.getTextureManager().bindTexture(CRUCIBLE_PAGE);
             drawModalRectWithCustomSizedTexture(rowX, rowY, 128, 0, 128, 20, 256, 256);
-            rowX += 24;
+            rowX += CRUCIBLE_INPUT_START_X;
+            int inputs = 0;
             for (List<ItemStack> stacks : getCondensedStacks(step)) {
-                if (rowX > x + 104) {
+                if (inputs >= CRUCIBLE_MAX_VISIBLE_INPUTS) {
                     break;
                 }
-                mc.getTextureManager().bindTexture(CRUCIBLE_PAGE);
-                drawModalRectWithCustomSizedTexture(rowX, rowY + 1, 176, 32, 16, 17, 256, 256);
-                drawStack(firstStack(stacks), rowX, rowY + 1);
-                rowX += 17;
+                drawCompactStack(firstStack(stacks), rowX, rowY + 4);
+                rowX += CRUCIBLE_INPUT_SPACING;
+                inputs++;
             }
-            for (int i = 0; i < step.getStirs() && rowX <= x + 104; i++) {
-                mc.getTextureManager().bindTexture(CRUCIBLE_PAGE);
-                drawModalRectWithCustomSizedTexture(rowX, rowY + 1, 192, 32, 16, 17, 256, 256);
-                drawIngredient(recipe.getStirrer(), rowX, rowY + 1);
-                rowX += 17;
+            if (step.getStirs() > 0) {
+                drawCompactStack(firstStack(stacksFor(recipe.getStirrer())), x + CRUCIBLE_STIRRER_X, rowY + 4);
+                fontRenderer.drawString("x" + step.getStirs(), x + CRUCIBLE_STIRRER_X + 10, rowY + 7, 0x5b4732);
             }
             fontRenderer.drawString((stepIndex + 1) + ".", x + 7, rowY + 7, 0x5b4732);
         }
-        int resultY = y + yOffset + steps.size() * 20 + CRUCIBLE_RESULT_GAP;
+        int resultY = y + CRUCIBLE_RESULT_Y;
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         mc.getTextureManager().bindTexture(CRUCIBLE_PAGE);
         drawModalRectWithCustomSizedTexture(x, resultY, 128, 64, 128, 32, 256, 256);
         drawStack(recipe.getResult(), x + 56, resultY + 11);
+        drawCrucibleScrollControls(x, y, steps.size());
+    }
+
+    private void drawCrucibleScrollControls(int x, int y, int stepCount) {
+        if (getMaxCrucibleStepScroll(stepCount) <= 0) {
+            return;
+        }
+        drawCrucibleScrollButton(x + CRUCIBLE_SCROLL_X, y + CRUCIBLE_SCROLL_UP_Y, "^", crucibleStepScroll > 0);
+        drawCrucibleScrollButton(x + CRUCIBLE_SCROLL_X, y + CRUCIBLE_SCROLL_DOWN_Y, "v",
+                crucibleStepScroll < getMaxCrucibleStepScroll(stepCount));
+    }
+
+    private void drawCrucibleScrollButton(int x, int y, String label, boolean enabled) {
+        int fill = enabled ? 0xffd8ceb8 : 0xffb7af9e;
+        int border = enabled ? 0xff5b4732 : 0xff8f8472;
+        drawRect(x, y, x + CRUCIBLE_SCROLL_BUTTON_SIZE, y + CRUCIBLE_SCROLL_BUTTON_SIZE, fill);
+        drawHorizontalLine(x, x + CRUCIBLE_SCROLL_BUTTON_SIZE, y, border);
+        drawHorizontalLine(x, x + CRUCIBLE_SCROLL_BUTTON_SIZE, y + CRUCIBLE_SCROLL_BUTTON_SIZE, border);
+        drawVerticalLine(x, y, y + CRUCIBLE_SCROLL_BUTTON_SIZE, border);
+        drawVerticalLine(x + CRUCIBLE_SCROLL_BUTTON_SIZE, y, y + CRUCIBLE_SCROLL_BUTTON_SIZE, border);
+        fontRenderer.drawString(label, x + 4, y + 2, enabled ? 0x2f2118 : 0x7d7366);
     }
 
     private void drawIngredient(Ingredient ingredient, int x, int y) {
@@ -705,6 +738,18 @@ public class CodexGui extends GuiScreen {
         GlStateManager.disableLighting();
         GlStateManager.disableDepth();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    private void drawCompactStack(ItemStack stack, int x, int y) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, 0.0F);
+        float scale = CRUCIBLE_COMPACT_ITEM_SIZE / 16.0F;
+        GlStateManager.scale(scale, scale, 1.0F);
+        drawStack(stack, 0, 0);
+        GlStateManager.popMatrix();
     }
 
     private List<List<ItemStack>> getCondensedStacks(CrucibleRecipe.Step step) {
@@ -915,6 +960,7 @@ public class CodexGui extends GuiScreen {
                 recipeListPage = 0;
                 researchListPage = 0;
                 selectedRecipeIndex = 0;
+                crucibleStepScroll = 0;
                 return;
             }
             if (view == VIEW_INDEX) {
@@ -937,6 +983,7 @@ public class CodexGui extends GuiScreen {
                     view = clickedEntry.view;
                     recipeListPage = 0;
                     selectedRecipeIndex = 0;
+                    crucibleStepScroll = 0;
                     return;
                 }
             } else if (isIn(mouseX, mouseY, left + 24, top + 32, left + 70, top + 44)) {
@@ -947,6 +994,7 @@ public class CodexGui extends GuiScreen {
                         left + LEFT_ARROW_X + PAGE_ARROW_WIDTH, top + PAGE_ARROW_Y + PAGE_ARROW_HEIGHT)) {
                     if (recipeListPage > 0) {
                         recipeListPage--;
+                        crucibleStepScroll = 0;
                         return;
                     }
                 } else if (isIn(mouseX, mouseY, left + LEFT_PAGE_RIGHT_ARROW_X, top + PAGE_ARROW_Y,
@@ -954,12 +1002,17 @@ public class CodexGui extends GuiScreen {
                     int totalEntries = getRecipeOutputs().size();
                     if (recipeListPage < getMaxRecipeListPage(totalEntries)) {
                         recipeListPage++;
+                        crucibleStepScroll = 0;
                         return;
                     }
+                }
+                if (handleCrucibleRecipeScrollClick(mouseX, mouseY, left, top)) {
+                    return;
                 }
                 int clicked = getClickedRecipeIndex(mouseX, mouseY, left, top);
                 if (clicked >= 0) {
                     selectedRecipeIndex = clicked;
+                    crucibleStepScroll = 0;
                     return;
                 }
                 return;
@@ -999,6 +1052,65 @@ public class CodexGui extends GuiScreen {
             }
         }
         super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        int wheel = Mouse.getEventDWheel();
+        if (wheel == 0 || view != VIEW_CRUCIBLE_RECIPES) {
+            return;
+        }
+        int mouseX = Mouse.getEventX() * width / mc.displayWidth;
+        int mouseY = height - Mouse.getEventY() * height / mc.displayHeight - 1;
+        int left = (width - WIDTH) / 2;
+        int top = (height - HEIGHT) / 2;
+        if (!isIn(mouseX, mouseY, left + RIGHT_PAGE_X, top + PAGE_Y,
+                left + RIGHT_PAGE_X + PAGE_WIDTH, top + PAGE_Y + PAGE_HEIGHT)) {
+            return;
+        }
+        scrollCrucibleSteps(wheel < 0 ? 1 : -1);
+    }
+
+    private boolean handleCrucibleRecipeScrollClick(int mouseX, int mouseY, int left, int top) {
+        if (view != VIEW_CRUCIBLE_RECIPES || getMaxCrucibleStepScroll(getSelectedCrucibleStepCount()) <= 0) {
+            return false;
+        }
+        int pageX = left + RIGHT_PAGE_X;
+        int pageY = top + PAGE_Y;
+        if (isIn(mouseX, mouseY, pageX + CRUCIBLE_SCROLL_X, pageY + CRUCIBLE_SCROLL_UP_Y,
+                pageX + CRUCIBLE_SCROLL_X + CRUCIBLE_SCROLL_BUTTON_SIZE,
+                pageY + CRUCIBLE_SCROLL_UP_Y + CRUCIBLE_SCROLL_BUTTON_SIZE)) {
+            scrollCrucibleSteps(-1);
+            return true;
+        }
+        if (isIn(mouseX, mouseY, pageX + CRUCIBLE_SCROLL_X, pageY + CRUCIBLE_SCROLL_DOWN_Y,
+                pageX + CRUCIBLE_SCROLL_X + CRUCIBLE_SCROLL_BUTTON_SIZE,
+                pageY + CRUCIBLE_SCROLL_DOWN_Y + CRUCIBLE_SCROLL_BUTTON_SIZE)) {
+            scrollCrucibleSteps(1);
+            return true;
+        }
+        return false;
+    }
+
+    private void scrollCrucibleSteps(int amount) {
+        crucibleStepScroll = clampCrucibleStepScroll(crucibleStepScroll + amount, getSelectedCrucibleStepCount());
+    }
+
+    private int getSelectedCrucibleStepCount() {
+        List<CrucibleRecipe> recipes = CrucibleRecipes.getRecipes();
+        if (selectedRecipeIndex < 0 || selectedRecipeIndex >= recipes.size()) {
+            return 0;
+        }
+        return recipes.get(selectedRecipeIndex).getSteps().size();
+    }
+
+    private int clampCrucibleStepScroll(int value, int stepCount) {
+        return Math.max(0, Math.min(value, getMaxCrucibleStepScroll(stepCount)));
+    }
+
+    private int getMaxCrucibleStepScroll(int stepCount) {
+        return Math.max(0, stepCount - CRUCIBLE_VISIBLE_STEPS);
     }
 
     private IndexEntry getClickedCategoryTab(int mouseX, int mouseY, int left, int top) {

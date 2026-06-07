@@ -28,7 +28,7 @@ EidolonLegacy 是 Eidolon 的 Minecraft 1.12.2 / Cleanroom 移植版本。项目
 - 饰品系统：接入 Bubbles/Baubles 风格装备栏，护符、戒指、腰带、护身符、头部饰品均可右键装备并触发对应效果。
 - HEI 兼容：工作台、坩埚、祭坛仪式、祭坛供物、仪式匕首采集、灵魂碎片获取等分类。
 
-更详细的物品和方块使用方法见：[docs/use.md](docs/use.md)；给玩家直接阅读的 TXT 教程见：[docs/player-guide.txt](docs/player-guide.txt)。
+更详细的物品和方块使用方法见：[docs/player-guide.txt](docs/player-guide.txt)。
 
 ## CraftTweaker 支持
 
@@ -49,7 +49,7 @@ EidolonLegacy 是 Eidolon 的 Minecraft 1.12.2 / Cleanroom 移植版本。项目
 .minecraft/scripts/eidolon_legacy.zs
 ```
 
-当前完整接口参数和中文逐行注释示例见：[docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt)。旧版 Markdown 参考见：[docs/crafttweaker-recipes.md](docs/crafttweaker-recipes.md)。
+当前完整接口参数和中文逐行注释示例见：[docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt)。
 
 开发环境中还提供了 CT2 冒烟测试脚本：
 
@@ -84,11 +84,8 @@ build/libs/EidolonLegacy-1.0.0.jar
 
 ## 文档
 
-- 使用教程：[docs/use.md](docs/use.md)
-- CraftTweaker 接口：[docs/crafttweaker-recipes.md](docs/crafttweaker-recipes.md)
-- 玩家 TXT 教程：[docs/player-guide.txt](docs/player-guide.txt)
+- 玩家教程：[docs/player-guide.txt](docs/player-guide.txt)
 - CraftTweaker2 中文魔改教程：[docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt)
-- 移植进度：[docs/feature-status.md](docs/feature-status.md)
 
 ## 许可证
 
@@ -124,7 +121,7 @@ EidolonLegacy is a Minecraft 1.12.2 / Cleanroom port of Eidolon. The project is 
 - Curio/trinket system: Bubbles/Baubles-style slots are wired for amulets, rings, belts, charms, and head curios, with right-click equip and gameplay effects.
 - HEI integration: Worktable, Crucible, Altar Rituals, Altar Offerings, Athame Harvest, and Soul Shard Harvest categories.
 
-For detailed item and block usage, see [docs/use.md](docs/use.md). A player-facing TXT guide is also available at [docs/player-guide.txt](docs/player-guide.txt).
+For detailed item and block usage, see [docs/player-guide.txt](docs/player-guide.txt).
 
 ## CraftTweaker Support
 
@@ -145,7 +142,7 @@ Place scripts in the instance `scripts` folder, for example:
 .minecraft/scripts/eidolon_legacy.zs
 ```
 
-For the current complete API parameters and Chinese line-by-line examples, see [docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt). The older Markdown reference remains available at [docs/crafttweaker-recipes.md](docs/crafttweaker-recipes.md).
+For the current complete API parameters and Chinese line-by-line examples, see [docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt).
 
 A development smoke-test script is included at:
 
@@ -180,11 +177,8 @@ Do not use `-dev.jar` or `-sources.jar` as the normal runtime mod jar.
 
 ## Documentation
 
-- User guide: [docs/use.md](docs/use.md)
-- CraftTweaker API: [docs/crafttweaker-recipes.md](docs/crafttweaker-recipes.md)
-- Player TXT guide: [docs/player-guide.txt](docs/player-guide.txt)
+- Player guide: [docs/player-guide.txt](docs/player-guide.txt)
 - CraftTweaker2 Chinese TXT guide: [docs/crafttweaker2-guide.txt](docs/crafttweaker2-guide.txt)
-- Porting status: [docs/feature-status.md](docs/feature-status.md)
 
 ## License
 

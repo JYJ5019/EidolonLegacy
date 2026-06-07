@@ -5,6 +5,7 @@ import elucent.eidolon.command.ResearchCommand;
 import elucent.eidolon.command.SpellCommand;
 import elucent.eidolon.diagnostics.RuntimeDiagnostics;
 import elucent.eidolon.proxy.IProxy;
+import elucent.eidolon.registries.ModPotions;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.util.DamageSource;
@@ -34,15 +35,15 @@ public class Eidolon {
     @SidedProxy(modId = Reference.MOD_ID, clientSide = "elucent.eidolon.proxy.ClientProxy", serverSide = "elucent.eidolon.proxy.CommonProxy")
     public static IProxy proxy;
 
-    public static boolean trueCreatureAttribute = false;
+    public static EnumCreatureAttribute getCreatureAttribute(EntityLivingBase entity) {
+        if (entity != null && entity.isPotionActive(ModPotions.UNDEATH)) {
+            return EnumCreatureAttribute.UNDEAD;
+        }
+        return getTrueCreatureAttribute(entity);
+    }
 
     public static EnumCreatureAttribute getTrueCreatureAttribute(EntityLivingBase entity) {
-        trueCreatureAttribute = true;
-        try {
-            return entity.getCreatureAttribute();
-        } finally {
-            trueCreatureAttribute = false;
-        }
+        return entity == null ? EnumCreatureAttribute.UNDEFINED : entity.getCreatureAttribute();
     }
 
     @Mod.EventHandler

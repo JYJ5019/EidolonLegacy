@@ -4,14 +4,7 @@
   "compatibilityLevel": "JAVA_8",
   "target": "@env(DEFAULT)",
   "client": [],
-  "mixins": [
-    "BlockSoulSandMixin",
-    "EntityMixin",
-    "EntityLivingBaseMixin",
-    "EntityPlayerMixin",
-    "EntityZombieVillagerMixin",
-    "RavenCloakFlightMixin"
-  ],
+  "mixins": [],
   "server": [],
   "setSourceFile": true,
   "minVersion": "0.8.7"

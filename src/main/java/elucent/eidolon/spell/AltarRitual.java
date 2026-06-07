@@ -1,7 +1,6 @@
 package elucent.eidolon.spell;
 
 import elucent.eidolon.Eidolon;
-import elucent.eidolon.mixin.EntityZombieVillagerMixin;
 import elucent.eidolon.item.IRechargeableWand;
 import elucent.eidolon.item.SummoningStaffItem;
 import elucent.eidolon.network.VisualEffectPacket;
@@ -38,8 +37,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.lang.reflect.Method;
 
 public class AltarRitual {
+    private static final Method ZOMBIE_VILLAGER_FINISH_CONVERSION = findZombieVillagerFinishConversion();
+
     public enum PerformResult {
         SUCCESS,
         NO_MATCH,
@@ -631,10 +633,10 @@ public class AltarRitual {
         }
         if (!world.isRemote) {
             world.playSound(null, origin.getX() + 0.5D, origin.getY() + 0.8D, origin.getZ() + 0.5D,
-                    SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.BLOCKS, 0.8F, 1.0F);
+            SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.BLOCKS, 0.8F, 1.0F);
             for (EntityLivingBase entity : entities) {
                 if (entity instanceof EntityZombieVillager) {
-                    ((EntityZombieVillagerMixin) entity).eidolon$finishConversion();
+                    finishZombieVillagerConversion((EntityZombieVillager) entity);
                 } else if (entity instanceof EntityPigZombie) {
                     EntityPig pig = new EntityPig(world);
                     pig.copyLocationAndAnglesFrom(entity);
@@ -650,6 +652,30 @@ public class AltarRitual {
         }
         playSuccessEffects(world, origin, EnumParticleTypes.VILLAGER_HAPPY, 24);
         return PerformResult.SUCCESS;
+    }
+
+    private static Method findZombieVillagerFinishConversion() {
+        for (String name : new String[]{"finishConversion", "func_190738_dp"}) {
+            try {
+                Method method = EntityZombieVillager.class.getDeclaredMethod(name);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        Eidolon.LOGGER.error("Unable to find EntityZombieVillager finishConversion method.");
+        return null;
+    }
+
+    private static void finishZombieVillagerConversion(EntityZombieVillager villager) {
+        if (ZOMBIE_VILLAGER_FINISH_CONVERSION == null) {
+            return;
+        }
+        try {
+            ZOMBIE_VILLAGER_FINISH_CONVERSION.invoke(villager);
+        } catch (ReflectiveOperationException e) {
+            Eidolon.LOGGER.error("Failed to finish zombie villager conversion.", e);
+        }
     }
 
     private boolean hasRequiredHealth(World world, BlockPos origin, EntityPlayer player) {
@@ -698,7 +724,7 @@ public class AltarRitual {
                     origin.getX() - 8.0D, origin.getY() - 6.0D, origin.getZ() - 8.0D,
                     origin.getX() + 9.0D, origin.getY() + 11.0D, origin.getZ() + 9.0D);
             List<EntityLiving> mobs = world.getEntitiesWithinAABB(EntityLiving.class, bounds,
-                    entity -> entity.getCreatureAttribute() != EnumCreatureAttribute.UNDEAD);
+                    entity -> Eidolon.getCreatureAttribute(entity) != EnumCreatureAttribute.UNDEAD);
             for (EntityLiving mob : mobs) {
                 if (used.add(mob.getEntityId())) {
                     targets.add(mob);

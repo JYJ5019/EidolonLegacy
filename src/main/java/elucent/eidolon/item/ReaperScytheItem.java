@@ -57,8 +57,7 @@ public class ReaperScytheItem extends EidolonSwordItem {
     }
 
     private boolean isReapable(EntityLivingBase target) {
-        return target.getCreatureAttribute() == EnumCreatureAttribute.UNDEAD
-                || DeathbringerScytheItem.hasUndeath(target);
+        return Eidolon.getCreatureAttribute(target) == EnumCreatureAttribute.UNDEAD;
     }
 
     @Override

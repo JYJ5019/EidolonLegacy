@@ -85,7 +85,7 @@ public class ActiveRituals extends WorldSavedData {
         List<EntityLivingBase> entities = world.getEntitiesWithinAABB(EntityLivingBase.class, bounds,
                 entity -> entity != null
                         && entity.isEntityAlive()
-                        && entity.getCreatureAttribute() == EnumCreatureAttribute.UNDEAD);
+                        && Eidolon.getCreatureAttribute(entity) == EnumCreatureAttribute.UNDEAD);
         for (EntityLivingBase entity : entities) {
             VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
                     VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, entity.posX,

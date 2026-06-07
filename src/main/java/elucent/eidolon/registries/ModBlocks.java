@@ -2360,7 +2360,8 @@ public final class ModBlocks {
 
         private boolean isEffectiveUndead(Entity entity) {
             return entity instanceof EntityLivingBase
-                    && ((EntityLivingBase) entity).getCreatureAttribute() == net.minecraft.entity.EnumCreatureAttribute.UNDEAD;
+                    && elucent.eidolon.Eidolon.getCreatureAttribute((EntityLivingBase) entity)
+                    == net.minecraft.entity.EnumCreatureAttribute.UNDEAD;
         }
 
         @Override

@@ -1,5 +1,6 @@
 package elucent.eidolon.item;
 
+import elucent.eidolon.Eidolon;
 import elucent.eidolon.network.DeathbringerSlashEffectPacket;
 import elucent.eidolon.network.ModNetwork;
 import elucent.eidolon.network.VisualEffectPacket;
@@ -25,7 +26,7 @@ public class DeathbringerScytheItem extends EidolonSwordItem {
     @Override
     public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker) {
         if (!attacker.world.isRemote) {
-            if (target.getCreatureAttribute() != EnumCreatureAttribute.UNDEAD) {
+            if (Eidolon.getCreatureAttribute(target) != EnumCreatureAttribute.UNDEAD) {
                 target.addPotionEffect(new PotionEffect(ModPotions.UNDEATH, UNDEATH_DURATION, 0));
             }
             ModNetwork.CHANNEL.sendToAllAround(

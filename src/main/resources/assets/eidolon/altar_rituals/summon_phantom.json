@@ -1,0 +1,26 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "entity_summon",
+  "entity": "minecraft:vex",
+  "capacity": 3,
+  "power": 3,
+  "result": {
+    "item": "minecraft:spawn_egg",
+    "nbt": "{EntityTag:{id:\"minecraft:vex\"}}"
+  },
+  "sacrifice": {
+    "item": "minecraft:coal",
+    "data": 1
+  },
+  "focus": {
+    "item": "eidolon:raven_feather"
+  },
+  "offerings": [
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:raven_feather"
+    }
+  ]
+}

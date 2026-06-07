@@ -1,0 +1,13 @@
+{
+  "type": "eidolon:incubator",
+  "input": {
+    "item": "minecraft:rotten_flesh"
+  },
+  "catalyst": {
+    "item": "eidolon:soul_shard"
+  },
+  "result": {
+    "item": "eidolon:zombie_heart"
+  },
+  "ticks": 1200
+}

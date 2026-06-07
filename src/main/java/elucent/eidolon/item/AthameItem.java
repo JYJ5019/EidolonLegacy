@@ -21,7 +21,6 @@ import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumActionResult;
@@ -43,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class AthameItem extends ItemSword {
+public class AthameItem extends EidolonSwordItem {
     private static final List<HarvestEntry> HARVEST_ENTRIES = new ArrayList<>();
 
     static {
@@ -66,7 +65,7 @@ public class AthameItem extends ItemSword {
     }
 
     public AthameItem(ToolMaterial material) {
-        super(material);
+        super(material, 3.0D, -1.6D);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -104,22 +103,25 @@ public class AthameItem extends ItemSword {
     public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand,
                                       EnumFacing facing, float hitX, float hitY, float hitZ) {
         IBlockState state = worldIn.getBlockState(pos);
+        float hardness = state.getBlockHardness(worldIn, pos);
         ItemStack harvest = getHarvestable(state);
-        if (harvest.isEmpty() && !isSoftPlant(state)) {
+        if (!isSoftPlant(state) || hardness < 0.0F || hardness >= 5.0F) {
             return super.onItemUse(player, worldIn, pos, hand, facing, hitX, hitY, hitZ);
         }
         if (!worldIn.isRemote) {
-            spawnPlantBreakParticles(worldIn, pos, state);
+            spawnPlantBreakParticles(worldIn, pos, state, hitX, hitY, hitZ);
             worldIn.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS,
                     0.5F, 0.9F + itemRand.nextFloat() * 0.2F);
             if (itemRand.nextInt(5) == 0) {
                 BlockPos destroyPos = getDestroyPos(state, pos);
                 worldIn.destroyBlock(destroyPos, false);
-                if (!harvest.isEmpty() && itemRand.nextInt(3) == 0) {
-                    worldIn.playSound(null, pos, SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS,
-                            0.5F, 0.9F + itemRand.nextFloat() * 0.2F);
-                    worldIn.spawnEntity(new EntityItem(worldIn,
-                            pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, harvest.copy()));
+                if (itemRand.nextInt(10) == 0) {
+                    if (!harvest.isEmpty()) {
+                        worldIn.playSound(null, pos, SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS,
+                                0.5F, 0.9F + itemRand.nextFloat() * 0.2F);
+                        worldIn.spawnEntity(new EntityItem(worldIn,
+                                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, harvest.copy()));
+                    }
                     if (!player.capabilities.isCreativeMode) {
                         player.getHeldItem(hand).damageItem(1, player);
                     }
@@ -129,11 +131,12 @@ public class AthameItem extends ItemSword {
         return EnumActionResult.SUCCESS;
     }
 
-    private void spawnPlantBreakParticles(World world, BlockPos pos, IBlockState state) {
+    private void spawnPlantBreakParticles(World world, BlockPos pos, IBlockState state,
+                                          float hitX, float hitY, float hitZ) {
         if (world instanceof WorldServer) {
             ((WorldServer) world).spawnParticle(EnumParticleTypes.BLOCK_CRACK,
-                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
-                    4, 0.15D, 0.15D, 0.15D, 0.03D, Block.getStateId(state));
+                    pos.getX() + hitX, pos.getY() + hitY, pos.getZ() + hitZ,
+                    3, 0.08D, 0.08D, 0.08D, 0.05D, Block.getStateId(state));
         }
     }
 

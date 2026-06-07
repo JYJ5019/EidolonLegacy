@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "eidolon",
+  "ingredients": [
+    {
+      "type": "forge:ore_dict",
+      "ore": "ingotSilver"
+    }
+  ],
+  "result": {
+    "item": "eidolon:silver_nugget",
+    "count": 9
+  }
+}

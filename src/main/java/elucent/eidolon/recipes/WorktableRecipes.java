@@ -239,6 +239,24 @@ public final class WorktableRecipes {
                 mapped.addProperty("item", "minecraft:dye");
                 mapped.addProperty("data", 15);
                 break;
+            case "minecraft:charcoal":
+                mapped.addProperty("item", "minecraft:coal");
+                mapped.addProperty("data", 1);
+                break;
+            case "minecraft:chiseled_stone_bricks":
+                mapped.addProperty("item", "minecraft:stonebrick");
+                mapped.addProperty("data", 3);
+                break;
+            case "minecraft:glistering_melon_slice":
+                mapped.addProperty("item", "minecraft:speckled_melon");
+                break;
+            case "minecraft:lapis_lazuli":
+                mapped.addProperty("item", "minecraft:dye");
+                mapped.addProperty("data", 4);
+                break;
+            case "minecraft:melon_slice":
+                mapped.addProperty("item", "minecraft:melon");
+                break;
             case "minecraft:skeleton_skull":
                 mapped.addProperty("item", "minecraft:skull");
                 mapped.addProperty("data", 0);
@@ -268,26 +286,45 @@ public final class WorktableRecipes {
                 mapped.addProperty("item", "minecraft:wool");
                 mapped.addProperty("data", 0);
                 break;
+            case "minecraft:gray_wool":
+                mapped.addProperty("item", "minecraft:wool");
+                mapped.addProperty("data", 7);
+                break;
+            case "minecraft:red_carpet":
+                mapped.addProperty("item", "minecraft:carpet");
+                mapped.addProperty("data", 14);
+                break;
+            case "minecraft:purple_carpet":
+                mapped.addProperty("item", "minecraft:carpet");
+                mapped.addProperty("data", 10);
+                break;
             default:
                 break;
+        }
+        if (!mapped.has("data")) {
+            mapped.addProperty("data", 0);
         }
         return mapped;
     }
 
     private static String mapTagToOre(String tag) {
         switch (tag) {
-            case "forge:ingots/arcane_gold":
-                return "ingotArcaneGold";
-            case "forge:ingots/lead":
-                return "ingotLead";
-            case "forge:ingots/pewter":
-                return "ingotPewter";
-            case "forge:ingots/silver":
-                return "ingotSilver";
-            case "forge:nuggets/gold":
-                return "nuggetGold";
-            case "forge:nuggets/silver":
-                return "nuggetSilver";
+            case "forge:bones":
+                return "bone";
+            case "forge:dusts/lead":
+                return "dustLead";
+            case "forge:dusts/redstone":
+                return "dustRedstone";
+            case "forge:dusts/silver":
+                return "dustSilver";
+            case "forge:dusts/sulfur":
+                return "dustSulfur";
+            case "forge:dyes/black":
+                return "dyeBlack";
+            case "forge:dyes/blue":
+                return "dyeBlue";
+            case "forge:dyes/red":
+                return "dyeRed";
             case "forge:ender_pearls":
                 return "enderpearl";
             case "forge:feathers":
@@ -296,18 +333,62 @@ public final class WorktableRecipes {
                 return "gemDiamond";
             case "forge:gems/quartz":
                 return "gemQuartz";
-            case "forge:bones":
-                return "bone";
+            case "forge:gems/shadow_gem":
+                return "gemShadow";
+            case "forge:ingots/arcane_gold":
+                return "ingotArcaneGold";
+            case "forge:ingots/gold":
+                return "ingotGold";
+            case "forge:ingots/iron":
+                return "ingotIron";
+            case "forge:ingots/lead":
+                return "ingotLead";
+            case "forge:ingots/pewter":
+                return "ingotPewter";
+            case "forge:ingots/silver":
+                return "ingotSilver";
+            case "forge:mushrooms":
+                return "cropMushroom";
+            case "forge:nuggets/arcane_gold":
+                return "nuggetArcaneGold";
+            case "forge:nuggets/gold":
+                return "nuggetGold";
+            case "forge:nuggets/lead":
+                return "nuggetLead";
+            case "forge:nuggets/pewter":
+                return "nuggetPewter";
+            case "forge:nuggets/silver":
+                return "nuggetSilver";
+            case "forge:ores/lead":
+                return "oreLead";
+            case "forge:ores/silver":
+                return "oreSilver";
             case "forge:rods/wooden":
                 return "stickWood";
+            case "forge:storage_blocks/arcane_gold":
+                return "blockArcaneGold";
+            case "forge:storage_blocks/coal":
+                return "blockCoal";
             case "forge:storage_blocks/diamond":
                 return "blockDiamond";
             case "forge:storage_blocks/lapis":
                 return "blockLapis";
-            case "forge:dyes/blue":
-                return "dyeBlue";
+            case "forge:storage_blocks/lead":
+                return "blockLead";
+            case "forge:storage_blocks/pewter":
+                return "blockPewter";
+            case "forge:storage_blocks/shadow_gem":
+                return "blockShadowGem";
+            case "forge:storage_blocks/silver":
+                return "blockSilver";
+            case "forge:string":
+                return "string";
+            case "forge:tallow":
+                return "tallow";
             case "minecraft:planks":
                 return "plankWood";
+            case "minecraft:wooden_slabs":
+                return "slabWood";
             default:
                 throw new IllegalArgumentException("Unsupported worktable tag: " + tag);
         }

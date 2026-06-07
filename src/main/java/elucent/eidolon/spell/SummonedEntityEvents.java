@@ -2,14 +2,17 @@ package elucent.eidolon.spell;
 
 import elucent.eidolon.Reference;
 import elucent.eidolon.item.SummoningStaffItem;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 @Mod.EventBusSubscriber(modid = Reference.MOD_ID)
@@ -41,15 +44,22 @@ public final class SummonedEntityEvents {
 
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
-        if (event.getEntityLiving() instanceof EntityPlayer
-                && event.getSource().getTrueSource() instanceof EntityLivingBase
-                && isSummoned((EntityLivingBase) event.getSource().getTrueSource())
-                && isOwner(event.getEntityLiving(), (EntityLivingBase) event.getSource().getTrueSource())) {
+        Entity trueSource = event.getSource().getTrueSource();
+        if (trueSource instanceof EntityLivingBase
+                && isSummoned((EntityLivingBase) trueSource)
+                && isOwner(event.getEntityLiving(), (EntityLivingBase) trueSource)) {
             event.setCanceled(true);
             return;
         }
-        if (event.getSource().getTrueSource() instanceof EntityPlayer && !event.getEntityLiving().world.isRemote) {
-            assignOwnerSummonsTarget((EntityPlayer) event.getSource().getTrueSource(), event.getEntityLiving());
+        if (trueSource instanceof EntityPlayer && !event.getEntityLiving().world.isRemote) {
+            assignOwnerSummonsTarget((EntityPlayer) trueSource, event.getEntityLiving());
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLivingDrops(LivingDropsEvent event) {
+        if (isSummoned(event.getEntityLiving())) {
+            event.getDrops().clear();
         }
     }
 
@@ -57,8 +67,8 @@ public final class SummonedEntityEvents {
         return entity != null && entity.getEntityData().getBoolean(SummoningStaffItem.SUMMONED_TAG);
     }
 
-    private static boolean isOwner(net.minecraft.entity.Entity candidate, EntityLivingBase summoned) {
-        return candidate instanceof EntityPlayer
+    private static boolean isOwner(Entity candidate, EntityLivingBase summoned) {
+        return candidate instanceof EntityLivingBase
                 && summoned.getEntityData().getString(SummoningStaffItem.OWNER_TAG)
                 .equals(candidate.getUniqueID().toString());
     }

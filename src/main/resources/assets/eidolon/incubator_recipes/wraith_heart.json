@@ -1,0 +1,13 @@
+{
+  "type": "eidolon:incubator",
+  "input": {
+    "item": "eidolon:zombie_heart"
+  },
+  "catalyst": {
+    "item": "eidolon:death_essence"
+  },
+  "result": {
+    "item": "eidolon:wraith_heart"
+  },
+  "ticks": 1600
+}

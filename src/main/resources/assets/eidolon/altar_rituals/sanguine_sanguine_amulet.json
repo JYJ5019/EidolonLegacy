@@ -1,0 +1,37 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "sanguine",
+  "capacity": 4,
+  "power": 4,
+  "health": 40,
+  "result": {
+    "item": "eidolon:sanguine_amulet"
+  },
+  "focus": {
+    "item": "eidolon:basic_amulet"
+  },
+  "sacrifice": {
+    "item": "minecraft:potion",
+    "nbt": "{Potion:\"minecraft:harming\"}"
+  },
+  "offerings": [
+    {
+      "item": "minecraft:diamond"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "eidolon:lesser_soul_gem"
+    }
+  ]
+}

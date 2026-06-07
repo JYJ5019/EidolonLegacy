@@ -1,0 +1,29 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "allure",
+  "capacity": 3,
+  "power": 3,
+  "sacrifice": {
+    "item": "minecraft:double_plant",
+    "data": 4
+  },
+  "offerings": [
+    {
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "item": "minecraft:dye",
+      "data": 1
+    },
+    {
+      "item": "minecraft:dye",
+      "data": 1
+    },
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ]
+}

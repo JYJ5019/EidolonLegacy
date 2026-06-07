@@ -57,13 +57,19 @@ public final class ModOreDictionary {
         OreDictionary.registerOre("gemLapis", new ItemStack(Items.DYE, 1, 4));
         OreDictionary.registerOre("dustRedstone", Items.REDSTONE);
         OreDictionary.registerOre("ingotGold", Items.GOLD_INGOT);
+        OreDictionary.registerOre("ingotIron", Items.IRON_INGOT);
         OreDictionary.registerOre("bone", Items.BONE);
         OreDictionary.registerOre("stickWood", Items.STICK);
+        OreDictionary.registerOre("string", Items.STRING);
         OreDictionary.registerOre("plankWood", new ItemStack(Blocks.PLANKS, 1, OreDictionary.WILDCARD_VALUE));
+        OreDictionary.registerOre("slabWood", new ItemStack(Blocks.WOODEN_SLAB, 1, OreDictionary.WILDCARD_VALUE));
         OreDictionary.registerOre("cropMushroom", Blocks.BROWN_MUSHROOM);
         OreDictionary.registerOre("cropMushroom", Blocks.RED_MUSHROOM);
+        OreDictionary.registerOre("blockCoal", Blocks.COAL_BLOCK);
         OreDictionary.registerOre("blockDiamond", Blocks.DIAMOND_BLOCK);
         OreDictionary.registerOre("blockLapis", Blocks.LAPIS_BLOCK);
         OreDictionary.registerOre("dyeBlue", new ItemStack(Items.DYE, 1, 4));
+        OreDictionary.registerOre("dyeRed", new ItemStack(Items.DYE, 1, 1));
+        OreDictionary.registerOre("dyeBlack", new ItemStack(Items.DYE, 1, 0));
     }
 }

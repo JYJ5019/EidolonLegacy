@@ -24,7 +24,6 @@ public class ResearchTableContainer extends Container {
     private static final int TASK_X = 189;
     private static final int TASK_Y = 17;
     private static final int TASK_SPACING = 36;
-    private static final int SEED = 1418644859;
     private static final int TASK_SLOT_COUNT = 9;
 
     private final ResearchTableTileEntity tile;
@@ -33,6 +32,8 @@ public class ResearchTableContainer extends Container {
     private final ResearchTaskSlot[] taskSlots = new ResearchTaskSlot[TASK_SLOT_COUNT];
     private String lastResearchKey = "";
     private int lastProgress = -1;
+    private int lastSeedLow = -1;
+    private int lastSeedHigh = -1;
 
     public ResearchTableContainer(InventoryPlayer playerInventory, ResearchTableTileEntity tile) {
         this.tile = tile;
@@ -90,7 +91,7 @@ public class ResearchTableContainer extends Container {
             return;
         }
 
-        List<ResearchTask> tasks = research.getTasks(SEED, stepsDone);
+        List<ResearchTask> tasks = research.getTasks(getTaskSeed(notes), stepsDone);
         int taskSlot = 0;
         for (int i = 0; i < tasks.size(); i++) {
             ResearchTask task = tasks.get(i);
@@ -123,7 +124,12 @@ public class ResearchTableContainer extends Container {
     }
 
     public int getProgress() {
-        return tile.getField(0);
+        return tile.getField(ResearchTableTileEntity.FIELD_PROGRESS);
+    }
+
+    public int getResearchSeed() {
+        ItemStack notes = tile.getStackInSlot(ResearchTableTileEntity.SLOT_NOTES);
+        return getTaskSeed(notes);
     }
 
     public boolean isTaskCompleteClient(List<ResearchTask> tasks, int taskIndex) {
@@ -149,7 +155,7 @@ public class ResearchTableContainer extends Container {
         if (stepsDone >= research.getStars()) {
             return;
         }
-        List<ResearchTask> tasks = research.getTasks(SEED, stepsDone);
+        List<ResearchTask> tasks = research.getTasks(getTaskSeed(notes), stepsDone);
         if (taskIndex < 0 || taskIndex >= tasks.size()) {
             return;
         }
@@ -250,7 +256,13 @@ public class ResearchTableContainer extends Container {
             return "";
         }
         NBTTagCompound tag = notes.getTagCompound();
-        return tag.getString("research") + ":" + tag.getInteger("stepsDone");
+        return tag.getString("research") + ":" + tag.getInteger("stepsDone") + ":" + getTaskSeed(notes);
+    }
+
+    private int getTaskSeed(ItemStack notes) {
+        return Researches.usesWorldSeed(notes)
+                ? tile.getResearchSeed()
+                : ResearchTableTileEntity.LEGACY_RESEARCH_SEED;
     }
 
     @Override
@@ -296,16 +308,35 @@ public class ResearchTableContainer extends Container {
         int progress = tile.getField(0);
         if (progress != lastProgress) {
             for (IContainerListener listener : listeners) {
-                listener.sendWindowProperty(this, 0, progress);
+                listener.sendWindowProperty(this, ResearchTableTileEntity.FIELD_PROGRESS, progress);
             }
             lastProgress = progress;
+        }
+        int seedLow = tile.getField(ResearchTableTileEntity.FIELD_RESEARCH_SEED_LOW);
+        if (seedLow != lastSeedLow) {
+            for (IContainerListener listener : listeners) {
+                listener.sendWindowProperty(this, ResearchTableTileEntity.FIELD_RESEARCH_SEED_LOW, seedLow);
+            }
+            lastSeedLow = seedLow;
+        }
+        int seedHigh = tile.getField(ResearchTableTileEntity.FIELD_RESEARCH_SEED_HIGH);
+        if (seedHigh != lastSeedHigh) {
+            for (IContainerListener listener : listeners) {
+                listener.sendWindowProperty(this, ResearchTableTileEntity.FIELD_RESEARCH_SEED_HIGH, seedHigh);
+            }
+            lastSeedHigh = seedHigh;
         }
     }
 
     @Override
     public void updateProgressBar(int id, int data) {
         tile.setField(id, data);
-        if (id == 0 && (data == 0 || data == ResearchTableTileEntity.RESEARCH_PROGRESS_TICKS)) {
+        if (id == ResearchTableTileEntity.FIELD_PROGRESS
+                && (data == 0 || data == ResearchTableTileEntity.RESEARCH_PROGRESS_TICKS)) {
+            lastResearchKey = "";
+            refreshTaskSlots(false);
+        } else if (id == ResearchTableTileEntity.FIELD_RESEARCH_SEED_LOW
+                || id == ResearchTableTileEntity.FIELD_RESEARCH_SEED_HIGH) {
             lastResearchKey = "";
             refreshTaskSlots(false);
         }

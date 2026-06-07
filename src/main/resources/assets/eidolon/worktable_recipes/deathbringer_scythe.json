@@ -8,24 +8,25 @@
   "reagents": "gege",
   "key": {
     "e": {
-    	"item": "eidolon:death_essence"
+      "item": "eidolon:death_essence"
     },
     "b": {
-    	"tag": "forge:bones"
+      "tag": "forge:bones"
     },
     "r": {
-    	"item": "eidolon:reaper_scythe"
+      "item": "eidolon:reaper_scythe"
     },
     "s": {
-    	"item": "minecraft:skeleton_skull"
+      "item": "minecraft:skull",
+      "data": 0
     },
     "g": {
-    	"item": "eidolon:shadow_gem"
+      "item": "eidolon:shadow_gem"
     },
     "w": {
-    	"item": "minecraft:wither_skeleton_skull"
+      "item": "minecraft:skull",
+      "data": 1
     }
-    
   },
   "result": {
     "item": "eidolon:deathbringer_scythe"

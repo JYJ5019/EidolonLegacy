@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 public final class Researches {
     public static final ResourceLocation DEFAULT_RESEARCH = new ResourceLocation(Reference.MOD_ID, "gluttony");
+    public static final String USES_WORLD_SEED_TAG = "usesWorldSeed";
     private static final Map<ResourceLocation, Research> RESEARCHES = new LinkedHashMap<>();
     private static final Map<ResourceLocation, List<Research>> BLOCK_RESEARCHES = new LinkedHashMap<>();
     private static final Map<ResourceLocation, List<Research>> ENTITY_RESEARCHES = new LinkedHashMap<>();
@@ -253,11 +254,15 @@ public final class Researches {
             tag = new NBTTagCompound();
             stack.setTagCompound(tag);
         }
+        boolean hadProgressData = tag.hasKey("research") || tag.hasKey("stepsDone");
         if (!tag.hasKey("research")) {
             tag.setString("research", DEFAULT_RESEARCH.toString());
         }
         if (!tag.hasKey("stepsDone")) {
             tag.setInteger("stepsDone", 0);
+        }
+        if (!hadProgressData && !tag.hasKey(USES_WORLD_SEED_TAG)) {
+            tag.setBoolean(USES_WORLD_SEED_TAG, true);
         }
     }
 
@@ -267,8 +272,16 @@ public final class Researches {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setString("research", research.getId().toString());
         tag.setInteger("stepsDone", 0);
+        tag.setBoolean(USES_WORLD_SEED_TAG, true);
         notes.setTagCompound(tag);
         return notes;
+    }
+
+    public static boolean usesWorldSeed(ItemStack stack) {
+        return !stack.isEmpty()
+                && stack.getItem() == ModItems.RESEARCH_NOTES
+                && stack.hasTagCompound()
+                && stack.getTagCompound().getBoolean(USES_WORLD_SEED_TAG);
     }
 
     public static boolean tryCreateNotes(EntityPlayer player, ItemStack tools, EnumHand hand, Collection<Research> researches) {

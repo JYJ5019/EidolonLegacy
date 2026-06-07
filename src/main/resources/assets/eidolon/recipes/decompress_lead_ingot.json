@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "eidolon",
+  "ingredients": [
+    {
+      "type": "forge:ore_dict",
+      "ore": "ingotLead"
+    }
+  ],
+  "result": {
+    "item": "eidolon:lead_nugget",
+    "count": 9
+  }
+}

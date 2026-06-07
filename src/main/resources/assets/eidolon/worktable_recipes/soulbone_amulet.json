@@ -8,22 +8,22 @@
   "reagents": "cege",
   "key": {
     "e": {
-    	"item": "eidolon:death_essence"
+      "item": "eidolon:death_essence"
     },
     "b": {
-    	"tag": "forge:bones"
+      "tag": "forge:bones"
     },
     "c": {
-    	"item": "eidolon:ender_calx"
+      "item": "eidolon:ender_calx"
     },
     "g": {
-    	"item": "eidolon:shadow_gem"
+      "item": "eidolon:shadow_gem"
     },
     "a": {
-    	"item": "eidolon:basic_amulet"
+      "item": "eidolon:basic_amulet"
     },
     "h": {
-    	"item": "eidolon:wraith_heart"
+      "item": "eidolon:wraith_heart"
     }
   },
   "result": {

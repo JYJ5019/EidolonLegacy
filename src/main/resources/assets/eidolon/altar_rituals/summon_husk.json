@@ -8,9 +8,13 @@
     "item": "minecraft:spawn_egg",
     "nbt": "{EntityTag:{id:\"minecraft:husk\"}}"
   },
-  "focus": {
+  "sacrifice": {
     "item": "minecraft:coal",
     "data": 1
+  },
+  "focus": {
+    "item": "minecraft:sand",
+    "data": 0
   },
   "offerings": [
     {
@@ -18,9 +22,6 @@
     },
     {
       "item": "minecraft:rotten_flesh"
-    },
-    {
-      "item": "minecraft:sand"
     }
   ]
 }

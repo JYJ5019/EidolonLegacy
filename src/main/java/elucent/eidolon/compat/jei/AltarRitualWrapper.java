@@ -36,7 +36,10 @@ public class AltarRitualWrapper implements IRecipeWrapper {
         }
         inputs.add(getSacrificeStacks());
         ingredients.setInputLists(VanillaTypes.ITEM, inputs);
-        ingredients.setOutput(VanillaTypes.ITEM, ritual.getResult());
+        ItemStack output = ritual.hasResult() ? ritual.getResult() : ritual.getDisplayStack();
+        if (!output.isEmpty()) {
+            ingredients.setOutput(VanillaTypes.ITEM, output);
+        }
     }
 
     public AltarRitual getRitual() {
@@ -88,6 +91,9 @@ public class AltarRitualWrapper implements IRecipeWrapper {
             minecraft.fontRenderer.drawString(health,
                     64 - minecraft.fontRenderer.getStringWidth(health) / 2, 18, 0x8b2f2f);
         }
+        String behavior = I18n.format(ritual.getBehaviorTranslationKey());
+        minecraft.fontRenderer.drawString(behavior,
+                64 - minecraft.fontRenderer.getStringWidth(behavior) / 2, 28, 0x7d5a39);
     }
 
     private List<ItemStack> stacksFor(Ingredient ingredient) {

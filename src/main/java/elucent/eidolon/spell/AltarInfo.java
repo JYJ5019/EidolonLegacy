@@ -1,5 +1,7 @@
 package elucent.eidolon.spell;
 
+import elucent.eidolon.reagent.ReagentStack;
+import elucent.eidolon.tile.AltarTileEntity;
 import elucent.eidolon.tile.OffertoryPlateTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -25,7 +27,12 @@ public class AltarInfo {
     }
 
     private final Map<ResourceLocation, AltarAttributes> attributes = new HashMap<>();
+    private final Map<BlockPos, ItemStack> offerings = new HashMap<>();
     private final Set<BlockPos> altarPositions;
+    private int reagentAmount;
+    private int reagentCapacity;
+    private double reagentCapacityBonus;
+    private double reagentPowerBonus;
 
     private AltarInfo(Set<BlockPos> altarPositions) {
         this.altarPositions = altarPositions;
@@ -35,6 +42,16 @@ public class AltarInfo {
         Set<BlockPos> altarPositions = getAltarPositions(world, pos);
         AltarInfo info = new AltarInfo(altarPositions);
         for (BlockPos altarPos : altarPositions) {
+            TileEntity altarTile = world.getTileEntity(altarPos);
+            if (altarTile instanceof AltarTileEntity) {
+                AltarTileEntity altar = (AltarTileEntity) altarTile;
+                ItemStack offering = altar.getOffering();
+                if (!offering.isEmpty()) {
+                    info.offerings.put(altarPos, offering);
+                }
+                info.applyReagentSupport(altar);
+            }
+
             IBlockState above = world.getBlockState(altarPos.up());
             AltarEntry blockEntry = AltarEntries.find(above);
             if (blockEntry != null) {
@@ -89,11 +106,12 @@ public class AltarInfo {
     }
 
     public ItemStack getOffering(BlockPos pos) {
-        return ItemStack.EMPTY;
+        ItemStack stack = offerings.get(pos);
+        return stack == null ? ItemStack.EMPTY : stack.copy();
     }
 
     public int getOfferingCount() {
-        return 0;
+        return offerings.size();
     }
 
     public double getCapacity() {
@@ -101,7 +119,7 @@ public class AltarInfo {
         for (AltarAttributes attrs : attributes.values()) {
             sum += attrs.capacity;
         }
-        return sum;
+        return sum + reagentCapacityBonus;
     }
 
     public double getPower() {
@@ -109,6 +127,35 @@ public class AltarInfo {
         for (AltarAttributes attrs : attributes.values()) {
             sum += attrs.power;
         }
-        return sum;
+        return sum + reagentPowerBonus;
+    }
+
+    public int getReagentAmount() {
+        return reagentAmount;
+    }
+
+    public int getReagentCapacity() {
+        return reagentCapacity;
+    }
+
+    private void applyReagentSupport(AltarTileEntity altar) {
+        reagentCapacity += altar.getTank().getCapacity();
+        ReagentStack stack = altar.getTank().getContents();
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        reagentAmount += stack.amount;
+        double pressure = Math.min(1.0D, altar.getTank().getPressure());
+        String reagent = stack.reagent.getRegistryName().getPath();
+        if ("crimsol".equals(reagent)) {
+            reagentCapacityBonus += pressure;
+            reagentPowerBonus += pressure * 3.0D;
+        } else if ("esprit".equals(reagent)) {
+            reagentCapacityBonus += pressure * 3.0D;
+            reagentPowerBonus += pressure;
+        } else {
+            reagentCapacityBonus += pressure * 2.0D;
+            reagentPowerBonus += pressure * 2.0D;
+        }
     }
 }

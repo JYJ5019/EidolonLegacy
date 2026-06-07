@@ -76,7 +76,12 @@ public class AltarRitualCategory implements IRecipeCategory<AltarRitualWrapper> 
         recipeLayout.getItemStacks().set(slot, wrapper.getSacrificeStacks());
         slot++;
         recipeLayout.getItemStacks().init(slot, false, RESULT_X, RESULT_Y);
-        recipeLayout.getItemStacks().set(slot, wrapper.getRitual().getResult());
+        ItemStack output = wrapper.getRitual().hasResult()
+                ? wrapper.getRitual().getResult()
+                : wrapper.getRitual().getDisplayStack();
+        if (!output.isEmpty()) {
+            recipeLayout.getItemStacks().set(slot, output);
+        }
     }
 
     @Override
@@ -86,7 +91,15 @@ public class AltarRitualCategory implements IRecipeCategory<AltarRitualWrapper> 
     @Override
     public List<String> getTooltipStrings(int mouseX, int mouseY) {
         if (isInSlot(mouseX, mouseY, RESULT_X, RESULT_Y)) {
-            return java.util.Collections.singletonList(I18n.format("gui.eidolon.codex.altar_slot.result"));
+            String key = currentWrapper != null && !currentWrapper.getRitual().hasResult()
+                    ? currentWrapper.getRitual().getBehaviorTranslationKey()
+                    : "gui.eidolon.codex.altar_slot.result";
+            java.util.List<String> tooltip = new java.util.ArrayList<>();
+            tooltip.add(I18n.format(key));
+            if (currentWrapper != null) {
+                tooltip.add(I18n.format(currentWrapper.getRitual().getResultDescriptionTranslationKey()));
+            }
+            return tooltip;
         }
         if (isInSlot(mouseX, mouseY, SACRIFICE_X, SACRIFICE_Y)) {
             return java.util.Collections.singletonList(I18n.format("gui.eidolon.codex.altar_slot.sacrifice"));

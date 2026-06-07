@@ -18,35 +18,53 @@
 - 2026-05-31: Fixed the missing Mixin resource launch path by setting `crl.dev.extrapath`; `runClient` should be re-tested manually by the user after refreshing Gradle in IDEA.
 - 2026-05-31: User confirmed `gradlew build` completed successfully.
 - 2026-05-31: Latest client log shows Eidolon loaded, ran `preInit`/`init`/`postInit`, entered an integrated server world, and exited normally.
+- 2026-06-06: `gradlew.bat compileJava processResources` passed for the frozen baseline after 1.12 recipe/altar JSON compatibility fixes.
+- 2026-06-06: `gradlew.bat runClient` reached main-menu startup and exited cleanly. Latest log loaded 24 Worktable recipes, 20 Crucible recipes, 22 Altar rituals, registered the matching HEI categories, registered Eidolon world generation, and showed no recipe/altar parse errors in the targeted scan.
 - Git initialization/commit workflow is intentionally skipped for now per user direction.
+
+## Current Baseline Freeze - 2026-06-06
+
+This baseline records the current Legacy port state before the next implementation pass. It is based on the detailed milestones below and the current source tree.
+
+### Baseline Completed
+
+- [x] Cleanroom/Forge 1.12.2 project shell, metadata, proxies, registration lifecycle, access transformer, HEI compatibility access points, and debug command wiring are in place.
+- [x] Static item/block closure is reached for the current source-visible set: the 1.12 port has matching item model names and blockstate names for the 1.20 reference resources.
+- [x] Base materials, ores, storage blocks, decorative blocks, stairs, walls, slabs, wood sets, logs, herbs, candles, ashes, altars, Worktable, Crucible, Research Table, Codex, static utility items, armor, weapons, trinkets, wands, music disc, and spawn egg items are registered with 1.12 resources.
+- [x] Worktable has recipe data loading, GUI/container behavior, output execution, Codex display, HEI display, and recipe transfer support.
+- [x] Crucible has recipe data loading, HEI/Codex display, required fluid state, item insertion, stirring, step submission, success/failure feedback, and first-pass TESR fluid/input rendering.
+- [x] Research has Research Notes generation, Research Table task preview/submission/progress, Completed Research conversion/use, persisted known-research storage, sync packet support, Codex research pages, and research debug commands.
+- [x] Codex has source-style page backgrounds, index entries, research directory/detail paging, recipe directories for Worktable/Crucible, altar ritual/offering pages, Athame/Soul Shard acquisition pages, and source-style side tabs.
+- [x] Altar has TileEntity offering storage/rendering, offering power/capacity scan, JSON ritual loading, item-result/item-transform/item-charge/entity-summon/absorption/health-cost behavior types, Codex/HEI display, and success feedback.
+- [x] Gameplay behavior exists for current dedicated items: Athame, Sapping Sword, Reaper Scythe, Deathbringer Scythe, Cleaving Axe, Reversal Pick, Alchemist's Tongs, Soulfire Wand, Bonechill Wand, and Summoning Staff.
+- [x] Entity registration exists for wand projectiles and the current Eidolon living entities; client renderers are registered for the current entities/projectiles.
+- [x] World generation is registered for ores, Illwood trees, lab/stray tower structures, and a lightweight catacomb template-pool approximation.
+
+### Baseline Differences From Source
+
+- [x] The port is a 1.12-friendly rewrite rather than a direct class-for-class downgrade. Deferred registers, tags, datapack recipes, Curios, modern particles, shaders, and modern worldgen are mapped to 1.12 registry events, OreDictionary/custom loaders, Baubles-style handling, vanilla particles/TESR, and `IWorldGenerator`.
+- [x] Codex and research are intentionally rebuilt around the current 1.12 systems instead of copying the full source `Category`/`Chapter`/`Page` hierarchy.
+- [x] Rituals are currently lightweight altar recipes with direct execution; full source ritual timing, symbols, particle systems, deity/reputation coupling, and advanced requirements are still deferred.
+- [x] Reagent classes exist, but a complete reagent pipe/tank network and machine integration are not part of this frozen baseline.
+- [x] Several machines remain static or partial: Soul Enchanter, Wooden Brewing Stand, Incubator, and deeper reagent-backed behavior need later passes.
+- [x] Runtime verification for the newest milestones remains outstanding because the latest detailed entries still mark compile/runtime validation as user-handled.
+
+### Verification Target For This Freeze
+
+- [x] Run `gradlew.bat compileJava processResources` from `EidolonLegacy`.
+- [x] Launch a client build and verify startup-level loading for Worktable, Crucible, Altar rituals, HEI integration, and world generation registration.
+- [ ] Manually verify in-game interaction for Worktable, Crucible, Research Table/Codex, Altar rituals, Soulfire/Bonechill Wand, Summoning Staff, Alchemist's Tongs, and new-world generation in newly generated chunks.
+- [x] Record startup/runtime loading regressions below the affected milestone before starting the next implementation pass.
 
 ## Next Milestones
 
-- [x] Register creative tab, simple items, and simple blocks.
-- [x] Add minimal model and lang entries for the test item and test block.
-- [x] Verify the stage 2 registry chain with `gradlew build`.
-- [x] Verify the stage 2 registry chain with `gradlew runClient`, then enter a creative world and check the Eidolon tab.
-- [x] Port first real material items and basic ore/storage blocks.
-- [ ] Verify first real material batch with `gradlew build`.
-- [x] Verify first real material batch textures with `gradlew runClient`.
-- [x] Verify first real material batch Chinese names with `gradlew runClient`.
-- [x] Add first basic crafting recipes, smelting recipes, and block loot tables.
-- [x] Verify first basic recipes and block drops in-game.
-- [x] Add first OreDictionary registrations for base materials.
-- [x] Defer ore world generation by user decision.
-- [x] Port second batch of low-risk material items.
-- [x] Verify second material batch with `gradlew build` and `runClient`.
-- [x] Port first simple decorative block batch.
-- [x] Verify first simple decorative block batch with `gradlew build` and `runClient`.
-- [x] Port first stairs and wall variant batch.
-- [x] Verify first stairs and wall variant batch with `gradlew build` and `runClient`.
-- [x] Port first slab batch.
-- [x] Verify first slab batch with `gradlew build` and `runClient`.
-- [x] Port first wood plank decorative batch.
-- [ ] Verify first wood plank decorative batch with `gradlew build` and `runClient`.
-- [ ] Port tile entities and sync.
-- [ ] Port reagent, ritual, spell, research, and codex systems.
-- [ ] Rebuild high-risk client rendering, worldgen, entity, JEI, and Baubles support.
+- [x] Verify the frozen 2026-06-06 baseline with `compileJava processResources` and startup-level client runtime checks.
+- [ ] Complete hands-on in-game verification for the frozen baseline checklist.
+- [x] Fill the reagent network gap first pass: tank storage, glass tube transfer, cistern behavior, Crucible/Altar integration, renderer feedback, and failure cases.
+- [ ] Complete remaining partial machines: Soul Enchanter, Wooden Brewing Stand, Incubator, and any reagent-backed machine recipes.
+- [ ] Expand entity behavior and runtime acquisition: natural spawns, AI parity, drops, advanced renderer polish, and source-inspired structure loot.
+- [ ] Replace remaining visual placeholders with 1.12-safe particles/TESR/audio assets without trying to directly port modern shader-only behavior.
+- [ ] Add release-facing coverage: English language fallback, README status table, known differences, HEI/CraftTweaker notes, and server/client verification notes.
 
 ## Milestone 2: Registry Smoke Test
 
@@ -1366,3 +1384,27 @@
 - [x] Add hover tooltips for the side tabs and keep the active tab visually extended/brightened.
 - [x] Keep this pass layout-focused: no full 1.20 `Category/Chapter/Page` class rewrite, no chant/rune bar, and no spell casting integration yet.
 - [ ] Compile/runtime verification is handled by the user.
+
+## Milestone 118: World Generation
+
+- [x] Register a 1.12 `IWorldGenerator` during common pre-init.
+- [x] Add lead, deep lead, silver, and deep silver ore generation for new Overworld chunks.
+- [x] Port Illwood tree generation in a 1.12-friendly form and wire it to sapling growth/bonemeal.
+- [x] Add natural Illwood tree placement in forest/swamp-style Overworld biomes.
+- [x] Copy the source lab, stray tower, and catacomb NBT templates into Legacy resources.
+- [x] Add a modern structure-template reader that converts 1.20 palette block ids/properties into 1.12 block states.
+- [x] Add source-inspired random-spread placement for lab and stray tower surface structures.
+- [x] Add a lightweight 1.12 template-pool approximation for catacombs using the copied catacomb room templates.
+- [ ] Runtime verification is handled by the user in newly generated chunks.
+
+## Milestone 119: Reagent Network First Pass
+
+- [x] Make reagent tanks capacity-aware so fills return the accepted amount and transfer cannot silently overfill destinations.
+- [x] Complete Cistern storage as a column aggregate with local per-block rendering, pressure/status feedback, container fill, and bucket extraction.
+- [x] Complete Glass Tube input/output direction persistence, pressure transfer, Alchemist's Tongs output switching, status feedback, and reagent rendering.
+- [x] Connect Glass Tube output into Crucible reagent input; 1000 mB Steam converts into a water-filled Crucible and partial steam progress renders/statuses.
+- [x] Connect Glass Tube output into Altar reagent input; altar scans include stored offerings and reagent-derived capacity/power bonuses.
+- [x] Restore direct altar ritual matching by scanning altar offerings and iterating loaded ritual definitions.
+- [x] Add Altar reagent persistence/status feedback and a subtle reagent render layer.
+- [x] `gradlew.bat compileJava` passed after this implementation pass.
+- [ ] Runtime verification is handled by the user after this implementation pass.

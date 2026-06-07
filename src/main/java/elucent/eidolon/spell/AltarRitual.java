@@ -1,19 +1,28 @@
 package elucent.eidolon.spell;
 
+import elucent.eidolon.Eidolon;
+import elucent.eidolon.mixin.EntityZombieVillagerMixin;
 import elucent.eidolon.item.IRechargeableWand;
 import elucent.eidolon.item.SummoningStaffItem;
+import elucent.eidolon.network.VisualEffectPacket;
 import elucent.eidolon.tile.AltarTileEntity;
 import elucent.eidolon.tile.ItemHolderTileEntity;
+import elucent.eidolon.tile.OffertoryPlateTileEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.monster.EntityPigZombie;
+import net.minecraft.entity.monster.EntityZombieVillager;
+import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
@@ -26,10 +35,8 @@ import net.minecraft.world.WorldServer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class AltarRitual {
@@ -60,27 +67,39 @@ public class AltarRitual {
     }
 
     private static final class AbsorptionResult {
-        private final Map<String, Integer> absorbed = new LinkedHashMap<>();
+        private final List<NBTTagCompound> charges = new ArrayList<>();
 
-        private void add(String entityId) {
-            absorbed.put(entityId, absorbed.containsKey(entityId) ? absorbed.get(entityId) + 1 : 1);
+        private void add(EntityLivingBase entity) {
+            NBTTagCompound tag = new NBTTagCompound();
+            if (entity.writeToNBTOptional(tag)) {
+                tag.removeTag("UUID");
+                tag.removeTag("UUIDMost");
+                tag.removeTag("UUIDLeast");
+                for (int i = 0; i < 5; i++) {
+                    charges.add(tag.copy());
+                }
+            }
         }
 
         private int size() {
-            int size = 0;
-            for (Integer count : absorbed.values()) {
-                size += count;
-            }
-            return size;
+            return charges.size();
         }
     }
 
     public enum BehaviorType {
         ITEM_RESULT,
         ITEM_TRANSFORM,
+        SANGUINE,
         ITEM_CHARGE,
         ENTITY_SUMMON,
-        ABSORPTION
+        ABSORPTION,
+        PURIFY,
+        CRYSTAL,
+        ALLURE,
+        REPELLING,
+        DECEIT,
+        DAYLIGHT,
+        MOONLIGHT
     }
 
     private final ResourceLocation id;
@@ -91,6 +110,7 @@ public class AltarRitual {
     private final BehaviorType behaviorType;
     private final Ingredient focus;
     private final Ingredient sacrifice;
+    private final boolean explicitSacrifice;
     private final int providerOfferingStart;
     private final ResourceLocation entityId;
     private final float healthCost;
@@ -123,6 +143,7 @@ public class AltarRitual {
         this.behaviorType = behaviorType;
         this.focus = focus;
         this.sacrifice = sacrifice == null ? defaultSacrifice(result, focus, requiredOfferings) : sacrifice;
+        this.explicitSacrifice = sacrifice != null;
         this.providerOfferingStart = sacrifice == null && requiredOfferings.length > 0 ? 1 : 0;
         this.entityId = entityId;
         this.healthCost = healthCost;
@@ -135,7 +156,7 @@ public class AltarRitual {
         if (focus != Ingredient.EMPTY) {
             return focus;
         }
-        return Ingredient.fromStacks(result.copy());
+        return result.isEmpty() ? Ingredient.EMPTY : Ingredient.fromStacks(result.copy());
     }
 
     public ResourceLocation getId() {
@@ -175,15 +196,51 @@ public class AltarRitual {
     }
 
     public int getRequiredOfferingCount() {
-        return requiredOfferings.size() + (hasFocus() ? 1 : 0);
+        return requiredOfferings.size() + (hasFocus() ? 1 : 0) + (explicitSacrifice ? 1 : 0);
     }
 
     public ItemStack getResult() {
         return result.copy();
     }
 
+    public boolean hasResult() {
+        return !result.isEmpty();
+    }
+
+    public ItemStack getDisplayStack() {
+        if (!result.isEmpty()) {
+            return result.copy();
+        }
+        if (behaviorType == BehaviorType.PURIFY) {
+            return new ItemStack(Items.SPECKLED_MELON);
+        }
+        ItemStack sacrificeStack = firstStack(sacrifice);
+        if (!sacrificeStack.isEmpty()) {
+            return sacrificeStack;
+        }
+        ItemStack focusStack = firstStack(focus);
+        if (!focusStack.isEmpty()) {
+            return focusStack;
+        }
+        for (Ingredient ingredient : requiredOfferings) {
+            ItemStack stack = firstStack(ingredient);
+            if (!stack.isEmpty()) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
     public BehaviorType getBehaviorType() {
         return behaviorType;
+    }
+
+    public String getBehaviorTranslationKey() {
+        return "gui.eidolon.codex.altar_behavior." + behaviorType.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    public String getResultDescriptionTranslationKey() {
+        return "gui.eidolon.codex.altar_result." + id.getPath();
     }
 
     public ResourceLocation getEntityId() {
@@ -198,15 +255,25 @@ public class AltarRitual {
         return healthCost > 0.0F;
     }
 
+    public boolean isFieldRitual() {
+        return behaviorType == BehaviorType.ALLURE
+                || behaviorType == BehaviorType.REPELLING
+                || behaviorType == BehaviorType.DECEIT
+                || behaviorType == BehaviorType.DAYLIGHT
+                || behaviorType == BehaviorType.MOONLIGHT;
+    }
+
     public SetupResult setupFromProviders(World world, BlockPos origin, int step) {
         List<Ingredient> providerOfferings = getProviderOfferings();
         if (step >= providerOfferings.size()) {
             return SetupResult.SUCCEED;
         }
-        IRitualItemProvider provider = findProvider(world, origin, providerOfferings.get(step));
-        if (provider == null) {
+        TileEntity providerTile = findProviderTile(world, origin, providerOfferings.get(step), Collections.emptySet());
+        if (!(providerTile instanceof IRitualItemProvider)) {
             return SetupResult.FAIL;
         }
+        IRitualItemProvider provider = (IRitualItemProvider) providerTile;
+        sendRitualConsumeEffect(world, providerTile.getPos(), origin);
         provider.take();
         return SetupResult.PASS;
     }
@@ -220,15 +287,17 @@ public class AltarRitual {
     }
 
     public PerformResult processFocusFromProviders(World world, BlockPos origin, EntityPlayer player) {
-        if (!hasRequiredHealth(player)) {
+        if (!hasRequiredHealth(world, origin, player)) {
             return PerformResult.NO_MATCH;
         }
         if (behaviorType == BehaviorType.ITEM_TRANSFORM) {
             return findFocusProvider(world, origin) == null ? PerformResult.NO_MATCH : PerformResult.SUCCESS;
         } else if (behaviorType == BehaviorType.ITEM_CHARGE) {
             return rechargeFocusFromProvider(world, origin);
+        } else if (behaviorType == BehaviorType.SANGUINE) {
+            return consumeFocusFromProvider(world, origin);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
-            consumeFocusFromProvider(world, origin);
+            return consumeFocusFromProvider(world, origin);
         } else if (behaviorType == BehaviorType.ABSORPTION) {
             return absorbFromFocusProvider(world, origin);
         }
@@ -236,15 +305,24 @@ public class AltarRitual {
     }
 
     public PerformResult finishFromProviders(World world, BlockPos origin, EntityPlayer player) {
-        if (!hasRequiredHealth(player)) {
+        if (!hasRequiredHealth(world, origin, player)) {
             return PerformResult.NO_MATCH;
         }
-        consumeHealth(player);
+        consumeHealth(world, origin, player);
         if (behaviorType == BehaviorType.ITEM_TRANSFORM) {
             return transformFocusFromProvider(world, origin);
+        } else if (behaviorType == BehaviorType.SANGUINE) {
+            spawnSanguineResult(world, origin);
+            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
             summonEntity(world, origin);
             playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
+        } else if (behaviorType == BehaviorType.PURIFY) {
+            return purifyNearby(world, origin);
+        } else if (behaviorType == BehaviorType.CRYSTAL) {
+            performCrystal(world, origin);
+        } else if (isFieldRitual()) {
+            startFieldRitual(world, origin);
         } else if (behaviorType == BehaviorType.ITEM_RESULT) {
             spawnResult(world, origin);
             playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
@@ -253,20 +331,36 @@ public class AltarRitual {
     }
 
     public PerformResult performFromProviders(World world, BlockPos origin, EntityPlayer player) {
-        if (!hasRequiredHealth(player)) {
+        if (!hasRequiredHealth(world, origin, player)) {
             return PerformResult.NO_MATCH;
         }
-        consumeHealth(player);
+        consumeHealth(world, origin, player);
         if (behaviorType == BehaviorType.ITEM_TRANSFORM) {
             return transformFocusFromProvider(world, origin);
+        } else if (behaviorType == BehaviorType.SANGUINE) {
+            PerformResult result = consumeFocusFromProvider(world, origin);
+            if (result != PerformResult.SUCCESS) {
+                return result;
+            }
+            spawnSanguineResult(world, origin);
+            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
         } else if (behaviorType == BehaviorType.ITEM_CHARGE) {
             return rechargeFocusFromProvider(world, origin);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
-            consumeFocusFromProvider(world, origin);
+            PerformResult result = consumeFocusFromProvider(world, origin);
+            if (result != PerformResult.SUCCESS) {
+                return result;
+            }
             summonEntity(world, origin);
             playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
         } else if (behaviorType == BehaviorType.ABSORPTION) {
             return absorbFromFocusProvider(world, origin);
+        } else if (behaviorType == BehaviorType.PURIFY) {
+            return purifyNearby(world, origin);
+        } else if (behaviorType == BehaviorType.CRYSTAL) {
+            performCrystal(world, origin);
+        } else if (isFieldRitual()) {
+            startFieldRitual(world, origin);
         } else {
             spawnResult(world, origin);
             playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
@@ -275,11 +369,15 @@ public class AltarRitual {
     }
 
     public boolean matches(AltarInfo info, EntityPlayer player) {
+        return matches(info, null, null, player);
+    }
+
+    public boolean matches(AltarInfo info, World world, BlockPos origin, EntityPlayer player) {
         MatchResult match = findMatch(info);
         return info.getOfferingCount() >= getRequiredOfferingCount()
                 && match.size() == getRequiredOfferingCount()
                 && hasAltarPower(info)
-                && hasRequiredHealth(player);
+                && hasRequiredHealth(world, origin, player);
     }
 
     public boolean hasAltarPower(AltarInfo info) {
@@ -316,18 +414,26 @@ public class AltarRitual {
         if (match.size() != getRequiredOfferingCount()) {
             return PerformResult.NO_MATCH;
         }
-        if (!hasRequiredHealth(player)) {
+        if (!hasRequiredHealth(world, origin, player)) {
             return PerformResult.NO_MATCH;
         }
-        consumeHealth(player);
+        consumeHealth(world, origin, player);
         if (behaviorType == BehaviorType.ITEM_TRANSFORM) {
             performItemTransform(world, origin, match);
+        } else if (behaviorType == BehaviorType.SANGUINE) {
+            performSanguine(world, origin, match);
         } else if (behaviorType == BehaviorType.ITEM_CHARGE) {
             performItemCharge(world, origin, match);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
             performEntitySummon(world, origin, match);
         } else if (behaviorType == BehaviorType.ABSORPTION) {
             return performAbsorption(world, origin, match);
+        } else if (behaviorType == BehaviorType.PURIFY) {
+            return performPurify(world, origin, match);
+        } else if (behaviorType == BehaviorType.CRYSTAL) {
+            performCrystal(world, origin, match);
+        } else if (isFieldRitual()) {
+            performFieldRitual(world, origin, match);
         } else if (behaviorType == BehaviorType.ITEM_RESULT) {
             performItemResult(world, origin, match);
         }
@@ -335,28 +441,47 @@ public class AltarRitual {
     }
 
     private void performItemResult(World world, BlockPos origin, MatchResult match) {
-        consumeOfferings(world, match.offerings);
+        consumeOfferings(world, match.offerings, origin);
         spawnResult(world, origin);
         playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
     }
 
     private void performItemTransform(World world, BlockPos origin, MatchResult match) {
         transformFocus(world, match.focus);
-        consumeOfferings(world, match.offerings);
+        consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
         playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.VILLAGER_HAPPY, 12);
+    }
+
+    private void performSanguine(World world, BlockPos origin, MatchResult match) {
+        consumeOffering(world, match.focus, origin);
+        consumeOfferings(world, match.offerings, origin);
+        spawnSanguineResult(world, origin);
+        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
     }
 
     private void performItemCharge(World world, BlockPos origin, MatchResult match) {
         rechargeFocus(world, match.focus);
-        consumeOfferings(world, match.offerings);
+        consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
         playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.SPELL, 18);
     }
 
     private void performEntitySummon(World world, BlockPos origin, MatchResult match) {
-        consumeOffering(world, match.focus);
-        consumeOfferings(world, match.offerings);
+        consumeOffering(world, match.focus, origin);
+        consumeOfferings(world, match.offerings, origin);
         summonEntity(world, origin);
         playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
+    }
+
+    private void performCrystal(World world, BlockPos origin, MatchResult match) {
+        consumeOffering(world, match.focus, origin);
+        consumeOfferings(world, match.offerings, origin);
+        performCrystal(world, origin);
+    }
+
+    private void performFieldRitual(World world, BlockPos origin, MatchResult match) {
+        consumeOffering(world, match.focus, origin);
+        consumeOfferings(world, match.offerings, origin);
+        startFieldRitual(world, origin);
     }
 
     private PerformResult performAbsorption(World world, BlockPos origin, MatchResult match) {
@@ -364,15 +489,35 @@ public class AltarRitual {
         if (absorbed.size() <= 0) {
             return PerformResult.ABSORPTION_TARGET_TOO_HEALTHY;
         }
-        chargeSummoningStaff(world, match.focus, absorbed.absorbed);
-        consumeOfferings(world, match.offerings);
+        chargeSummoningStaff(world, match.focus, absorbed.charges);
+        consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
+        sendRitualVisual(world, match.focus == null ? origin : match.focus, VisualEffectPacket.CRYSTALLIZE, 0.7F, 0.25F, 1.0F);
         playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.SPELL_MOB, 24);
         return PerformResult.SUCCESS;
     }
 
-    private void consumeOfferings(World world, List<BlockPos> matchedOfferings) {
+    private PerformResult performPurify(World world, BlockPos origin, MatchResult match) {
+        PerformResult result = purifyNearby(world, origin);
+        if (result != PerformResult.SUCCESS) {
+            return result;
+        }
+        consumeOfferings(world, match.offerings, origin);
+        return PerformResult.SUCCESS;
+    }
+
+    private void performCrystal(World world, BlockPos origin) {
+        ActiveRituals.performCrystal(world, origin);
+        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_MOB, 24);
+    }
+
+    private void startFieldRitual(World world, BlockPos origin) {
+        ActiveRituals.activate(world, origin, this);
+        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+    }
+
+    private void consumeOfferings(World world, List<BlockPos> matchedOfferings, BlockPos destination) {
         for (BlockPos altarPos : matchedOfferings) {
-            consumeOffering(world, altarPos);
+            consumeOffering(world, altarPos, destination);
         }
     }
 
@@ -398,30 +543,42 @@ public class AltarRitual {
         }
     }
 
-    private void chargeSummoningStaff(World world, BlockPos focusPos, Map<String, Integer> absorbed) {
+    private void chargeSummoningStaff(World world, BlockPos focusPos, List<NBTTagCompound> charges) {
         if (focusPos != null) {
             TileEntity tile = world.getTileEntity(focusPos);
             if (tile instanceof AltarTileEntity) {
                 AltarTileEntity altar = (AltarTileEntity) tile;
                 ItemStack stack = altar.getOffering();
                 if (!stack.isEmpty() && stack.getItem() instanceof SummoningStaffItem) {
-                    altar.setOffering(((SummoningStaffItem) stack.getItem()).addAbsorbedUndead(stack, absorbed));
+                    altar.setOffering(((SummoningStaffItem) stack.getItem()).addAbsorbedUndeadCharges(stack, charges));
                 }
             }
         }
     }
 
-    private void consumeOffering(World world, BlockPos altarPos) {
+    private void consumeOffering(World world, BlockPos altarPos, BlockPos destination) {
         if (altarPos != null) {
             TileEntity tile = world.getTileEntity(altarPos);
             if (tile instanceof AltarTileEntity) {
+                sendRitualConsumeEffect(world, altarPos, destination == null ? altarPos : destination);
                 ((AltarTileEntity) tile).removeOffering();
             }
         }
     }
 
     private void spawnResult(World world, BlockPos origin) {
+        if (result.isEmpty()) {
+            return;
+        }
         EntityItem item = new EntityItem(world, origin.getX() + 0.5D, origin.getY() + 1.1D, origin.getZ() + 0.5D, result.copy());
+        world.spawnEntity(item);
+    }
+
+    private void spawnSanguineResult(World world, BlockPos origin) {
+        if (result.isEmpty()) {
+            return;
+        }
+        EntityItem item = new EntityItem(world, origin.getX() + 0.5D, origin.getY() + 2.5D, origin.getZ() + 0.5D, result.copy());
         world.spawnEntity(item);
     }
 
@@ -438,12 +595,15 @@ public class AltarRitual {
             ((EntityLiving) entity).onInitialSpawn(world.getDifficultyForLocation(origin.up()), null);
         }
         world.spawnEntity(entity);
+        VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
+                VisualEffectPacket.at(VisualEffectPacket.SUMMON_BURST, entity.posX, entity.posY + entity.height * 0.5D,
+                        entity.posZ, 0.55F, 0.25F, 0.85F));
     }
 
     private AbsorptionResult absorbNearbyUndead(World world, BlockPos origin) {
         AxisAlignedBB bounds = new AxisAlignedBB(origin).grow(8.0D, 4.0D, 8.0D);
         List<EntityLivingBase> entities = world.getEntitiesWithinAABB(EntityLivingBase.class, bounds,
-                entity -> entity.getCreatureAttribute() == EnumCreatureAttribute.UNDEAD
+                entity -> Eidolon.getTrueCreatureAttribute(entity) == EnumCreatureAttribute.UNDEAD
                         && !entity.getEntityData().getBoolean(SummoningStaffItem.SUMMONED_TAG)
                         && entity.getHealth() <= entity.getMaxHealth() / 5.0F);
         AbsorptionResult absorbed = new AbsorptionResult();
@@ -451,28 +611,127 @@ public class AltarRitual {
             if (entity instanceof EntityPlayer) {
                 continue;
             }
-            ResourceLocation id = EntityList.getKey(entity);
-            if (id != null) {
-                absorbed.add(id.toString());
-            }
+            entity.setHealth(entity.getMaxHealth());
+            absorbed.add(entity);
+            VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
+                    VisualEffectPacket.line(VisualEffectPacket.LIFESTEAL, entity.posX, entity.posY + entity.height * 0.5D,
+                            entity.posZ, origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D,
+                            0.65F, 0.15F, 0.95F));
             entity.setDead();
         }
         return absorbed;
     }
 
-    private boolean hasRequiredHealth(EntityPlayer player) {
-        return !hasHealthCost() || player != null && player.getHealth() >= healthCost;
+    private PerformResult purifyNearby(World world, BlockPos origin) {
+        AxisAlignedBB bounds = new AxisAlignedBB(origin).grow(8.0D, 4.0D, 8.0D);
+        List<EntityLivingBase> entities = world.getEntitiesWithinAABB(EntityLivingBase.class, bounds,
+                entity -> entity instanceof EntityZombieVillager || entity instanceof EntityPigZombie);
+        if (entities.isEmpty()) {
+            return PerformResult.NO_MATCH;
+        }
+        if (!world.isRemote) {
+            world.playSound(null, origin.getX() + 0.5D, origin.getY() + 0.8D, origin.getZ() + 0.5D,
+                    SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.BLOCKS, 0.8F, 1.0F);
+            for (EntityLivingBase entity : entities) {
+                if (entity instanceof EntityZombieVillager) {
+                    ((EntityZombieVillagerMixin) entity).eidolon$finishConversion();
+                } else if (entity instanceof EntityPigZombie) {
+                    EntityPig pig = new EntityPig(world);
+                    pig.copyLocationAndAnglesFrom(entity);
+                    entity.setDead();
+                    world.spawnEntity(pig);
+                }
+                if (world instanceof WorldServer) {
+                    ((WorldServer) world).spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
+                            entity.posX, entity.posY + entity.height + 0.2D, entity.posZ,
+                            12, 0.32D, 0.18D, 0.32D, 0.02D);
+                }
+            }
+        }
+        playSuccessEffects(world, origin, EnumParticleTypes.VILLAGER_HAPPY, 24);
+        return PerformResult.SUCCESS;
     }
 
-    private void consumeHealth(EntityPlayer player) {
-        if (hasHealthCost() && player != null) {
-            player.setHealth(Math.max(0.0F, player.getHealth() - healthCost));
+    private boolean hasRequiredHealth(World world, BlockPos origin, EntityPlayer player) {
+        return !hasHealthCost() || getAvailableRitualHealth(world, origin, player) >= healthCost;
+    }
+
+    private float getAvailableRitualHealth(World world, BlockPos origin, EntityPlayer player) {
+        float health = 0.0F;
+        for (EntityLivingBase target : getRitualHealthTargets(world, origin, player)) {
+            health += Math.max(0.0F, target.getHealth());
+            if (health >= healthCost) {
+                return health;
+            }
         }
+        return health;
+    }
+
+    private void consumeHealth(World world, BlockPos origin, EntityPlayer player) {
+        if (!hasHealthCost()) {
+            return;
+        }
+        float consumed = 0.0F;
+        for (EntityLivingBase target : getRitualHealthTargets(world, origin, player)) {
+            float targetHealth = Math.max(0.0F, target.getHealth());
+            if (targetHealth <= 0.0F) {
+                continue;
+            }
+            float damage = Math.min(healthCost - consumed, targetHealth);
+            if (damage <= 0.0F) {
+                return;
+            }
+            target.attackEntityFrom(Eidolon.RITUAL_DAMAGE, damage);
+            sendRitualHealthEffect(world, target, origin);
+            consumed += targetHealth;
+            if (consumed >= healthCost) {
+                return;
+            }
+        }
+    }
+
+    private List<EntityLivingBase> getRitualHealthTargets(World world, BlockPos origin, EntityPlayer player) {
+        List<EntityLivingBase> targets = new ArrayList<>();
+        Set<Integer> used = new HashSet<>();
+        if (world != null && origin != null) {
+            AxisAlignedBB bounds = new AxisAlignedBB(
+                    origin.getX() - 8.0D, origin.getY() - 6.0D, origin.getZ() - 8.0D,
+                    origin.getX() + 9.0D, origin.getY() + 11.0D, origin.getZ() + 9.0D);
+            List<EntityLiving> mobs = world.getEntitiesWithinAABB(EntityLiving.class, bounds,
+                    entity -> entity.getCreatureAttribute() != EnumCreatureAttribute.UNDEAD);
+            for (EntityLiving mob : mobs) {
+                if (used.add(mob.getEntityId())) {
+                    targets.add(mob);
+                }
+            }
+            List<EntityPlayer> players = world.getEntitiesWithinAABB(EntityPlayer.class, bounds);
+            for (EntityPlayer nearbyPlayer : players) {
+                if (used.add(nearbyPlayer.getEntityId())) {
+                    targets.add(nearbyPlayer);
+                }
+            }
+        }
+        if (player != null && used.add(player.getEntityId())) {
+            targets.add(player);
+        }
+        return targets;
+    }
+
+    private void sendRitualHealthEffect(World world, EntityLivingBase target, BlockPos origin) {
+        if (world == null || origin == null || target == null) {
+            return;
+        }
+        VisualEffectPacket.sendAround(world, target.posX, target.posY + target.height * 0.5D, target.posZ,
+                VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME,
+                        target.posX, target.posY + target.height * 0.5D, target.posZ,
+                        origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D,
+                        0.85F, 0.05F, 0.12F));
     }
 
     private void playSuccessEffects(World world, BlockPos pos, EnumParticleTypes particle, int count) {
         world.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D,
                 SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 0.45F, 1.35F);
+        sendRitualVisual(world, pos, VisualEffectPacket.RITUAL_COMPLETE, 0.65F, 0.28F, 1.0F);
         if (world instanceof WorldServer) {
             ((WorldServer) world).spawnParticle(particle,
                     pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
@@ -492,6 +751,9 @@ public class AltarRitual {
                 continue;
             }
             if (tile instanceof IRitualItemFocus) {
+                continue;
+            }
+            if (tile instanceof OffertoryPlateTileEntity) {
                 continue;
             }
             if (tile instanceof IRitualItemProvider) {
@@ -538,11 +800,14 @@ public class AltarRitual {
         return tiles;
     }
 
-    private void consumeFocusFromProvider(World world, BlockPos origin) {
+    private PerformResult consumeFocusFromProvider(World world, BlockPos origin) {
         IRitualItemFocus focusProvider = findFocusProvider(world, origin);
         if (focusProvider != null) {
+            sendProviderConsumeEffect(world, focusProvider, origin);
             focusProvider.take();
+            return PerformResult.SUCCESS;
         }
+        return PerformResult.NO_MATCH;
     }
 
     private PerformResult transformFocusFromProvider(World world, BlockPos origin) {
@@ -551,6 +816,7 @@ public class AltarRitual {
             return PerformResult.NO_MATCH;
         }
         focusProvider.replace(result.copy());
+        sendProviderConsumeEffect(world, focusProvider, origin);
         playFocusProviderEffect(focusProvider);
         playSuccessEffects(world, origin, EnumParticleTypes.VILLAGER_HAPPY, 12);
         return PerformResult.SUCCESS;
@@ -564,6 +830,7 @@ public class AltarRitual {
         ItemStack stack = focusProvider.provide();
         if (!stack.isEmpty() && stack.getItem() instanceof IRechargeableWand) {
             focusProvider.replace(((IRechargeableWand) stack.getItem()).recharge(stack));
+            sendProviderConsumeEffect(world, focusProvider, origin);
             playFocusProviderEffect(focusProvider);
             playSuccessEffects(world, origin, EnumParticleTypes.SPELL, 18);
             return PerformResult.SUCCESS;
@@ -582,8 +849,10 @@ public class AltarRitual {
         }
         ItemStack stack = focusProvider.provide();
         if (!stack.isEmpty() && stack.getItem() instanceof SummoningStaffItem) {
-            focusProvider.replace(((SummoningStaffItem) stack.getItem()).addAbsorbedUndead(stack, absorbed.absorbed));
+            focusProvider.replace(((SummoningStaffItem) stack.getItem()).addAbsorbedUndeadCharges(stack, absorbed.charges));
+            sendProviderConsumeEffect(world, focusProvider, origin);
             playFocusProviderEffect(focusProvider);
+            sendRitualVisual(world, origin, VisualEffectPacket.CRYSTALLIZE, 0.7F, 0.25F, 1.0F);
             playSuccessEffects(world, origin, EnumParticleTypes.SPELL_MOB, 24);
             return PerformResult.SUCCESS;
         }
@@ -596,6 +865,28 @@ public class AltarRitual {
         }
     }
 
+    private void sendProviderConsumeEffect(World world, IRitualItemProvider provider, BlockPos destination) {
+        if (provider instanceof TileEntity) {
+            sendRitualConsumeEffect(world, ((TileEntity) provider).getPos(), destination);
+        }
+    }
+
+    private void sendRitualConsumeEffect(World world, BlockPos source, BlockPos destination) {
+        if (source == null || destination == null) {
+            return;
+        }
+        VisualEffectPacket.sendAround(world, source,
+                VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME, source, destination, 0.62F, 0.22F, 0.9F));
+    }
+
+    private void sendRitualVisual(World world, BlockPos pos, int effect, float r, float g, float b) {
+        if (pos == null) {
+            return;
+        }
+        VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
+                VisualEffectPacket.at(effect, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D, r, g, b));
+    }
+
     private MatchResult findMatch(AltarInfo info) {
         List<BlockPos> matchedOfferings = new ArrayList<>();
         Set<BlockPos> used = new HashSet<>();
@@ -606,6 +897,14 @@ public class AltarRitual {
                 return new MatchResult(null, Collections.emptyList());
             }
             used.add(focusMatch);
+        }
+        if (explicitSacrifice && sacrifice != Ingredient.EMPTY) {
+            BlockPos match = findOffering(info, sacrifice, used, false);
+            if (match == null) {
+                return new MatchResult(null, Collections.emptyList());
+            }
+            matchedOfferings.add(match);
+            used.add(match);
         }
         for (Ingredient ingredient : requiredOfferings) {
             BlockPos match = findOffering(info, ingredient, used, false);
@@ -644,5 +943,13 @@ public class AltarRitual {
             }
         }
         return false;
+    }
+
+    private ItemStack firstStack(Ingredient ingredient) {
+        if (ingredient == Ingredient.EMPTY) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack[] stacks = ingredient.getMatchingStacks();
+        return stacks.length == 0 ? ItemStack.EMPTY : stacks[0].copy();
     }
 }

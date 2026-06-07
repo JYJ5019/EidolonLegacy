@@ -1,5 +1,6 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
   "pattern": [
     "x x",
     "x x",
@@ -7,8 +8,7 @@
   ],
   "key": {
     "x": {
-      "type": "forge:ore_dict",
-      "ore": "ingotPewter"
+      "item": "eidolon:pewter_ingot"
     }
   },
   "result": {

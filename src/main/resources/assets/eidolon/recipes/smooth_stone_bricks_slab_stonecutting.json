@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "eidolon",
+  "ingredients": [
+    {
+      "item": "eidolon:smooth_stone_bricks"
+    }
+  ],
+  "result": {
+    "item": "eidolon:smooth_stone_bricks_slab",
+    "count": 2
+  }
+}

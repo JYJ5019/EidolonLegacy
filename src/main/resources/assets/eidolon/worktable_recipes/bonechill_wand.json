@@ -20,7 +20,8 @@
       "item": "eidolon:wraith_heart"
     },
     "b": {
-      "item": "minecraft:bone_meal"
+      "item": "minecraft:dye",
+      "data": 15
     },
     "l": {
       "item": "eidolon:lesser_soul_gem"

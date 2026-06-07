@@ -3,20 +3,29 @@ package elucent.eidolon.registries;
 import elucent.eidolon.Reference;
 import elucent.eidolon.Eidolon;
 import elucent.eidolon.gui.ModGuiHandler;
+import elucent.eidolon.network.VisualEffectPacket;
 import elucent.eidolon.recipes.CrucibleRecipes;
 import elucent.eidolon.spell.AltarInfo;
-import elucent.eidolon.spell.AltarRitual;
-import elucent.eidolon.spell.AltarRituals;
+import elucent.eidolon.reagent.IReagentTankProvider;
+import elucent.eidolon.reagent.ReagentRegistry;
+import elucent.eidolon.reagent.ReagentStack;
 import elucent.eidolon.tile.AltarTileEntity;
 import elucent.eidolon.tile.BrazierTileEntity;
+import elucent.eidolon.tile.CisternTileEntity;
 import elucent.eidolon.tile.CrucibleTileEntity;
+import elucent.eidolon.tile.EffigyTileEntity;
 import elucent.eidolon.tile.GlassTubeTileEntity;
+import elucent.eidolon.tile.GobletTileEntity;
+import elucent.eidolon.tile.IncubatorTileEntity;
 import elucent.eidolon.tile.ItemHolderTileEntity;
 import elucent.eidolon.tile.NecroticFocusTileEntity;
 import elucent.eidolon.tile.OffertoryPlateTileEntity;
 import elucent.eidolon.tile.ResearchTableTileEntity;
+import elucent.eidolon.tile.SoulEnchanterTileEntity;
 import elucent.eidolon.tile.StoneHandTileEntity;
+import elucent.eidolon.tile.WoodenBrewingStandTileEntity;
 import elucent.eidolon.tile.WorktableTileEntity;
+import elucent.eidolon.world.IllwoodTreeGenerator;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.BlockFence;
@@ -37,6 +46,7 @@ import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -51,6 +61,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -58,7 +69,10 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.stats.StatList;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
@@ -66,6 +80,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.List;
 import java.util.Random;
 
 @Mod.EventBusSubscriber(modid = Reference.MOD_ID)
@@ -129,9 +144,9 @@ public final class ModBlocks {
     public static final Block BONE_PILE_SLAB = slab("bone_pile_slab", false, BONE_PILE);
     public static final Block DOUBLE_BONE_PILE_SLAB = slab("double_bone_pile_slab", true, BONE_PILE);
     public static final Block SMOOTH_STONE_ARCH = arch("smooth_stone_arch");
-    public static final Block STRAW_EFFIGY = horizontalFacingBlock("straw_effigy", Material.PLANTS);
-    public static final Block UNHOLY_EFFIGY = horizontalFacingBlock("unholy_effigy", Material.WOOD);
-    public static final Block GOBLET = smallDecorBlock("goblet", Material.IRON);
+    public static final Block STRAW_EFFIGY = effigy("straw_effigy", Material.PLANTS);
+    public static final Block UNHOLY_EFFIGY = effigy("unholy_effigy", Material.WOOD);
+    public static final Block GOBLET = goblet("goblet");
     public static final Block STONE_HAND = ritualHolder("stone_hand", Material.ROCK, false);
     public static final Block CANDLE = smallDecorBlock("candle", Material.CIRCUITS);
     public static final Block CANDLESTICK = attachableDecorBlock("candlestick", Material.CIRCUITS);
@@ -160,7 +175,7 @@ public final class ModBlocks {
     public static final Block OFFERTORY_PLATE_BLOCK = offertoryPlateBlock("offertory_plate_block", ModItems.OFFERTORY_PLATE);
     public static final Block PEWTER_OFFERTORY_PLATE_BLOCK = offertoryPlateBlock("pewter_offertory_plate_block", ModItems.PEWTER_OFFERTORY_PLATE);
     public static final Block GOLD_OFFERTORY_PLATE_BLOCK = offertoryPlateBlock("gold_offertory_plate_block", ModItems.GOLD_OFFERTORY_PLATE);
-    public static final Block SOUL_ENCHANTER = horizontalFacingBlock("soul_enchanter", Material.ROCK);
+    public static final Block SOUL_ENCHANTER = soulEnchanter("soul_enchanter");
     public static final Block RESEARCH_TABLE = researchTable("research_table");
 
     public static final ItemBlock TEST_STONE_ITEM = itemBlock(TEST_STONE);
@@ -566,6 +581,26 @@ public final class ModBlocks {
         return block;
     }
 
+    private static Block effigy(String name, Material material) {
+        Block block = new EffigyBlock(material);
+        block.setRegistryName(Reference.MOD_ID, name);
+        block.setTranslationKey(Reference.MOD_ID + "." + name);
+        block.setCreativeTab(ModCreativeTabs.EIDOLON);
+        block.setHardness(1.0F);
+        block.setResistance(5.0F);
+        return block;
+    }
+
+    private static Block goblet(String name) {
+        Block block = new GobletBlock();
+        block.setRegistryName(Reference.MOD_ID, name);
+        block.setTranslationKey(Reference.MOD_ID + "." + name);
+        block.setCreativeTab(ModCreativeTabs.EIDOLON);
+        block.setHardness(1.0F);
+        block.setResistance(5.0F);
+        return block;
+    }
+
     private static Block ritualHolder(String name, Material material, boolean focus) {
         Block block = new RitualHolderBlock(material, focus);
         block.setRegistryName(Reference.MOD_ID, name);
@@ -617,6 +652,16 @@ public final class ModBlocks {
 
     private static Block researchTable(String name) {
         Block block = new ResearchTableBlock();
+        block.setRegistryName(Reference.MOD_ID, name);
+        block.setTranslationKey(Reference.MOD_ID + "." + name);
+        block.setCreativeTab(ModCreativeTabs.EIDOLON);
+        block.setHardness(1.0F);
+        block.setResistance(5.0F);
+        return block;
+    }
+
+    private static Block soulEnchanter(String name) {
+        Block block = new SoulEnchanterBlock();
         block.setRegistryName(Reference.MOD_ID, name);
         block.setTranslationKey(Reference.MOD_ID + "." + name);
         block.setCreativeTab(ModCreativeTabs.EIDOLON);
@@ -768,6 +813,28 @@ public final class ModBlocks {
         @Override
         public Item getItemDropped(IBlockState state, Random rand, int fortune) {
             return drop;
+        }
+
+        @Override
+        protected ItemStack getSilkTouchDrop(IBlockState state) {
+            return new ItemStack(Item.getItemFromBlock(this));
+        }
+
+        @Override
+        public boolean canSilkHarvest(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
+            return true;
+        }
+
+        @Override
+        public int quantityDroppedWithBonus(int fortune, Random random) {
+            if (fortune <= 0) {
+                return quantityDropped(random);
+            }
+            int multiplier = random.nextInt(fortune + 2) - 1;
+            if (multiplier < 0) {
+                multiplier = 0;
+            }
+            return quantityDropped(random) * (multiplier + 1);
         }
     }
 
@@ -1036,21 +1103,12 @@ public final class ModBlocks {
                     return true;
                 }
                 AltarInfo info = AltarInfo.scan(worldIn, pos);
-                AltarRitual ritual = AltarRituals.find(info, playerIn);
-                if (ritual != null) {
-                    AltarRitual.PerformResult result = ritual.perform(worldIn, pos, info, playerIn);
-                    if (result == AltarRitual.PerformResult.SUCCESS) {
-                        playerIn.sendStatusMessage(new TextComponentString("祭坛仪式完成：" + ritual.getId().getPath()), true);
-                    } else if (result == AltarRitual.PerformResult.ABSORPTION_TARGET_TOO_HEALTHY) {
-                        playerIn.sendStatusMessage(new TextComponentString("目标血量较高，无法吸收"), true);
-                    }
-                    return true;
-                }
                 playerIn.sendStatusMessage(new TextComponentString(
                         "祭坛：" + info.getAltarCount()
-                                + "，供品：" + info.getOfferingCount()
                                 + "，容量：" + formatAltarValue(info.getCapacity())
-                                + "，力量：" + formatAltarValue(info.getPower())), true);
+                                + "，力量：" + formatAltarValue(info.getPower())
+                                + "，试剂：" + info.getReagentAmount() + "/" + info.getReagentCapacity()
+                                + "；材料用石手/暗蚀焦点，祭品盘只计数值"), true);
                 return true;
             }
             return false;
@@ -1083,7 +1141,7 @@ public final class ModBlocks {
         }
     }
 
-    private static final class WoodenBrewingStandBlock extends Block {
+    private static final class WoodenBrewingStandBlock extends Block implements ITileEntityProvider {
         private static final PropertyBool HAS_BOTTLE_0 = PropertyBool.create("has_bottle_0");
         private static final PropertyBool HAS_BOTTLE_1 = PropertyBool.create("has_bottle_1");
         private static final PropertyBool HAS_BOTTLE_2 = PropertyBool.create("has_bottle_2");
@@ -1094,6 +1152,62 @@ public final class ModBlocks {
                     .withProperty(HAS_BOTTLE_0, false)
                     .withProperty(HAS_BOTTLE_1, false)
                     .withProperty(HAS_BOTTLE_2, false));
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return new WoodenBrewingStandTileEntity();
+        }
+
+        @Override
+        public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state,
+                                    EntityLivingBase placer, ItemStack stack) {
+            if (stack.hasDisplayName()) {
+                TileEntity tile = worldIn.getTileEntity(pos);
+                if (tile instanceof WoodenBrewingStandTileEntity) {
+                    ((WoodenBrewingStandTileEntity) tile).setCustomName(stack.getDisplayName());
+                }
+            }
+        }
+
+        @Override
+        public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (tile instanceof WoodenBrewingStandTileEntity) {
+                WoodenBrewingStandTileEntity stand = (WoodenBrewingStandTileEntity) tile;
+                return state
+                        .withProperty(HAS_BOTTLE_0, stand.hasBottle(0))
+                        .withProperty(HAS_BOTTLE_1, stand.hasBottle(1))
+                        .withProperty(HAS_BOTTLE_2, stand.hasBottle(2));
+            }
+            return state;
+        }
+
+        @Override
+        public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn,
+                                        EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+            if (hand != EnumHand.MAIN_HAND) {
+                return false;
+            }
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (!(tile instanceof WoodenBrewingStandTileEntity)) {
+                return false;
+            }
+            if (worldIn.isRemote) {
+                return true;
+            }
+            playerIn.openGui(Eidolon.instance, ModGuiHandler.WOODEN_BREWING_STAND, worldIn, pos.getX(), pos.getY(), pos.getZ());
+            playerIn.addStat(StatList.BREWINGSTAND_INTERACTION);
+            return true;
+        }
+
+        @Override
+        public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (tile instanceof WoodenBrewingStandTileEntity) {
+                ((WoodenBrewingStandTileEntity) tile).dropContents();
+            }
+            super.breakBlock(worldIn, pos, state);
         }
 
         @Override
@@ -1127,7 +1241,7 @@ public final class ModBlocks {
         }
     }
 
-    private static final class IncubatorBlock extends Block {
+    private static final class IncubatorBlock extends Block implements ITileEntityProvider {
         private static final PropertyEnum<IncubatorHalf> HALF =
                 PropertyEnum.create("half", IncubatorHalf.class);
         private static final AxisAlignedBB INCUBATOR_AABB =
@@ -1136,6 +1250,11 @@ public final class ModBlocks {
         private IncubatorBlock() {
             super(Material.IRON);
             setDefaultState(blockState.getBaseState().withProperty(HALF, IncubatorHalf.BOTTOM));
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return (meta & 1) == 0 ? new IncubatorTileEntity() : null;
         }
 
         @Override
@@ -1151,12 +1270,36 @@ public final class ModBlocks {
 
         @Override
         public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+            if (state.getValue(HALF) == IncubatorHalf.BOTTOM) {
+                TileEntity tile = worldIn.getTileEntity(pos);
+                if (tile instanceof IncubatorTileEntity) {
+                    ((IncubatorTileEntity) tile).dropContents();
+                }
+            }
             BlockPos otherPos = state.getValue(HALF) == IncubatorHalf.TOP ? pos.down() : pos.up();
             IBlockState otherState = worldIn.getBlockState(otherPos);
             if (otherState.getBlock() == this) {
                 worldIn.setBlockToAir(otherPos);
             }
             super.breakBlock(worldIn, pos, state);
+        }
+
+        @Override
+        public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn,
+                                        EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+            if (hand != EnumHand.MAIN_HAND) {
+                return false;
+            }
+            BlockPos tilePos = state.getValue(HALF) == IncubatorHalf.TOP ? pos.down() : pos;
+            TileEntity tile = worldIn.getTileEntity(tilePos);
+            if (!(tile instanceof IncubatorTileEntity)) {
+                return false;
+            }
+            if (worldIn.isRemote) {
+                return true;
+            }
+            playerIn.openGui(Eidolon.instance, ModGuiHandler.INCUBATOR, worldIn, tilePos.getX(), tilePos.getY(), tilePos.getZ());
+            return true;
         }
 
         @Override
@@ -1169,7 +1312,7 @@ public final class ModBlocks {
 
         @Override
         public int quantityDropped(IBlockState state, int fortune, Random random) {
-            return state.getValue(HALF) == IncubatorHalf.BOTTOM ? 1 : 0;
+            return 1;
         }
 
         @Override
@@ -1208,7 +1351,7 @@ public final class ModBlocks {
         }
     }
 
-    private static final class CisternBlock extends Block {
+    private static final class CisternBlock extends Block implements ITileEntityProvider {
         private static final PropertyBool TOP = PropertyBool.create("top");
         private static final PropertyBool BOTTOM = PropertyBool.create("bottom");
         private static final AxisAlignedBB CISTERN_AABB =
@@ -1219,6 +1362,11 @@ public final class ModBlocks {
             setDefaultState(blockState.getBaseState()
                     .withProperty(TOP, false)
                     .withProperty(BOTTOM, false));
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return new CisternTileEntity();
         }
 
         @Override
@@ -1249,6 +1397,83 @@ public final class ModBlocks {
         }
 
         @Override
+        public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn,
+                                        EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+            if (hand != EnumHand.MAIN_HAND) {
+                return false;
+            }
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (!(tile instanceof CisternTileEntity)) {
+                return false;
+            }
+            if (worldIn.isRemote) {
+                return true;
+            }
+
+            CisternTileEntity cistern = (CisternTileEntity) tile;
+            ItemStack held = playerIn.getHeldItem(hand);
+            if (held.getItem() == Items.BUCKET
+                    && !cistern.getTank().isEmpty()
+                    && cistern.getTank().getContents().reagent == ReagentRegistry.STEAM
+                    && cistern.getTank().getContents().amount >= Fluid.BUCKET_VOLUME) {
+                cistern.getTank().drain(Fluid.BUCKET_VOLUME);
+                cistern.onContentsChanged();
+                if (!playerIn.capabilities.isCreativeMode) {
+                    ItemStack waterBucket = new ItemStack(Items.WATER_BUCKET);
+                    if (held.getCount() == 1) {
+                        playerIn.setHeldItem(hand, waterBucket);
+                    } else {
+                        held.shrink(1);
+                        if (!playerIn.addItemStackToInventory(waterBucket)) {
+                            EntityItem item = new EntityItem(worldIn,
+                                    pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, waterBucket);
+                            worldIn.spawnEntity(item);
+                        }
+                    }
+                }
+                worldIn.playSound(null, pos, SoundEvents.ITEM_BUCKET_FILL, SoundCategory.BLOCKS, 0.75F, 1.0F);
+                return true;
+            }
+
+            IFluidHandlerItem fluidHandler = FluidUtil.getFluidHandler(held.copy());
+            FluidStack containedFluid = fluidHandler == null ? null : fluidHandler.drain(Integer.MAX_VALUE, false);
+            if (containedFluid != null && containedFluid.amount > 0) {
+                ReagentStack reagent = new ReagentStack(ReagentRegistry.STEAM, containedFluid.amount);
+                int accepted = cistern.getTank().fill(worldIn, pos, reagent);
+                if (accepted > 0) {
+                    if (!playerIn.capabilities.isCreativeMode) {
+                        fluidHandler.drain(accepted, true);
+                        playerIn.setHeldItem(hand, fluidHandler.getContainer());
+                    }
+                    cistern.onContentsChanged();
+                    worldIn.playSound(null, pos, SoundEvents.ITEM_BUCKET_EMPTY, SoundCategory.BLOCKS, 0.75F, 1.1F);
+                } else {
+                    worldIn.playSound(null, pos, SoundEvents.BLOCK_NOTE_BASS, SoundCategory.BLOCKS, 0.45F, 0.65F);
+                }
+                return true;
+            }
+
+            if (held.isEmpty()) {
+                if (playerIn.isSneaking()) {
+                    cistern.getTank().clear();
+                    cistern.onContentsChanged();
+                    worldIn.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.35F, 1.4F);
+                    return true;
+                }
+                String reagentName = cistern.getTank().isEmpty()
+                        ? "空"
+                        : formatReagentName(cistern.getTank().getContents().reagent.getRegistryName().getPath());
+                playerIn.sendStatusMessage(new TextComponentString(
+                        "蓄水罐：" + reagentName + " "
+                                + cistern.getTank().getContents().amount + "/" + cistern.getTank().getCapacity()
+                                + "，压力 " + String.format("%.2f", cistern.getTank().getPressure())), true);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
         public IBlockState getStateFromMeta(int meta) {
             return getDefaultState();
         }
@@ -1261,6 +1486,19 @@ public final class ModBlocks {
         @Override
         protected BlockStateContainer createBlockState() {
             return new BlockStateContainer(this, TOP, BOTTOM);
+        }
+
+        private String formatReagentName(String name) {
+            if ("steam".equals(name)) {
+                return "蒸汽";
+            }
+            if ("esprit".equals(name)) {
+                return "灵质";
+            }
+            if ("crimsol".equals(name)) {
+                return "绯液";
+            }
+            return name;
         }
     }
 
@@ -1311,6 +1549,43 @@ public final class ModBlocks {
         }
     }
 
+    private static final class SoulEnchanterBlock extends HorizontalFacingBlock implements ITileEntityProvider {
+        private SoulEnchanterBlock() {
+            super(Material.ROCK);
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return new SoulEnchanterTileEntity();
+        }
+
+        @Override
+        public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn,
+                                        EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+            if (hand != EnumHand.MAIN_HAND) {
+                return false;
+            }
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (!(tile instanceof SoulEnchanterTileEntity)) {
+                return false;
+            }
+            if (worldIn.isRemote) {
+                return true;
+            }
+            playerIn.openGui(Eidolon.instance, ModGuiHandler.SOUL_ENCHANTER, worldIn, pos.getX(), pos.getY(), pos.getZ());
+            return true;
+        }
+
+        @Override
+        public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (tile instanceof SoulEnchanterTileEntity) {
+                ((SoulEnchanterTileEntity) tile).dropContents();
+            }
+            super.breakBlock(worldIn, pos, state);
+        }
+    }
+
     private static class SmallDecorBlock extends Block {
         private SmallDecorBlock(Material material) {
             super(material);
@@ -1329,6 +1604,28 @@ public final class ModBlocks {
         @Override
         public BlockRenderLayer getRenderLayer() {
             return BlockRenderLayer.CUTOUT;
+        }
+    }
+
+    private static final class EffigyBlock extends HorizontalFacingBlock implements ITileEntityProvider {
+        private EffigyBlock(Material material) {
+            super(material);
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return new EffigyTileEntity();
+        }
+    }
+
+    private static final class GobletBlock extends SmallDecorBlock implements ITileEntityProvider {
+        private GobletBlock() {
+            super(Material.IRON);
+        }
+
+        @Override
+        public TileEntity createNewTileEntity(World worldIn, int meta) {
+            return new GobletTileEntity();
         }
     }
 
@@ -1546,6 +1843,7 @@ public final class ModBlocks {
                     }
                     playCrucibleSound(worldIn, pos, SoundEvents.ITEM_BUCKET_EMPTY, 0.8F, 1.0F);
                     spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.WATER_SPLASH, 8);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.45F, 0.75F, 1.0F);
                 } else {
                     playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_NOTE_BASS, 0.45F, 0.6F);
                 }
@@ -1554,14 +1852,21 @@ public final class ModBlocks {
             if (held.isEmpty()) {
                 if (playerIn.isSneaking()) {
                     crucible.reset();
-                    playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, 0.35F, 1.5F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SMOKE_NORMAL, 6);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.EXTINGUISH, 0.55F, 0.55F, 0.6F);
                     return true;
                 }
                 if (!crucible.hasFluid()) {
+                    if (crucible.getSteamProgress() > 0 || !crucible.getTank().isEmpty()) {
+                        ReagentStack steamStack = crucible.getTank().getContents();
+                        int steam = crucible.getSteamProgress() + (steamStack == null ? 0 : steamStack.amount);
+                        playerIn.sendStatusMessage(new TextComponentString(
+                                "坩埚：蒸汽 " + steam + "/" + Fluid.BUCKET_VOLUME), true);
+                        return true;
+                    }
                     playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_NOTE_BASS, 0.45F, 0.6F);
                     return true;
                 }
+                boolean hadAction = crucible.hasPendingStepAction();
                 ItemStack result = crucible.commitStep();
                 if (!result.isEmpty()) {
                     EntityItem item = new EntityItem(worldIn, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, result);
@@ -1570,12 +1875,15 @@ public final class ModBlocks {
                     item.motionZ = (worldIn.rand.nextDouble() - 0.5D) * 0.04D;
                     item.setDefaultPickupDelay();
                     worldIn.spawnEntity(item);
-                    playCrucibleSound(worldIn, pos, SoundEvents.ENTITY_PLAYER_LEVELUP, 0.45F, 1.4F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL_WITCH, 24);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.VILLAGER_HAPPY, 8);
-                } else {
-                    playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, 0.55F, 0.7F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SMOKE_LARGE, 10);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_SUCCESS, 0.65F, 0.35F, 1.0F);
+                    playCrucibleSound(worldIn, pos, SoundEvents.ENTITY_PLAYER_LEVELUP, 0.45F, 1.35F);
+                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL_WITCH, 10);
+                } else if (hadAction && crucible.hasFluid()) {
+                    playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_WATER_AMBIENT, 0.45F, 1.6F);
+                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL, 8);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.55F, 0.8F, 1.0F);
+                } else if (!hadAction || !crucible.hasFluid()) {
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_FAIL, 0.45F, 0.45F, 0.45F);
                 }
                 return true;
             }
@@ -1588,11 +1896,13 @@ public final class ModBlocks {
                 crucible.stir(held);
                 playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_WATER_AMBIENT, 0.45F, 1.6F);
                 spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.WATER_SPLASH, 4);
+                sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.55F, 0.8F, 1.0F);
                 return true;
             }
             if (crucible.addOne(held)) {
                 playCrucibleSound(worldIn, pos, SoundEvents.ENTITY_ITEM_PICKUP, 0.35F, 0.6F);
                 spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL, 3);
+                sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.7F, 0.35F, 1.0F);
                 return true;
             }
             return false;
@@ -1600,6 +1910,16 @@ public final class ModBlocks {
 
         @Override
         public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (!worldIn.isRemote && tile instanceof CrucibleTileEntity) {
+                for (ItemStack stack : ((CrucibleTileEntity) tile).getDroppedStacks()) {
+                    if (!stack.isEmpty()) {
+                        EntityItem item = new EntityItem(worldIn,
+                                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack.copy());
+                        worldIn.spawnEntity(item);
+                    }
+                }
+            }
             super.breakBlock(worldIn, pos, state);
         }
 
@@ -1629,6 +1949,11 @@ public final class ModBlocks {
                         pos.getX() + 0.5D, pos.getY() + 0.9D, pos.getZ() + 0.5D,
                         count, 0.18D, 0.12D, 0.18D, 0.02D);
             }
+        }
+
+        private void sendCrucibleVisual(World world, BlockPos pos, int effect, float r, float g, float b) {
+            VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D,
+                    VisualEffectPacket.at(effect, pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D, r, g, b));
         }
     }
 
@@ -1890,12 +2215,22 @@ public final class ModBlocks {
         }
     }
 
-    private static final class SimpleSaplingBlock extends Block {
+    private static final class SimpleSaplingBlock extends Block implements IGrowable {
         private static final AxisAlignedBB SAPLING_AABB =
                 new AxisAlignedBB(0.1D, 0.0D, 0.1D, 0.9D, 0.8D, 0.9D);
 
         private SimpleSaplingBlock() {
             super(Material.PLANTS);
+            setTickRandomly(true);
+        }
+
+        @Override
+        public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
+            if (!worldIn.isRemote
+                    && worldIn.getLightFromNeighbors(pos.up()) >= 9
+                    && rand.nextInt(7) == 0) {
+                grow(worldIn, rand, pos, state);
+            }
         }
 
         @Override
@@ -1936,6 +2271,23 @@ public final class ModBlocks {
             return BlockRenderLayer.CUTOUT;
         }
 
+        @Override
+        public boolean canGrow(World worldIn, BlockPos pos, IBlockState state, boolean isClient) {
+            return true;
+        }
+
+        @Override
+        public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, IBlockState state) {
+            return true;
+        }
+
+        @Override
+        public void grow(World worldIn, Random rand, BlockPos pos, IBlockState state) {
+            if (!worldIn.isRemote) {
+                IllwoodTreeGenerator.generateAt(worldIn, rand, pos);
+            }
+        }
+
         private boolean canSustain(IBlockState state) {
             Block block = state.getBlock();
             return block == net.minecraft.init.Blocks.GRASS
@@ -1951,6 +2303,8 @@ public final class ModBlocks {
         private static final PropertyEnum<AshSide> WEST = PropertyEnum.create("west", AshSide.class);
         private static final AxisAlignedBB ASH_AABB =
                 new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.0625D, 1.0D);
+        private static final AxisAlignedBB UNDEAD_BARRIER_AABB =
+                new AxisAlignedBB(0.0D, -4.0D, 0.0D, 1.0D, 5.0D, 1.0D);
 
         private EnchantedAshBlock() {
             super(Material.CIRCUITS);
@@ -1978,6 +2332,35 @@ public final class ModBlocks {
         @Override
         public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos) {
             return NULL_AABB;
+        }
+
+        @Override
+        public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox,
+                                          List<AxisAlignedBB> collidingBoxes, Entity entityIn,
+                                          boolean isActualState) {
+            if (isBlocked(entityIn)) {
+                addCollisionBoxToList(pos, entityBox, collidingBoxes, UNDEAD_BARRIER_AABB);
+            }
+        }
+
+        private boolean isBlocked(Entity entity) {
+            if (entity == null) {
+                return false;
+            }
+            if (isEffectiveUndead(entity)) {
+                return true;
+            }
+            for (Entity passenger : entity.getPassengers()) {
+                if (isEffectiveUndead(passenger)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean isEffectiveUndead(Entity entity) {
+            return entity instanceof EntityLivingBase
+                    && ((EntityLivingBase) entity).getCreatureAttribute() == net.minecraft.entity.EnumCreatureAttribute.UNDEAD;
         }
 
         @Override
@@ -2024,7 +2407,31 @@ public final class ModBlocks {
         }
 
         private AshSide getSide(IBlockAccess world, BlockPos pos, EnumFacing facing) {
-            return world.getBlockState(pos.offset(facing)).getBlock() == this ? AshSide.SIDE : AshSide.NONE;
+            BlockPos sidePos = pos.offset(facing);
+            IBlockState sideState = world.getBlockState(sidePos);
+            if (!isSolidAbove(world, pos)
+                    && canPlaceOnTopOf(world, sidePos, sideState)
+                    && canConnectTo(world.getBlockState(sidePos.up()))) {
+                return sideState.isSideSolid(world, sidePos, facing.getOpposite()) ? AshSide.UP : AshSide.SIDE;
+            }
+            if (canConnectTo(sideState)) {
+                return AshSide.SIDE;
+            }
+            return sideState.isSideSolid(world, sidePos, facing.getOpposite())
+                    || !canConnectTo(world.getBlockState(sidePos.down())) ? AshSide.NONE : AshSide.SIDE;
+        }
+
+        private boolean isSolidAbove(IBlockAccess world, BlockPos pos) {
+            BlockPos above = pos.up();
+            return world.getBlockState(above).isSideSolid(world, above, EnumFacing.DOWN);
+        }
+
+        private boolean canPlaceOnTopOf(IBlockAccess world, BlockPos pos, IBlockState state) {
+            return state.isSideSolid(world, pos, EnumFacing.UP);
+        }
+
+        private boolean canConnectTo(IBlockState state) {
+            return state.getBlock() == this;
         }
     }
 
@@ -2062,7 +2469,11 @@ public final class ModBlocks {
             if (facing == tube.getInput()) {
                 return false;
             }
-            return world.isRemote || tube.setOutput(facing);
+            boolean changed = world.isRemote || tube.setOutput(facing);
+            if (changed && !world.isRemote) {
+                world.playSound(null, pos, SoundEvents.BLOCK_GLASS_HIT, SoundCategory.BLOCKS, 0.45F, 1.4F);
+            }
+            return changed;
         }
 
         @Override
@@ -2113,6 +2524,33 @@ public final class ModBlocks {
         }
 
         @Override
+        public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn,
+                                        EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+            if (hand != EnumHand.MAIN_HAND || !playerIn.getHeldItem(hand).isEmpty()) {
+                return false;
+            }
+            TileEntity tile = worldIn.getTileEntity(pos);
+            if (!(tile instanceof GlassTubeTileEntity)) {
+                return false;
+            }
+            if (worldIn.isRemote) {
+                return true;
+            }
+            GlassTubeTileEntity tube = (GlassTubeTileEntity) tile;
+            setOutput(worldIn, pos, state, facing);
+            String reagentName = tube.getTank().isEmpty()
+                    ? "空"
+                    : formatReagentName(tube.getTank().getContents().reagent.getRegistryName().getPath());
+            playerIn.sendStatusMessage(new TextComponentString(
+                    "玻璃管：" + reagentName + " "
+                            + tube.getTank().getContents().amount + "/" + tube.getTank().getCapacity()
+                            + "，输入 " + formatFacingName(tube.getInput())
+                            + "，输出 " + formatFacingName(tube.getOutput())
+                            + "，压力 " + String.format("%.2f", tube.getTank().getPressure())), true);
+            return true;
+        }
+
+        @Override
         public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
             return TUBE_AABB;
         }
@@ -2148,7 +2586,45 @@ public final class ModBlocks {
         }
 
         private boolean isGlassTube(IBlockAccess world, BlockPos pos) {
-            return world.getBlockState(pos).getBlock() == this;
+            if (world.getBlockState(pos).getBlock() == this) {
+                return true;
+            }
+            return world.getTileEntity(pos) instanceof IReagentTankProvider;
+        }
+
+        private String formatReagentName(String name) {
+            if ("steam".equals(name)) {
+                return "蒸汽";
+            }
+            if ("esprit".equals(name)) {
+                return "灵质";
+            }
+            if ("crimsol".equals(name)) {
+                return "绯液";
+            }
+            return name;
+        }
+
+        private String formatFacingName(EnumFacing facing) {
+            if (facing == EnumFacing.DOWN) {
+                return "下";
+            }
+            if (facing == EnumFacing.UP) {
+                return "上";
+            }
+            if (facing == EnumFacing.NORTH) {
+                return "北";
+            }
+            if (facing == EnumFacing.SOUTH) {
+                return "南";
+            }
+            if (facing == EnumFacing.WEST) {
+                return "西";
+            }
+            if (facing == EnumFacing.EAST) {
+                return "东";
+            }
+            return facing.getName();
         }
     }
 
@@ -2231,6 +2707,21 @@ public final class ModBlocks {
         @Override
         public int getMetaFromState(IBlockState state) {
             return 0;
+        }
+
+        @Override
+        public Item getItemDropped(IBlockState state, Random rand, int fortune) {
+            ResourceLocation name = getRegistryName();
+            if (name == null || !name.getPath().startsWith("double_")) {
+                return Items.AIR;
+            }
+            Item item = Item.getByNameOrId(Reference.MOD_ID + ":" + name.getPath().substring("double_".length()));
+            return item == null ? Items.AIR : item;
+        }
+
+        @Override
+        public int quantityDropped(Random random) {
+            return 2;
         }
 
         @Override

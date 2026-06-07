@@ -1,0 +1,31 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        {
+          "item": "minecraft:brown_mushroom"
+        }
+      ]
+    },
+    {
+      "stirs": 2,
+      "items": [
+        {
+          "item": "eidolon:ender_calx"
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "item": "minecraft:nether_wart"
+        }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:warped_sprouts",
+    "count": 2
+  }
+}

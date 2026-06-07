@@ -20,9 +20,16 @@ public class ResearchTableTileEntity extends TileEntity implements IInventory, I
     public static final int SLOT_SEAL = 1;
     public static final int SLOT_COUNT = 2;
     public static final int RESEARCH_PROGRESS_TICKS = 200;
+    public static final int FIELD_PROGRESS = 0;
+    public static final int FIELD_RESEARCH_SEED_LOW = 1;
+    public static final int FIELD_RESEARCH_SEED_HIGH = 2;
+    public static final int LEGACY_RESEARCH_SEED = 1418644859;
+    private static final int WORLD_SEED_MULTIPLIER = 978060631;
 
     private final NonNullList<ItemStack> inventory = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private int progress;
+    private int worldSeed = LEGACY_RESEARCH_SEED;
+    private boolean worldSeedInitialized;
 
     @Override
     public void update() {
@@ -59,6 +66,25 @@ public class ResearchTableTileEntity extends TileEntity implements IInventory, I
 
     public boolean isResearchInProgress() {
         return progress > 0;
+    }
+
+    public int getResearchSeed() {
+        if (world != null && !world.isRemote) {
+            int sourceSeed = getSourceResearchSeed(world.getSeed());
+            if (!worldSeedInitialized || worldSeed != sourceSeed) {
+                worldSeed = sourceSeed;
+                worldSeedInitialized = true;
+                markDirty();
+            }
+        } else if (!worldSeedInitialized) {
+            worldSeed = LEGACY_RESEARCH_SEED;
+            worldSeedInitialized = true;
+        }
+        return worldSeed;
+    }
+
+    private static int getSourceResearchSeed(long seed) {
+        return LEGACY_RESEARCH_SEED + WORLD_SEED_MULTIPLIER * (int) seed;
     }
 
     @Override
@@ -164,19 +190,34 @@ public class ResearchTableTileEntity extends TileEntity implements IInventory, I
 
     @Override
     public int getField(int id) {
-        return id == 0 ? progress : 0;
+        if (id == FIELD_PROGRESS) {
+            return progress;
+        }
+        if (id == FIELD_RESEARCH_SEED_LOW) {
+            return getResearchSeed() & 0xffff;
+        }
+        if (id == FIELD_RESEARCH_SEED_HIGH) {
+            return (getResearchSeed() >>> 16) & 0xffff;
+        }
+        return 0;
     }
 
     @Override
     public void setField(int id, int value) {
-        if (id == 0) {
+        if (id == FIELD_PROGRESS) {
             progress = value;
+        } else if (id == FIELD_RESEARCH_SEED_LOW) {
+            worldSeed = (worldSeed & 0xffff0000) | (value & 0xffff);
+            worldSeedInitialized = true;
+        } else if (id == FIELD_RESEARCH_SEED_HIGH) {
+            worldSeed = (worldSeed & 0x0000ffff) | ((value & 0xffff) << 16);
+            worldSeedInitialized = true;
         }
     }
 
     @Override
     public int getFieldCount() {
-        return 1;
+        return 3;
     }
 
     @Override
@@ -192,6 +233,7 @@ public class ResearchTableTileEntity extends TileEntity implements IInventory, I
         super.writeToNBT(compound);
         ItemStackHelper.saveAllItems(compound, inventory);
         compound.setInteger("progress", progress);
+        compound.setInteger("worldSeed", getResearchSeed());
         return compound;
     }
 
@@ -203,5 +245,12 @@ public class ResearchTableTileEntity extends TileEntity implements IInventory, I
         }
         ItemStackHelper.loadAllItems(compound, inventory);
         progress = compound.getInteger("progress");
+        if (compound.hasKey("worldSeed")) {
+            worldSeed = compound.getInteger("worldSeed");
+            worldSeedInitialized = true;
+        } else {
+            worldSeed = LEGACY_RESEARCH_SEED;
+            worldSeedInitialized = false;
+        }
     }
 }

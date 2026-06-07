@@ -1,11 +1,12 @@
 package elucent.eidolon.research;
 
 import elucent.eidolon.Reference;
-import elucent.eidolon.network.KnowledgeSyncPacket;
+import elucent.eidolon.capability.SoulData;
 import elucent.eidolon.network.ModNetwork;
+import elucent.eidolon.network.SoulSyncPacket;
 import elucent.eidolon.util.KnowledgeUtil;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -17,12 +18,27 @@ public final class KnowledgeEvents {
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!(event.player instanceof EntityPlayerMP)) {
+        syncPlayerData(event.player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        syncPlayerData(event.player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        syncPlayerData(event.player);
+    }
+
+    private static void syncPlayerData(EntityPlayer player) {
+        if (!(player instanceof EntityPlayerMP)) {
             return;
         }
-        EntityPlayerMP player = (EntityPlayerMP) event.player;
-        for (String id : KnowledgeUtil.getKnownResearchIds(player)) {
-            ModNetwork.CHANNEL.sendTo(new KnowledgeSyncPacket(new ResourceLocation(id), true), player);
-        }
+        EntityPlayerMP mpPlayer = (EntityPlayerMP) player;
+        SoulData.ensureDefaults(mpPlayer);
+        KnowledgeUtil.syncAll(mpPlayer);
+        ModNetwork.CHANNEL.sendTo(new SoulSyncPacket(mpPlayer), mpPlayer);
     }
+
 }

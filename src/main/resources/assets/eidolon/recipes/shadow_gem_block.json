@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
   "pattern": [
-    "###",
-    "###",
-    "###"
+    "xxx",
+    "xxx",
+    "xxx"
   ],
   "key": {
-    "#": {
+    "x": {
       "type": "forge:ore_dict",
       "ore": "gemShadow"
     }

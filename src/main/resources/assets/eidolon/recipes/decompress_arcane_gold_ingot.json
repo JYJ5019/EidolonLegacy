@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "eidolon",
+  "ingredients": [
+    {
+      "type": "forge:ore_dict",
+      "ore": "ingotArcaneGold"
+    }
+  ],
+  "result": {
+    "item": "eidolon:arcane_gold_nugget",
+    "count": 9
+  }
+}

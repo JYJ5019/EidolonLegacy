@@ -2,11 +2,11 @@ package elucent.eidolon.item;
 
 import elucent.eidolon.network.DeathbringerSlashEffectPacket;
 import elucent.eidolon.network.ModNetwork;
+import elucent.eidolon.network.VisualEffectPacket;
 import elucent.eidolon.registries.ModPotions;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
@@ -14,12 +14,12 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 import java.util.List;
 
-public class DeathbringerScytheItem extends ItemSword {
+public class DeathbringerScytheItem extends EidolonSwordItem {
     private static final int UNDEATH_DURATION = 900;
     private static final double SLASH_EFFECT_RANGE = 32.0D;
 
     public DeathbringerScytheItem(ToolMaterial material) {
-        super(material);
+        super(material, 10.0D, -2.9D);
     }
 
     @Override
@@ -33,6 +33,9 @@ public class DeathbringerScytheItem extends ItemSword {
                             attacker.posZ, target.posX, target.posY + target.height * 0.5D, target.posZ),
                     new NetworkRegistry.TargetPoint(attacker.dimension, target.posX, target.posY, target.posZ,
                             SLASH_EFFECT_RANGE));
+            VisualEffectPacket.sendAround(attacker.world, target.posX, target.posY + target.height * 0.5D, target.posZ,
+                    VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, target.posX,
+                            target.posY + target.height * 0.5D, target.posZ, 0.45F, 1.0F, 0.35F));
         }
         return super.hitEntity(stack, target, attacker);
     }

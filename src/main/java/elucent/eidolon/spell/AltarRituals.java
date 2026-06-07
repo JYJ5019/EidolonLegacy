@@ -10,16 +10,21 @@ import elucent.eidolon.registries.ModBlocks;
 import elucent.eidolon.registries.ModItems;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.init.PotionTypes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.PotionType;
+import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.JsonContext;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraft.world.World;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -68,6 +73,15 @@ public final class AltarRituals {
     }
 
     public static AltarRitual find(AltarInfo info, EntityPlayer player) {
+        return find(info, null, null, player);
+    }
+
+    public static AltarRitual find(AltarInfo info, World world, BlockPos origin, EntityPlayer player) {
+        for (AltarRitual ritual : RITUALS.values()) {
+            if (ritual.matches(info, world, origin, player)) {
+                return ritual;
+            }
+        }
         return null;
     }
 
@@ -234,7 +248,9 @@ public final class AltarRituals {
         double capacity = JsonUtils.getFloat(json, "capacity", 0.0F);
         double power = JsonUtils.getFloat(json, "power", 0.0F);
         float health = JsonUtils.getFloat(json, "health", 0.0F);
-        ItemStack result = CraftingHelper.getItemStack(JsonUtils.getJsonObject(json, "result"), JSON_CONTEXT);
+        ItemStack result = json.has("result")
+                ? CraftingHelper.getItemStack(JsonUtils.getJsonObject(json, "result"), JSON_CONTEXT)
+                : ItemStack.EMPTY;
         Ingredient focus = json.has("focus") ? parseIngredient(json.get("focus")) : Ingredient.EMPTY;
         Ingredient sacrifice = json.has("sacrifice") ? parseIngredient(json.get("sacrifice")) : null;
         ResourceLocation entity = json.has("entity") ? new ResourceLocation(JsonUtils.getString(json, "entity")) : null;
@@ -246,6 +262,9 @@ public final class AltarRituals {
         if ("item_transform".equals(behavior)) {
             return AltarRitual.BehaviorType.ITEM_TRANSFORM;
         }
+        if ("sanguine".equals(behavior)) {
+            return AltarRitual.BehaviorType.SANGUINE;
+        }
         if ("item_charge".equals(behavior)) {
             return AltarRitual.BehaviorType.ITEM_CHARGE;
         }
@@ -254,6 +273,27 @@ public final class AltarRituals {
         }
         if ("absorption".equals(behavior)) {
             return AltarRitual.BehaviorType.ABSORPTION;
+        }
+        if ("purify".equals(behavior)) {
+            return AltarRitual.BehaviorType.PURIFY;
+        }
+        if ("crystal".equals(behavior)) {
+            return AltarRitual.BehaviorType.CRYSTAL;
+        }
+        if ("allure".equals(behavior)) {
+            return AltarRitual.BehaviorType.ALLURE;
+        }
+        if ("repelling".equals(behavior)) {
+            return AltarRitual.BehaviorType.REPELLING;
+        }
+        if ("deceit".equals(behavior)) {
+            return AltarRitual.BehaviorType.DECEIT;
+        }
+        if ("daylight".equals(behavior)) {
+            return AltarRitual.BehaviorType.DAYLIGHT;
+        }
+        if ("moonlight".equals(behavior)) {
+            return AltarRitual.BehaviorType.MOONLIGHT;
         }
         return AltarRitual.BehaviorType.ITEM_RESULT;
     }
@@ -267,6 +307,12 @@ public final class AltarRituals {
     }
 
     private static Ingredient parseIngredient(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return Ingredient.EMPTY;
+        }
+        if (element.isJsonObject()) {
+            return CraftingHelper.getIngredient(element.getAsJsonObject(), JSON_CONTEXT);
+        }
         return CraftingHelper.getIngredient(element);
     }
 
@@ -280,26 +326,11 @@ public final class AltarRituals {
                 ingredient(ModItems.SOUL_SHARD),
                 ingredient(ModItems.TATTERED_CLOTH),
                 ingredient(Items.BONE));
-        putMissing("sapping_sword", 4.0D, 4.0D, new ItemStack(ModItems.SAPPING_SWORD),
-                AltarRitual.BehaviorType.ITEM_TRANSFORM, ingredient(Items.IRON_SWORD),
-                ingredient(ModItems.SHADOW_GEM),
-                ingredient(ModItems.SOUL_SHARD),
-                ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.GHAST_TEAR),
-                ingredient(Items.NETHER_WART),
-                ingredient(Items.NETHER_WART));
-        putMissing("sanguine_amulet", 4.0D, 4.0D, new ItemStack(ModItems.SANGUINE_AMULET),
-                AltarRitual.BehaviorType.ITEM_TRANSFORM, ingredient(ModItems.BASIC_AMULET),
-                ingredient(Items.REDSTONE),
-                ingredient(Items.REDSTONE),
-                ingredient(Items.DIAMOND),
-                ingredient(ModItems.LESSER_SOUL_GEM),
-                ingredient(Items.REDSTONE),
-                ingredient(Items.REDSTONE));
-        putMissing("purify", 3.0D, 3.0D, new ItemStack(ModItems.CRIMSON_ESSENCE),
-                AltarRitual.BehaviorType.ITEM_RESULT, Ingredient.EMPTY,
+        putMissingWithSacrifice("purify", 3.0D, 3.0D, ItemStack.EMPTY,
+                AltarRitual.BehaviorType.PURIFY, Ingredient.EMPTY, ingredient(Items.SPECKLED_MELON),
                 ingredient(Item.getItemFromBlock(ModBlocks.ENCHANTED_ASH)),
                 ingredient(Item.getItemFromBlock(ModBlocks.ENCHANTED_ASH)),
+                ingredient(potion(PotionTypes.HEALING)),
                 ingredient(ModItems.SOUL_SHARD),
                 ingredient(ModItems.SOUL_SHARD));
         putMissing("wraith_heart", 3.0D, 4.0D, new ItemStack(ModItems.WRAITH_HEART),
@@ -341,30 +372,25 @@ public final class AltarRituals {
                 ingredient(Items.REDSTONE),
                 ingredient(Items.REDSTONE));
         putMissingSummon("summon_zombie", 3.0D, 3.0D, spawnEgg("minecraft:zombie"),
-                new ResourceLocation("minecraft:zombie"), ingredient(Items.COAL, 1),
+                new ResourceLocation("minecraft:zombie"), ingredient(Items.ROTTEN_FLESH),
                 ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.ROTTEN_FLESH),
                 ingredient(Items.ROTTEN_FLESH));
         putMissingSummon("summon_skeleton", 3.0D, 3.0D, spawnEgg("minecraft:skeleton"),
-                new ResourceLocation("minecraft:skeleton"), ingredient(Items.COAL, 1),
+                new ResourceLocation("minecraft:skeleton"), ingredient(Items.BONE),
                 ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.BONE),
                 ingredient(Items.BONE));
         putMissingSummon("summon_husk", 3.0D, 3.0D, spawnEgg("minecraft:husk"),
-                new ResourceLocation("minecraft:husk"), ingredient(Items.COAL, 1),
+                new ResourceLocation("minecraft:husk"), ingredient(Item.getItemFromBlock(Blocks.SAND)),
                 ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.ROTTEN_FLESH),
-                ingredient(Item.getItemFromBlock(Blocks.SAND)));
+                ingredient(Items.ROTTEN_FLESH));
         putMissingSummon("summon_stray", 3.0D, 3.0D, spawnEgg("minecraft:stray"),
-                new ResourceLocation("minecraft:stray"), ingredient(Items.COAL, 1),
+                new ResourceLocation("minecraft:stray"), ingredient(Items.STRING),
                 ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.BONE),
-                ingredient(Items.STRING));
+                ingredient(Items.BONE));
         putMissingSummon("summon_wither_skeleton", 4.0D, 4.0D, spawnEgg("minecraft:wither_skeleton"),
-                new ResourceLocation("minecraft:wither_skeleton"), ingredient(Items.COAL, 1),
+                new ResourceLocation("minecraft:wither_skeleton"), ingredient(Item.getItemFromBlock(Blocks.SOUL_SAND)),
                 ingredient(ModItems.SOUL_SHARD),
-                ingredient(Items.BONE),
-                ingredient(Item.getItemFromBlock(Blocks.SOUL_SAND)));
+                ingredient(Items.BONE));
         putMissing("absorption", 4.0D, 4.0D, new ItemStack(ModItems.SUMMONING_STAFF),
                 AltarRitual.BehaviorType.ABSORPTION, ingredient(ModItems.SUMMONING_STAFF),
                 ingredient(ModItems.DEATH_ESSENCE),
@@ -383,22 +409,26 @@ public final class AltarRituals {
         }
     }
 
+    private static void putMissingWithSacrifice(String name, double capacity, double power, ItemStack result,
+                                                AltarRitual.BehaviorType behavior, Ingredient focus,
+                                                Ingredient sacrifice, Ingredient... offerings) {
+        ResourceLocation id = new ResourceLocation(Reference.MOD_ID, name);
+        if (!RITUALS.containsKey(id)) {
+            RITUALS.put(id, new AltarRitual(id, capacity, power, result, behavior, focus,
+                    sacrifice, null, missingHealthCost(name), offerings));
+        }
+    }
+
     private static void putMissingSummon(String name, double capacity, double power, ItemStack result,
                                          ResourceLocation entity, Ingredient focus, Ingredient... offerings) {
         ResourceLocation id = new ResourceLocation(Reference.MOD_ID, name);
         if (!RITUALS.containsKey(id)) {
             RITUALS.put(id, new AltarRitual(id, capacity, power, result,
-                    AltarRitual.BehaviorType.ENTITY_SUMMON, focus, entity, 0.0F, offerings));
+                    AltarRitual.BehaviorType.ENTITY_SUMMON, focus, ingredient(Items.COAL, 1), entity, 0.0F, offerings));
         }
     }
 
     private static float missingHealthCost(String name) {
-        if ("sapping_sword".equals(name)) {
-            return 20.0F;
-        }
-        if ("sanguine_amulet".equals(name)) {
-            return 40.0F;
-        }
         return 0.0F;
     }
 
@@ -408,6 +438,14 @@ public final class AltarRituals {
 
     private static Ingredient ingredient(Item item, int metadata) {
         return Ingredient.fromStacks(new ItemStack(item, 1, metadata));
+    }
+
+    private static Ingredient ingredient(ItemStack stack) {
+        return Ingredient.fromStacks(stack);
+    }
+
+    private static ItemStack potion(PotionType type) {
+        return PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM), type);
     }
 
     private static ItemStack spawnEgg(String entityId) {

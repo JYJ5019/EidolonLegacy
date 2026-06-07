@@ -1,0 +1,27 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        {
+          "item": "minecraft:nether_wart"
+        },
+        {
+          "item": "minecraft:nether_wart"
+        }
+      ]
+    },
+    {
+      "stirs": 1,
+      "items": [
+        {
+          "tag": "forge:dusts/sulfur"
+        }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:crimson_essence",
+    "count": 2
+  }
+}

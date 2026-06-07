@@ -1,5 +1,6 @@
 package elucent.eidolon.network;
 
+import elucent.eidolon.particle.EidolonParticles;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumParticleTypes;
@@ -73,6 +74,10 @@ public class DeathbringerSlashEffectPacket implements IMessage {
                 double x = message.x1 + (message.x2 - message.x1) * t;
                 double y = message.y1 + (message.y2 - message.y1) * t + arc * 0.35D;
                 double z = message.z1 + (message.z2 - message.z1) * t;
+                if (i == 0) {
+                    EidolonParticles.spawnSlash(world, message.x1, message.y1, message.z1,
+                            message.x2, message.y2, message.z2, 0.63F, 1.0F, 0.48F);
+                }
                 world.spawnParticle(EnumParticleTypes.SPELL_MOB, x, y, z, 0.63D, 1.0D, 0.48D);
                 world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x - dz * arc * 0.25D, y, z + dx * arc * 0.25D,
                         -dx * 0.02D, -0.01D, -dz * 0.02D);

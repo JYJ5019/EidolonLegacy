@@ -1,11 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
   "pattern": [
-    "###",
-    "###"
+    "xxx",
+    "xxx"
   ],
   "key": {
-    "#": {
+    "x": {
       "item": "eidolon:smooth_stone_bricks"
     }
   },

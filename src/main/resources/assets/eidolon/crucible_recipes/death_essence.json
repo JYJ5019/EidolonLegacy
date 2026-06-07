@@ -1,0 +1,40 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        {
+          "item": "eidolon:zombie_heart"
+        },
+        {
+          "item": "minecraft:rotten_flesh"
+        }
+      ]
+    },
+    {
+      "stirs": 2,
+      "items": [
+        {
+          "item": "minecraft:dye",
+          "data": 15
+        },
+        {
+          "item": "minecraft:dye",
+          "data": 15
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "item": "minecraft:coal",
+          "data": 1
+        }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:death_essence",
+    "count": 4
+  }
+}

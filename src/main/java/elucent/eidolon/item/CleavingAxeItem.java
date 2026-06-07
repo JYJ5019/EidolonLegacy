@@ -24,7 +24,7 @@ import java.util.List;
 
 public class CleavingAxeItem extends ItemAxe {
     public CleavingAxeItem(ToolMaterial material) {
-        super(material, 8.0F, -3.1F);
+        super(material, 9.0F, -3.2F);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -52,11 +52,11 @@ public class CleavingAxeItem extends ItemAxe {
     }
 
     private boolean shouldDropHead(EntityLivingBase target, int looting) {
-        if (target.world.rand.nextInt(2) == 0) {
+        if (target.world.rand.nextInt(20) == 0) {
             return true;
         }
         for (int i = 0; i < looting; i++) {
-            if (target.world.rand.nextInt(5) == 0) {
+            if (target.world.rand.nextInt(40) == 0) {
                 return true;
             }
         }

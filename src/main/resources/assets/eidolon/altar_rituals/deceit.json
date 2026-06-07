@@ -1,0 +1,26 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "deceit",
+  "capacity": 3,
+  "power": 3,
+  "sacrifice": {
+    "item": "minecraft:emerald"
+  },
+  "offerings": [
+    {
+      "item": "minecraft:emerald"
+    },
+    {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    {
+      "item": "minecraft:brown_mushroom"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ]
+}

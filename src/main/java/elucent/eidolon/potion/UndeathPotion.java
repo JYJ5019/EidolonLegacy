@@ -1,10 +1,8 @@
 package elucent.eidolon.potion;
 
-import net.minecraft.potion.Potion;
-
-public class UndeathPotion extends Potion {
+public class UndeathPotion extends EidolonPotion {
     public UndeathPotion() {
-        super(true, 0x5fff7b);
+        super(true, 0x5fff7b, "undeath");
         setIconIndex(0, 0);
     }
 }

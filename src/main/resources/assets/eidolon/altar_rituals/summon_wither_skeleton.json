@@ -8,9 +8,12 @@
     "item": "minecraft:spawn_egg",
     "nbt": "{EntityTag:{id:\"minecraft:wither_skeleton\"}}"
   },
-  "focus": {
+  "sacrifice": {
     "item": "minecraft:coal",
     "data": 1
+  },
+  "focus": {
+    "item": "minecraft:soul_sand"
   },
   "offerings": [
     {
@@ -18,9 +21,6 @@
     },
     {
       "item": "minecraft:bone"
-    },
-    {
-      "item": "minecraft:soul_sand"
     }
   ]
 }

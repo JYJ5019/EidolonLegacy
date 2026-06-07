@@ -1,5 +1,6 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
   "pattern": [
     " x ",
     "xyx",
@@ -7,10 +8,12 @@
   ],
   "key": {
     "x": {
-      "item": "minecraft:stone_slab"
+      "item": "minecraft:stone_slab",
+      "data": 0
     },
     "y": {
-      "item": "minecraft:stone"
+      "item": "minecraft:stone",
+      "data": 0
     }
   },
   "result": {

@@ -1,7 +1,5 @@
 package elucent.eidolon.command;
 
-import elucent.eidolon.network.KnowledgeSyncPacket;
-import elucent.eidolon.network.ModNetwork;
 import elucent.eidolon.research.Research;
 import elucent.eidolon.research.Researches;
 import elucent.eidolon.util.KnowledgeUtil;
@@ -64,11 +62,9 @@ public class ResearchCommand extends CommandBase {
 
         if ("grant".equals(args[0])) {
             KnowledgeUtil.grantResearch(player, id);
-            ModNetwork.CHANNEL.sendTo(new KnowledgeSyncPacket(id, true), player);
             sender.sendMessage(new TextComponentString("Granted Eidolon research: " + id));
         } else if ("remove".equals(args[0])) {
             KnowledgeUtil.removeResearch(player, id);
-            ModNetwork.CHANNEL.sendTo(new KnowledgeSyncPacket(id, false), player);
             sender.sendMessage(new TextComponentString("Removed Eidolon research: " + id));
         } else {
             throw new WrongUsageException(getUsage(sender));
@@ -76,18 +72,13 @@ public class ResearchCommand extends CommandBase {
     }
 
     private void clearResearch(EntityPlayerMP player) {
-        List<String> knownIds = new ArrayList<>(KnowledgeUtil.getKnownResearchIds(player));
         KnowledgeUtil.clearResearch(player);
-        for (String id : knownIds) {
-            ModNetwork.CHANNEL.sendTo(new KnowledgeSyncPacket(new ResourceLocation(id), false), player);
-        }
     }
 
     private int grantAllResearch(EntityPlayerMP player) {
         int count = 0;
         for (Research research : Researches.getResearches()) {
             KnowledgeUtil.grantResearch(player, research.getId());
-            ModNetwork.CHANNEL.sendTo(new KnowledgeSyncPacket(research.getId(), true), player);
             count++;
         }
         return count;

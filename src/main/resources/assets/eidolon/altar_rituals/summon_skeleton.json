@@ -8,16 +8,16 @@
     "item": "minecraft:spawn_egg",
     "nbt": "{EntityTag:{id:\"minecraft:skeleton\"}}"
   },
-  "focus": {
+  "sacrifice": {
     "item": "minecraft:coal",
     "data": 1
+  },
+  "focus": {
+    "item": "minecraft:bone"
   },
   "offerings": [
     {
       "item": "eidolon:soul_shard"
-    },
-    {
-      "item": "minecraft:bone"
     },
     {
       "item": "minecraft:bone"

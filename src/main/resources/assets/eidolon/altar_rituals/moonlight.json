@@ -1,0 +1,24 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "moonlight",
+  "capacity": 3,
+  "power": 3,
+  "sacrifice": {
+    "item": "minecraft:dye",
+    "data": 0
+  },
+  "offerings": [
+    {
+      "item": "minecraft:snowball"
+    },
+    {
+      "item": "minecraft:spider_eye"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ]
+}

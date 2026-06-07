@@ -8,7 +8,8 @@
   "reagents": "u b ",
   "key": {
     "w": {
-      "item": "minecraft:white_wool"
+      "item": "minecraft:wool",
+      "data": 0
     },
     "s": {
       "item": "eidolon:shadow_gem"

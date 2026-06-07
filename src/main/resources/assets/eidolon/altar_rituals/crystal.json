@@ -1,0 +1,18 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "crystal",
+  "capacity": 2,
+  "power": 2,
+  "sacrifice": {
+    "item": "minecraft:dye",
+    "data": 15
+  },
+  "offerings": [
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

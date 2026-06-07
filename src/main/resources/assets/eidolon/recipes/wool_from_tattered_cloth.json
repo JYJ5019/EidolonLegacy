@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
+  "pattern": [
+    "xx",
+    "xx"
+  ],
+  "key": {
+    "x": {
+      "item": "eidolon:tattered_cloth"
+    }
+  },
+  "result": {
+    "item": "minecraft:wool",
+    "count": 2,
+    "data": 7
+  }
+}

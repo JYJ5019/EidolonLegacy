@@ -8,10 +8,12 @@
   "reagents": "u i ",
   "key": {
     "s": {
-      "item": "minecraft:stone"
+      "item": "minecraft:stone",
+      "data": 0
     },
     "S": {
-      "item": "minecraft:smooth_stone"
+      "item": "minecraft:stone",
+      "data": 0
     },
     "u": {
       "item": "eidolon:unholy_symbol"

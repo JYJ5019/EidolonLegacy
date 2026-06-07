@@ -15,18 +15,18 @@ public class WorktableContainer extends Container {
 
     public WorktableContainer(InventoryPlayer playerInventory, WorktableTileEntity tile) {
         this.tile = tile;
-        addSlotToContainer(new WorktableResultSlot(tile, result, 0, 163, 58));
+        addSlotToContainer(new WorktableResultSlot(tile, this, result, 0, 163, 58));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                addSlotToContainer(new WorktableSlot(tile, col + row * 3, 40 + col * 18, 40 + row * 18));
+                addSlotToContainer(new WorktableSlot(tile, this, col + row * 3, 40 + col * 18, 40 + row * 18));
             }
         }
 
-        addSlotToContainer(new WorktableSlot(tile, 9, 58, 18));
-        addSlotToContainer(new WorktableSlot(tile, 10, 98, 58));
-        addSlotToContainer(new WorktableSlot(tile, 11, 58, 98));
-        addSlotToContainer(new WorktableSlot(tile, 12, 18, 58));
+        addSlotToContainer(new WorktableSlot(tile, this, 9, 58, 18));
+        addSlotToContainer(new WorktableSlot(tile, this, 10, 98, 58));
+        addSlotToContainer(new WorktableSlot(tile, this, 11, 58, 98));
+        addSlotToContainer(new WorktableSlot(tile, this, 12, 18, 58));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -51,8 +51,8 @@ public class WorktableContainer extends Container {
         super.detectAndSendChanges();
     }
 
-    private void updateResult() {
-        result.setInventorySlotContents(0, inventorySlots.get(0).getStack());
+    void updateResult() {
+        result.setInventorySlotContents(0, tile.getCraftingResult());
     }
 
     @Override
@@ -63,6 +63,9 @@ public class WorktableContainer extends Container {
 
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
+        if (index == 0) {
+            updateResult();
+        }
         ItemStack copy = ItemStack.EMPTY;
         Slot slot = inventorySlots.get(index);
         if (slot != null && slot.getHasStack()) {

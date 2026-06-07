@@ -28,15 +28,17 @@ public class BonechillWandItem extends WandItem {
         }
         if (!worldIn.isRemote) {
             Vec3d look = playerIn.getLookVec();
+            Vec3d pos = playerIn.getPositionVector()
+                    .add(0.0D, playerIn.getEyeHeight(), 0.0D)
+                    .add(look);
+            Vec3d vel = playerIn.getPositionEyes(0.0F).add(look.scale(40.0D)).subtract(pos).scale(1.0D / 20.0D);
             BonechillProjectileEntity projectile = new BonechillProjectileEntity(worldIn, playerIn);
-            projectile.setPosition(playerIn.posX + look.x * 0.7D,
-                    playerIn.posY + playerIn.getEyeHeight() - 0.15D + look.y * 0.7D,
-                    playerIn.posZ + look.z * 0.7D);
-            projectile.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.8F, 0.0F);
+            projectile.setPosition(pos.x, pos.y, pos.z);
+            projectile.shoot(vel.x, vel.y, vel.z, 1.0F, 0.0F);
             worldIn.spawnEntity(projectile);
             worldIn.playSound(null, playerIn.posX, playerIn.posY, playerIn.posZ,
                     ModSounds.CAST_BONECHILL, SoundCategory.PLAYERS, 0.75F, itemRand.nextFloat() * 0.2F + 0.9F);
-            consumeCharge(stack, 1);
+            damageWand(stack, 1, playerIn);
         }
         playerIn.swingArm(handIn);
         playerIn.getCooldownTracker().setCooldown(this, 10);

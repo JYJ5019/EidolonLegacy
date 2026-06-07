@@ -1,0 +1,1185 @@
+{
+  "source": "../eidolon-1.20x/src/main/resources/data/eidolon",
+  "generatedAt": "2026-06-06T08:04:55.980Z",
+  "converted": {
+    "crafting": [
+      {
+        "file": "arcane_gold_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/arcane_gold_block.json"
+      },
+      {
+        "file": "arcane_seal.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/arcane_seal.json"
+      },
+      {
+        "file": "basic_amulet.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/basic_amulet.json"
+      },
+      {
+        "file": "basic_belt.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/basic_belt.json"
+      },
+      {
+        "file": "basic_ring.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/basic_ring.json"
+      },
+      {
+        "file": "brazier.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/brazier.json"
+      },
+      {
+        "file": "candle.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/candle.json"
+      },
+      {
+        "file": "candlestick.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/candlestick.json"
+      },
+      {
+        "file": "codex.json",
+        "type": "minecraft:crafting_shapeless",
+        "target": "assets/eidolon/recipes/codex.json"
+      },
+      {
+        "file": "crucible.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/crucible.json"
+      },
+      {
+        "file": "goblet.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/goblet.json"
+      },
+      {
+        "file": "gold_inlay.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/gold_inlay.json"
+      },
+      {
+        "file": "lead_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/lead_block.json"
+      },
+      {
+        "file": "magic_candle.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/magic_candle.json"
+      },
+      {
+        "file": "magic_candlestick.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/magic_candlestick.json"
+      },
+      {
+        "file": "necrotic_focus.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/necrotic_focus.json"
+      },
+      {
+        "file": "notetaking_tools.json",
+        "type": "minecraft:crafting_shapeless",
+        "target": "assets/eidolon/recipes/notetaking_tools.json"
+      },
+      {
+        "file": "obelisk.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/obelisk.json"
+      },
+      {
+        "file": "pewter_blend.json",
+        "type": "minecraft:crafting_shapeless",
+        "target": "assets/eidolon/recipes/pewter_blend.json"
+      },
+      {
+        "file": "pewter_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/pewter_block.json"
+      },
+      {
+        "file": "pewter_inlay.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/pewter_inlay.json"
+      },
+      {
+        "file": "plinth.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/plinth.json"
+      },
+      {
+        "file": "polished_planks_fence.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/polished_planks_fence.json"
+      },
+      {
+        "file": "polished_planks_fence_gate.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/polished_planks_fence_gate.json"
+      },
+      {
+        "file": "polished_planks_pillar.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/polished_planks_pillar.json"
+      },
+      {
+        "file": "polished_planks_slab.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/polished_planks_slab.json"
+      },
+      {
+        "file": "polished_planks_stairs.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/polished_planks_stairs.json"
+      },
+      {
+        "file": "raven_feather_arrows.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/raven_feather_arrows.json"
+      },
+      {
+        "file": "raw_lead_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/raw_lead_block.json"
+      },
+      {
+        "file": "raw_silver_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/raw_silver_block.json"
+      },
+      {
+        "file": "research_table.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/research_table.json"
+      },
+      {
+        "file": "shadow_gem_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/shadow_gem_block.json"
+      },
+      {
+        "file": "silver_axe.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_axe.json"
+      },
+      {
+        "file": "silver_block.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_block.json"
+      },
+      {
+        "file": "silver_boots.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_boots.json"
+      },
+      {
+        "file": "silver_chestplate.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_chestplate.json"
+      },
+      {
+        "file": "silver_helmet.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_helmet.json"
+      },
+      {
+        "file": "silver_hoe.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_hoe.json"
+      },
+      {
+        "file": "silver_leggings.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_leggings.json"
+      },
+      {
+        "file": "silver_pickaxe.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_pickaxe.json"
+      },
+      {
+        "file": "silver_shovel.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_shovel.json"
+      },
+      {
+        "file": "silver_sword.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/silver_sword.json"
+      },
+      {
+        "file": "smooth_stone_bricks_slab.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_bricks_slab.json"
+      },
+      {
+        "file": "smooth_stone_bricks_stairs.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_bricks_stairs.json"
+      },
+      {
+        "file": "smooth_stone_bricks_wall.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_bricks_wall.json"
+      },
+      {
+        "file": "smooth_stone_tiles.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_tiles.json"
+      },
+      {
+        "file": "smooth_stone_tiles_slab.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_tiles_slab.json"
+      },
+      {
+        "file": "smooth_stone_tiles_stairs.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/smooth_stone_tiles_stairs.json"
+      },
+      {
+        "file": "stone_hand.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/stone_hand.json"
+      },
+      {
+        "file": "straw_effigy.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/straw_effigy.json"
+      },
+      {
+        "file": "wooden_altar.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/wooden_altar.json"
+      },
+      {
+        "file": "wooden_brewing_stand.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/wooden_brewing_stand.json"
+      },
+      {
+        "file": "wool_from_tattered_cloth.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/wool_from_tattered_cloth.json"
+      },
+      {
+        "file": "worktable.json",
+        "type": "minecraft:crafting_shaped",
+        "target": "assets/eidolon/recipes/worktable.json"
+      }
+    ],
+    "worktable": [
+      {
+        "file": "athame.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/athame.json"
+      },
+      {
+        "file": "bonechill_wand.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/bonechill_wand.json"
+      },
+      {
+        "file": "cleaving_axe.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/cleaving_axe.json"
+      },
+      {
+        "file": "deathbringer_scythe.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/deathbringer_scythe.json"
+      },
+      {
+        "file": "glass_hand.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/glass_hand.json"
+      },
+      {
+        "file": "gravity_belt.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/gravity_belt.json"
+      },
+      {
+        "file": "mind_shielding_plate.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/mind_shielding_plate.json"
+      },
+      {
+        "file": "planter.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/planter.json"
+      },
+      {
+        "file": "prestigious_palm.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/prestigious_palm.json"
+      },
+      {
+        "file": "reaper_scythe.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/reaper_scythe.json"
+      },
+      {
+        "file": "resolute_belt.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/resolute_belt.json"
+      },
+      {
+        "file": "reversal_pick.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/reversal_pick.json"
+      },
+      {
+        "file": "soul_enchanter.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/soul_enchanter.json"
+      },
+      {
+        "file": "soulbone_amulet.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/soulbone_amulet.json"
+      },
+      {
+        "file": "soulfire_wand.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/soulfire_wand.json"
+      },
+      {
+        "file": "stone_altar.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/stone_altar.json"
+      },
+      {
+        "file": "unholy_effigy.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/unholy_effigy.json"
+      },
+      {
+        "file": "void_amulet.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/void_amulet.json"
+      },
+      {
+        "file": "warded_mail.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/warded_mail.json"
+      },
+      {
+        "file": "warlock_boots.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/warlock_boots.json"
+      },
+      {
+        "file": "warlock_cloak.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/warlock_cloak.json"
+      },
+      {
+        "file": "warlock_hat.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/warlock_hat.json"
+      },
+      {
+        "file": "wicked_weave.json",
+        "type": "eidolon:worktable",
+        "target": "assets/eidolon/worktable_recipes/wicked_weave.json"
+      }
+    ],
+    "crucible": [
+      {
+        "file": "arcane_gold_ingot_alchemy.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/arcane_gold_ingot_alchemy.json"
+      },
+      {
+        "file": "beef_to_flesh.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/beef_to_flesh.json"
+      },
+      {
+        "file": "chicken_to_flesh.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/chicken_to_flesh.json"
+      },
+      {
+        "file": "crimson_essence_roots.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/crimson_essence_roots.json"
+      },
+      {
+        "file": "crimson_essence_vines.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/crimson_essence_vines.json"
+      },
+      {
+        "file": "death_essence.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/death_essence.json"
+      },
+      {
+        "file": "death_essence_withered.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/death_essence_withered.json"
+      },
+      {
+        "file": "ender_calx.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/ender_calx.json"
+      },
+      {
+        "file": "flesh_to_leather.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/flesh_to_leather.json"
+      },
+      {
+        "file": "fungus_sprouts.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/fungus_sprouts.json"
+      },
+      {
+        "file": "gilding_apple.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/gilding_apple.json"
+      },
+      {
+        "file": "gilding_carrot.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/gilding_carrot.json"
+      },
+      {
+        "file": "gilding_melon.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/gilding_melon.json"
+      },
+      {
+        "file": "glowstone_dust.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/glowstone_dust.json"
+      },
+      {
+        "file": "gunpowder_alchemy.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/gunpowder_alchemy.json"
+      },
+      {
+        "file": "lesser_soul_gem.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/lesser_soul_gem.json"
+      },
+      {
+        "file": "magic_ink.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/magic_ink.json"
+      },
+      {
+        "file": "magicians_wax.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/magicians_wax.json"
+      },
+      {
+        "file": "mutton_to_flesh.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/mutton_to_flesh.json"
+      },
+      {
+        "file": "parchment.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/parchment.json"
+      },
+      {
+        "file": "polished_planks.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/polished_planks.json"
+      },
+      {
+        "file": "pork_to_flesh.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/pork_to_flesh.json"
+      },
+      {
+        "file": "rabbit_to_flesh.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/rabbit_to_flesh.json"
+      },
+      {
+        "file": "shadow_gem.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/shadow_gem.json"
+      },
+      {
+        "file": "sulfur.json",
+        "type": "eidolon:crucible",
+        "target": "assets/eidolon/crucible_recipes/sulfur.json"
+      }
+    ],
+    "lootBlocks": [
+      {
+        "file": "arcane_gold_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/arcane_gold_block.json"
+      },
+      {
+        "file": "avennian_sprig.json",
+        "target": "assets/eidolon/loot_tables/blocks/avennian_sprig.json"
+      },
+      {
+        "file": "brazier.json",
+        "target": "assets/eidolon/loot_tables/blocks/brazier.json"
+      },
+      {
+        "file": "candle.json",
+        "target": "assets/eidolon/loot_tables/blocks/candle.json"
+      },
+      {
+        "file": "candlestick.json",
+        "target": "assets/eidolon/loot_tables/blocks/candlestick.json"
+      },
+      {
+        "file": "crucible.json",
+        "target": "assets/eidolon/loot_tables/blocks/crucible.json"
+      },
+      {
+        "file": "deep_lead_ore.json",
+        "target": "assets/eidolon/loot_tables/blocks/deep_lead_ore.json"
+      },
+      {
+        "file": "deep_silver_ore.json",
+        "target": "assets/eidolon/loot_tables/blocks/deep_silver_ore.json"
+      },
+      {
+        "file": "enchanted_ash.json",
+        "target": "assets/eidolon/loot_tables/blocks/enchanted_ash.json"
+      },
+      {
+        "file": "goblet.json",
+        "target": "assets/eidolon/loot_tables/blocks/goblet.json"
+      },
+      {
+        "file": "lead_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/lead_block.json"
+      },
+      {
+        "file": "lead_ore.json",
+        "target": "assets/eidolon/loot_tables/blocks/lead_ore.json"
+      },
+      {
+        "file": "magic_candle.json",
+        "target": "assets/eidolon/loot_tables/blocks/magic_candle.json"
+      },
+      {
+        "file": "magic_candlestick.json",
+        "target": "assets/eidolon/loot_tables/blocks/magic_candlestick.json"
+      },
+      {
+        "file": "merammer_root.json",
+        "target": "assets/eidolon/loot_tables/blocks/merammer_root.json"
+      },
+      {
+        "file": "necrotic_focus.json",
+        "target": "assets/eidolon/loot_tables/blocks/necrotic_focus.json"
+      },
+      {
+        "file": "oanna_bloom.json",
+        "target": "assets/eidolon/loot_tables/blocks/oanna_bloom.json"
+      },
+      {
+        "file": "obelisk.json",
+        "target": "assets/eidolon/loot_tables/blocks/obelisk.json"
+      },
+      {
+        "file": "pewter_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/pewter_block.json"
+      },
+      {
+        "file": "planter.json",
+        "target": "assets/eidolon/loot_tables/blocks/planter.json"
+      },
+      {
+        "file": "plinth.json",
+        "target": "assets/eidolon/loot_tables/blocks/plinth.json"
+      },
+      {
+        "file": "polished_planks.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_planks.json"
+      },
+      {
+        "file": "polished_planks_fence.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_planks_fence.json"
+      },
+      {
+        "file": "polished_planks_fence_gate.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_planks_fence_gate.json"
+      },
+      {
+        "file": "polished_planks_slab.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_planks_slab.json"
+      },
+      {
+        "file": "polished_planks_stairs.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_planks_stairs.json"
+      },
+      {
+        "file": "polished_wood_pillar.json",
+        "target": "assets/eidolon/loot_tables/blocks/polished_wood_pillar.json"
+      },
+      {
+        "file": "raw_lead_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/raw_lead_block.json"
+      },
+      {
+        "file": "raw_silver_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/raw_silver_block.json"
+      },
+      {
+        "file": "research_table.json",
+        "target": "assets/eidolon/loot_tables/blocks/research_table.json"
+      },
+      {
+        "file": "shadow_gem_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/shadow_gem_block.json"
+      },
+      {
+        "file": "sildrian_seed.json",
+        "target": "assets/eidolon/loot_tables/blocks/sildrian_seed.json"
+      },
+      {
+        "file": "silver_block.json",
+        "target": "assets/eidolon/loot_tables/blocks/silver_block.json"
+      },
+      {
+        "file": "silver_ore.json",
+        "target": "assets/eidolon/loot_tables/blocks/silver_ore.json"
+      },
+      {
+        "file": "smooth_stone_bricks.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_bricks.json"
+      },
+      {
+        "file": "smooth_stone_bricks_slab.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_bricks_slab.json"
+      },
+      {
+        "file": "smooth_stone_bricks_stairs.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_bricks_stairs.json"
+      },
+      {
+        "file": "smooth_stone_bricks_wall.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_bricks_wall.json"
+      },
+      {
+        "file": "smooth_stone_tiles.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_tiles.json"
+      },
+      {
+        "file": "smooth_stone_tiles_slab.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_tiles_slab.json"
+      },
+      {
+        "file": "smooth_stone_tiles_stairs.json",
+        "target": "assets/eidolon/loot_tables/blocks/smooth_stone_tiles_stairs.json"
+      },
+      {
+        "file": "soul_enchanter.json",
+        "target": "assets/eidolon/loot_tables/blocks/soul_enchanter.json"
+      },
+      {
+        "file": "stone_altar.json",
+        "target": "assets/eidolon/loot_tables/blocks/stone_altar.json"
+      },
+      {
+        "file": "stone_hand.json",
+        "target": "assets/eidolon/loot_tables/blocks/stone_hand.json"
+      },
+      {
+        "file": "straw_effigy.json",
+        "target": "assets/eidolon/loot_tables/blocks/straw_effigy.json"
+      },
+      {
+        "file": "unholy_effigy.json",
+        "target": "assets/eidolon/loot_tables/blocks/unholy_effigy.json"
+      },
+      {
+        "file": "wooden_altar.json",
+        "target": "assets/eidolon/loot_tables/blocks/wooden_altar.json"
+      },
+      {
+        "file": "wooden_brewing_stand.json",
+        "target": "assets/eidolon/loot_tables/blocks/wooden_brewing_stand.json"
+      },
+      {
+        "file": "worktable.json",
+        "target": "assets/eidolon/loot_tables/blocks/worktable.json"
+      }
+    ],
+    "lootChests": [
+      {
+        "file": "catacomb_basic.json",
+        "target": "assets/eidolon/loot_tables/chests/catacomb_basic.json"
+      },
+      {
+        "file": "catacomb_coffin.json",
+        "target": "assets/eidolon/loot_tables/chests/catacomb_coffin.json"
+      },
+      {
+        "file": "lab.json",
+        "target": "assets/eidolon/loot_tables/chests/lab.json"
+      }
+    ],
+    "lootEntities": [
+      {
+        "file": "raven.json",
+        "target": "assets/eidolon/loot_tables/entities/raven.json"
+      },
+      {
+        "file": "slimy_slug.json",
+        "target": "assets/eidolon/loot_tables/entities/slimy_slug.json"
+      },
+      {
+        "file": "wraith.json",
+        "target": "assets/eidolon/loot_tables/entities/wraith.json"
+      },
+      {
+        "file": "zombie_brute.json",
+        "target": "assets/eidolon/loot_tables/entities/zombie_brute.json"
+      }
+    ]
+  },
+  "codeBacked": {
+    "smelting": [
+      {
+        "file": "enchanted_ash.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "item": "minecraft:bone"
+          },
+          "result": {
+            "item": "eidolon:enchanted_ash",
+            "count": 2
+          },
+          "experience": 0.1
+        }
+      },
+      {
+        "file": "enchanted_ash_from_block.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "item": "minecraft:bone_block"
+          },
+          "result": {
+            "item": "eidolon:enchanted_ash",
+            "count": 6
+          },
+          "experience": 0.1
+        }
+      },
+      {
+        "file": "smelt_lead_ore.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "tag": "forge:ores/lead"
+          },
+          "result": "eidolon:lead_ingot",
+          "experience": 0.5
+        }
+      },
+      {
+        "file": "smelt_pewter_blend.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "item": "eidolon:pewter_blend"
+          },
+          "result": "eidolon:pewter_ingot",
+          "experience": 0.5
+        }
+      },
+      {
+        "file": "smelt_raw_lead.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "item": "eidolon:raw_lead"
+          },
+          "result": "eidolon:lead_ingot",
+          "experience": 0.5
+        }
+      },
+      {
+        "file": "smelt_raw_silver.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "item": "eidolon:raw_silver"
+          },
+          "result": "eidolon:silver_ingot",
+          "experience": 0.5
+        }
+      },
+      {
+        "file": "smelt_silver_ore.json",
+        "reason": "1.12 smelting is registered through ModRecipes/GameRegistry instead of JSON.",
+        "summary": {
+          "ingredient": {
+            "tag": "forge:ores/silver"
+          },
+          "result": "eidolon:silver_ingot",
+          "experience": 0.5
+        }
+      },
+      {
+        "file": "tallow.json",
+        "reason": "1.12 has no blasting station; this one is registered as a furnace fallback in ModRecipes.",
+        "summary": {
+          "ingredient": {
+            "item": "minecraft:rotten_flesh"
+          },
+          "result": "eidolon:tallow",
+          "experience": 0.5
+        }
+      }
+    ],
+    "conditionalOreSmelting": [
+      {
+        "file": "smelt_lead_dust.json",
+        "tag": "forge:dusts/lead",
+        "ore": "dustLead",
+        "result": "eidolon:lead_ingot",
+        "reason": "Converted to ModRecipes OreDictionary smelting registration."
+      },
+      {
+        "file": "smelt_silver_dust.json",
+        "tag": "forge:dusts/silver",
+        "ore": "dustSilver",
+        "result": "eidolon:silver_ingot",
+        "reason": "Converted to ModRecipes OreDictionary smelting registration."
+      }
+    ],
+    "coveredCrafting": [
+      {
+        "file": "arcane_gold_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/arcane_gold_ingot_from_nuggets.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_arcane_gold_block.json",
+        "coveredBy": "assets/eidolon/recipes/arcane_gold_ingot_from_block.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_arcane_gold_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/arcane_gold_nugget.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_lead_block.json",
+        "coveredBy": "assets/eidolon/recipes/lead_ingot_from_block.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_lead_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/lead_nugget.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_pewter_block.json",
+        "coveredBy": "assets/eidolon/recipes/pewter_ingot_from_block.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_pewter_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/pewter_nugget.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_raw_lead_block.json",
+        "coveredBy": "assets/eidolon/recipes/raw_lead.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_raw_silver_block.json",
+        "coveredBy": "assets/eidolon/recipes/raw_silver.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_shadow_gem_block.json",
+        "coveredBy": "assets/eidolon/recipes/shadow_gem.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_silver_block.json",
+        "coveredBy": "assets/eidolon/recipes/silver_ingot_from_block.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "decompress_silver_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/silver_nugget.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "lead_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/lead_ingot_from_nuggets.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "pewter_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/pewter_ingot_from_nuggets.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      },
+      {
+        "file": "silver_ingot.json",
+        "coveredBy": "assets/eidolon/recipes/silver_ingot_from_nuggets.json",
+        "reason": "Source recipe is already represented by an existing Legacy 1.12 recipe with equivalent input/output."
+      }
+    ],
+    "entityLootWiring": [
+      {
+        "files": [
+          "loot_tables/entities/raven.json",
+          "loot_tables/entities/slimy_slug.json",
+          "loot_tables/entities/wraith.json",
+          "loot_tables/entities/zombie_brute.json"
+        ],
+        "reason": "1.12 entities must return a ResourceLocation from getLootTable(); the Legacy entity classes now point to the generated tables."
+      }
+    ],
+    "tags": [
+      {
+        "file": "tags/items/zombie_food.json",
+        "reason": "No runtime tag loader exists in 1.12; values were analyzed for potential code hooks.",
+        "values": [
+          "minecraft:rotten_flesh",
+          "eidolon:zombie_heart"
+        ],
+        "status": "No code usage found in Legacy during conversion, so no custom loader was added."
+      },
+      {
+        "file": "tags/worldgen/biome/has_structure/stray_tower.json",
+        "reason": "Worldgen biome tags are represented by ModWorldGen biome/structure code in 1.12."
+      }
+    ],
+    "worldgen": [
+      {
+        "files": [
+          "worldgen/configured_feature/lead_ore.json",
+          "worldgen/configured_feature/silver_ore.json",
+          "worldgen/placed_feature/lead_ore.json",
+          "worldgen/placed_feature/silver_ore.json",
+          "worldgen/structure/catacomb.json",
+          "worldgen/structure/lab.json",
+          "worldgen/structure/stray_tower.json",
+          "worldgen/structure_set/surface_structures.json",
+          "worldgen/template_pool/catacomb.json",
+          "worldgen/template_pool/lab.json",
+          "worldgen/template_pool/stray_tower.json"
+        ],
+        "reason": "1.12 has no datapack worldgen loader; values are carried by elucent.eidolon.world.EidolonWorldGenerator/EidolonStructureGenerator.",
+        "mappedToCode": [
+          {
+            "file": "worldgen/placed_feature/lead_ore.json",
+            "count": 6,
+            "height": {
+              "type": "minecraft:uniform",
+              "max_inclusive": {
+                "absolute": 41
+              },
+              "min_inclusive": {
+                "absolute": -27
+              }
+            },
+            "note": "1.20 negative Y/deepslate split cannot be represented directly in 1.12; ore generation remains code-backed with normal/deep ranges."
+          },
+          {
+            "file": "worldgen/placed_feature/silver_ore.json",
+            "count": 5,
+            "height": {
+              "type": "minecraft:uniform",
+              "max_inclusive": {
+                "absolute": 33
+              },
+              "min_inclusive": {
+                "absolute": -64
+              }
+            },
+            "note": "1.20 negative Y/deepslate split cannot be represented directly in 1.12; ore generation remains code-backed with normal/deep ranges."
+          },
+          {
+            "file": "worldgen/structure_set/surface_structures.json",
+            "placement": {
+              "spacing": 48,
+              "separation": 32,
+              "salt": 13215577,
+              "type": "minecraft:random_spread"
+            },
+            "note": "Surface structure random-spread constants are mirrored in EidolonWorldGenerator."
+          }
+        ]
+      }
+    ]
+  },
+  "skipped": [
+    {
+      "file": "blast_enchanted_ash.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "blast_lead_dust.json",
+      "type": "forge:conditional",
+      "reason": "Forge conditional recipes have no equivalent JSON condition system in 1.12."
+    },
+    {
+      "file": "blast_lead_ore.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "blast_pewter_blend.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "blast_raw_lead.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "blast_raw_silver.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "blast_silver_dust.json",
+      "type": "forge:conditional",
+      "reason": "Forge conditional recipes have no equivalent JSON condition system in 1.12."
+    },
+    {
+      "file": "blast_silver_ore.json",
+      "type": "minecraft:blasting",
+      "reason": "1.12 has no blasting station; equivalent ore/pewter smelting is handled by ModRecipes."
+    },
+    {
+      "file": "crimson_essence_fungus.json",
+      "type": "eidolon:crucible",
+      "reason": "minecraft:red_mushroom is not in the conservative Minecraft 1.12 item map."
+    },
+    {
+      "file": "smooth_stone_bricks_slab_stonecutting.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_slab_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_stairs_stonecutting.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_stairs_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_wall_stonecutting.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_bricks_wall_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_tiles_slab_stonecutting.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_tiles_slab_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_tiles_stairs_stonecutting.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_tiles_stairs_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "smooth_stone_tiles_stonecutting_from_stone.json",
+      "type": "minecraft:stonecutting",
+      "reason": "1.12 has no stonecutter recipe type; existing shaped slab/stair/wall recipes cover the craftable outputs."
+    },
+    {
+      "file": "warped_sprouts.json",
+      "type": "eidolon:crucible",
+      "reason": "minecraft:brown_mushroom is not in the conservative Minecraft 1.12 item map."
+    }
+  ],
+  "warnings": [
+    {
+      "file": "loot_tables/blocks/avennian_sprig.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/deep_lead_ore.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/deep_silver_ore.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/lead_ore.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/merammer_root.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/oanna_bloom.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/polished_planks_slab.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/sildrian_seed.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/silver_ore.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/smooth_stone_bricks_slab.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    },
+    {
+      "file": "loot_tables/blocks/smooth_stone_tiles_slab.json",
+      "warning": "Simplified modern block loot; silk touch, fortune, explosion decay, and block-state conditions are not represented in 1.12 JSON."
+    }
+  ]
+}

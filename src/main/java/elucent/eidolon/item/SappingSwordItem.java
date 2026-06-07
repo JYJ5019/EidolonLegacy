@@ -1,45 +1,31 @@
 package elucent.eidolon.item;
 
+import elucent.eidolon.network.VisualEffectPacket;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSource;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-public class SappingSwordItem extends ItemSword {
+public class SappingSwordItem extends EidolonSwordItem {
     public SappingSwordItem(ToolMaterial material) {
-        super(material);
-        MinecraftForge.EVENT_BUS.register(this);
+        super(material, 4.0D, -2.4D);
     }
 
-    @SubscribeEvent
-    public void onAttack(AttackEntityEvent event) {
-        if (!(event.getTarget() instanceof EntityLivingBase)) {
-            return;
+    @Override
+    public boolean hitEntity(net.minecraft.item.ItemStack stack, EntityLivingBase target, EntityLivingBase attacker) {
+        if (!attacker.world.isRemote && target.hurtResistantTime > 0) {
+            target.hurtResistantTime = 0;
+            float before = target.getHealth();
+            target.attackEntityFrom(new EntityDamageSource("wither", attacker).setDamageBypassesArmor(), 2.0F);
+            float healing = before - target.getHealth();
+            if (healing > 0.0F) {
+                attacker.heal(healing);
+                VisualEffectPacket.sendAround(attacker.world, target.posX, target.posY + target.height * 0.5D, target.posZ,
+                        VisualEffectPacket.line(VisualEffectPacket.LIFESTEAL,
+                                target.posX, target.posY + target.height * 0.5D, target.posZ,
+                                attacker.posX, attacker.posY + attacker.height * 0.5D,
+                                attacker.posZ, 1.0F, 0.12F, 0.18F));
+            }
         }
-        if (!(event.getEntityPlayer().getHeldItemMainhand().getItem() instanceof SappingSwordItem)) {
-            return;
-        }
-        EntityLivingBase target = (EntityLivingBase) event.getTarget();
-        target.hurtResistantTime = 0;
-        if (!event.getEntityPlayer().world.isRemote) {
-            event.getEntityPlayer().heal(2.0F);
-        }
-    }
-
-    @SubscribeEvent
-    public void onDamage(LivingDamageEvent event) {
-        DamageSource source = event.getSource();
-        if (source == null || !(source.getTrueSource() instanceof EntityLivingBase)) {
-            return;
-        }
-        EntityLivingBase attacker = (EntityLivingBase) source.getTrueSource();
-        if (!(attacker.getHeldItemMainhand().getItem() instanceof SappingSwordItem)) {
-            return;
-        }
-        event.setAmount(event.getAmount() + 2.0F);
+        return super.hitEntity(stack, target, attacker);
     }
 }

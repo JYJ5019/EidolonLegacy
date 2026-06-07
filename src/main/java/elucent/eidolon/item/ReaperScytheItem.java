@@ -1,11 +1,13 @@
 package elucent.eidolon.item;
 
+import elucent.eidolon.Eidolon;
+import elucent.eidolon.network.VisualEffectPacket;
 import elucent.eidolon.registries.ModItems;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
@@ -15,9 +17,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.List;
 
-public class ReaperScytheItem extends ItemSword {
+public class ReaperScytheItem extends EidolonSwordItem {
     public ReaperScytheItem(ToolMaterial material) {
-        super(material);
+        super(material, 7.0D, -2.9D);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -33,21 +35,25 @@ public class ReaperScytheItem extends ItemSword {
         }
         EntityLivingBase attacker = (EntityLivingBase) source.getTrueSource();
         ItemStack weapon = attacker.getHeldItemMainhand();
-        boolean deathbringer = weapon.getItem() instanceof DeathbringerScytheItem;
-        if (!(weapon.getItem() instanceof ReaperScytheItem) && !deathbringer) {
+        if (!(weapon.getItem() instanceof ReaperScytheItem) && source != Eidolon.RITUAL_DAMAGE) {
             return;
         }
         if (target.world.isRemote) {
             return;
         }
-        int count = 1 + target.world.rand.nextInt(1 + Math.max(0, event.getLootingLevel()));
-        if (deathbringer) {
-            count *= 3;
+        if (!(target instanceof EntityPlayer)) {
+            event.getDrops().clear();
         }
-        EntityItem drop = new EntityItem(target.world, target.posX, target.posY, target.posZ,
-                new ItemStack(ModItems.SOUL_SHARD, count));
-        drop.setDefaultPickupDelay();
-        event.getDrops().add(drop);
+        int count = target.world.rand.nextInt(2 + Math.max(0, event.getLootingLevel()));
+        if (count > 0) {
+            EntityItem drop = new EntityItem(target.world, target.posX, target.posY, target.posZ,
+                    new ItemStack(ModItems.SOUL_SHARD, count));
+            drop.setDefaultPickupDelay();
+            event.getDrops().add(drop);
+        }
+        VisualEffectPacket.sendAround(target.world, target.posX, target.posY + target.height * 0.5D, target.posZ,
+                VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, target.posX, target.posY + target.height * 0.5D,
+                        target.posZ, 0.97F, 0.61F, 0.86F));
     }
 
     private boolean isReapable(EntityLivingBase target) {

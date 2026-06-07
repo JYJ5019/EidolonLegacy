@@ -56,6 +56,54 @@ public final class AltarTweaker {
     }
 
     @ZenMethod
+    public static void addSanguine(String id, IItemStack output, IIngredient focus, IIngredient sacrifice,
+                                   double capacity, double power, double health, IIngredient[] offerings) {
+        addRitual(id, output, "sanguine", capacity, power, focus, sacrifice, null, (float) health, offerings);
+    }
+
+    @ZenMethod
+    public static void addPurify(String id, IIngredient sacrifice, double capacity, double power,
+                                 IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "purify", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addCrystal(String id, IIngredient sacrifice, double capacity, double power,
+                                  IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "crystal", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addAllure(String id, IIngredient sacrifice, double capacity, double power,
+                                 IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "allure", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addRepelling(String id, IIngredient sacrifice, double capacity, double power,
+                                    IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "repelling", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addDeceit(String id, IIngredient sacrifice, double capacity, double power,
+                                 IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "deceit", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addDaylight(String id, IIngredient sacrifice, double capacity, double power,
+                                   IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "daylight", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
+    public static void addMoonlight(String id, IIngredient sacrifice, double capacity, double power,
+                                    IIngredient[] offerings, @Optional IIngredient focus) {
+        addEffectRitual(id, "moonlight", sacrifice, capacity, power, offerings, focus);
+    }
+
+    @ZenMethod
     public static void addOffering(String id, IItemStack item, double capacity, double power) {
         Item entryItem = item(item);
         boolean blockOffering = entryItem instanceof ItemBlock;
@@ -181,6 +229,11 @@ public final class AltarTweaker {
         });
     }
 
+    private static void addEffectRitual(String id, String behavior, IIngredient sacrifice, double capacity,
+                                        double power, IIngredient[] offerings, IIngredient focus) {
+        addRitual(id, null, behavior, capacity, power, focus, sacrifice, null, 0.0F, offerings);
+    }
+
     private static List<Ingredient> offerings(IIngredient[] offerings) {
         List<Ingredient> converted = new ArrayList<>();
         if (offerings != null) {
@@ -195,6 +248,9 @@ public final class AltarTweaker {
         if ("item_transform".equals(behavior)) {
             return AltarRitual.BehaviorType.ITEM_TRANSFORM;
         }
+        if ("sanguine".equals(behavior)) {
+            return AltarRitual.BehaviorType.SANGUINE;
+        }
         if ("item_charge".equals(behavior)) {
             return AltarRitual.BehaviorType.ITEM_CHARGE;
         }
@@ -203,6 +259,27 @@ public final class AltarTweaker {
         }
         if ("absorption".equals(behavior)) {
             return AltarRitual.BehaviorType.ABSORPTION;
+        }
+        if ("purify".equals(behavior)) {
+            return AltarRitual.BehaviorType.PURIFY;
+        }
+        if ("crystal".equals(behavior)) {
+            return AltarRitual.BehaviorType.CRYSTAL;
+        }
+        if ("allure".equals(behavior)) {
+            return AltarRitual.BehaviorType.ALLURE;
+        }
+        if ("repelling".equals(behavior)) {
+            return AltarRitual.BehaviorType.REPELLING;
+        }
+        if ("deceit".equals(behavior)) {
+            return AltarRitual.BehaviorType.DECEIT;
+        }
+        if ("daylight".equals(behavior)) {
+            return AltarRitual.BehaviorType.DAYLIGHT;
+        }
+        if ("moonlight".equals(behavior)) {
+            return AltarRitual.BehaviorType.MOONLIGHT;
         }
         return AltarRitual.BehaviorType.ITEM_RESULT;
     }

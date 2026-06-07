@@ -1,0 +1,26 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "entity_summon",
+  "entity": "minecraft:guardian",
+  "capacity": 3,
+  "power": 3,
+  "result": {
+    "item": "minecraft:spawn_egg",
+    "nbt": "{EntityTag:{id:\"minecraft:guardian\"}}"
+  },
+  "sacrifice": {
+    "item": "minecraft:coal",
+    "data": 1
+  },
+  "focus": {
+    "item": "minecraft:prismarine_shard"
+  },
+  "offerings": [
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "minecraft:rotten_flesh"
+    }
+  ]
+}

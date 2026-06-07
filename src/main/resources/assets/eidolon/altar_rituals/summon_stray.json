@@ -8,9 +8,12 @@
     "item": "minecraft:spawn_egg",
     "nbt": "{EntityTag:{id:\"minecraft:stray\"}}"
   },
-  "focus": {
+  "sacrifice": {
     "item": "minecraft:coal",
     "data": 1
+  },
+  "focus": {
+    "item": "minecraft:string"
   },
   "offerings": [
     {
@@ -18,9 +21,6 @@
     },
     {
       "item": "minecraft:bone"
-    },
-    {
-      "item": "minecraft:string"
     }
   ]
 }

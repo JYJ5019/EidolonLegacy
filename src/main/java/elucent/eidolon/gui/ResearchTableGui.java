@@ -24,7 +24,6 @@ public class ResearchTableGui extends GuiContainer {
     private static final int TASK_X = 164;
     private static final int TASK_Y = 16;
     private static final int TASK_SPACING = 36;
-    private static final int SEED = 1418644859;
     private final ResearchTableContainer tableContainer;
 
     public ResearchTableGui(InventoryPlayer playerInventory, ResearchTableTileEntity tile) {
@@ -82,7 +81,7 @@ public class ResearchTableGui extends GuiContainer {
             drawTexturedModalRect(left + 137, top + 17 + amount, 192, 92 + amount, 9, 104 - amount);
         }
         if (stepsDone < stars && progress == 0) {
-            List<ResearchTask> tasks = research.getTasks(SEED, stepsDone);
+            List<ResearchTask> tasks = research.getTasks(tableContainer.getResearchSeed(), stepsDone);
             for (int i = 0; i < tasks.size(); i++) {
                 drawTask(tasks, i, left + TASK_X, top + TASK_Y + i * TASK_SPACING);
             }
@@ -133,7 +132,7 @@ public class ResearchTableGui extends GuiContainer {
         if (tag.getInteger("stepsDone") >= research.getStars()) {
             return null;
         }
-        List<ResearchTask> tasks = research.getTasks(SEED, tag.getInteger("stepsDone"));
+        List<ResearchTask> tasks = research.getTasks(tableContainer.getResearchSeed(), tag.getInteger("stepsDone"));
         for (int i = 0; i < tasks.size(); i++) {
             int x = left + TASK_X + 10;
             int y = top + TASK_Y + i * TASK_SPACING + 6;
@@ -156,7 +155,7 @@ public class ResearchTableGui extends GuiContainer {
         if (stepsDone >= research.getStars()) {
             return false;
         }
-        List<ResearchTask> tasks = research.getTasks(SEED, stepsDone);
+        List<ResearchTask> tasks = research.getTasks(tableContainer.getResearchSeed(), stepsDone);
         for (int i = 0; i < tasks.size(); i++) {
             ResearchTask task = tasks.get(i);
             int x = left + TASK_X;

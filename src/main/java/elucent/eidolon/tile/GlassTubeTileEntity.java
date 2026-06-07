@@ -3,12 +3,17 @@ package elucent.eidolon.tile;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 
-public class GlassTubeTileEntity extends TileEntity {
+public class GlassTubeTileEntity extends ReagentTankTileEntity {
+    private static final int CAPACITY = 128;
+
     private EnumFacing input = EnumFacing.DOWN;
     private EnumFacing output = EnumFacing.UP;
+
+    public GlassTubeTileEntity() {
+        super(CAPACITY);
+    }
 
     public EnumFacing getInput() {
         return input;
@@ -38,10 +43,17 @@ public class GlassTubeTileEntity extends TileEntity {
     }
 
     private void notifyStateChanged() {
-        markDirty();
-        if (world != null && !world.isRemote) {
-            world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-        }
+        onContentsChanged();
+    }
+
+    @Override
+    public boolean isOutput(EnumFacing direction) {
+        return direction == output;
+    }
+
+    @Override
+    public boolean isInput(EnumFacing direction) {
+        return direction == input;
     }
 
     @Override

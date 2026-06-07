@@ -1,0 +1,732 @@
+EidolonLegacy CraftTweaker2 魔改教程
+适用环境：Minecraft 1.12.2 / CraftTweaker 2 / EidolonLegacy
+
+本教程说明当前已经接入 CraftTweaker2 的全部接口，并提供带中文注释的示例脚本。
+
+测试脚本位置：
+run/client/scripts/eidolon_ct2_smoke_test.zs
+
+启动客户端后，检查 run/client/crafttweaker.log。如果看到下面两行，说明脚本已被 CraftTweaker2 读取：
+Loading Eidolon CraftTweaker2 smoke test script
+Loaded Eidolon CraftTweaker2 smoke test script
+
+
+一、通用规则
+
+1. 脚本位置
+   把 .zs 文件放进当前实例的 scripts 目录，例如：
+   .minecraft/scripts/eidolon_legacy.zs
+
+   开发环境中可使用：
+   run/client/scripts/eidolon_ct2_smoke_test.zs
+
+2. ID 写法
+   配方 id 建议使用自己的命名空间：
+   "pack:test_worktable"
+   "mymod:custom_ritual"
+
+3. 物品写法
+   <minecraft:diamond> 表示 1 个钻石。
+   <minecraft:dye:4> 表示 metadata 为 4 的染料。
+   <minecraft:paper> * 2 表示 2 张纸。
+   null 表示空槽。
+
+4. 删除规则
+   优先用 removeById 删除指定配方。
+   removeByOutput 会删除所有输出匹配的配方。
+   removeAll 会清空整个系统，正式整合包中谨慎使用。
+
+5. 调试
+   脚本加载失败时先看 crafttweaker.log。
+   如果 HEI 或圣教秘典不显示新增配方，先确认日志里没有语法错误。
+   替换内置配方时，推荐先 removeById，再 addRecipe 添加同类新配方。
+
+
+二、Worktable 接口
+
+接口类：
+mods.eidolon.Worktable
+
+用途：
+添加、删除魔法工作台配方。
+
+方法：
+mods.eidolon.Worktable.addRecipe(String id, IItemStack output, IIngredient[] grid, IIngredient[] reagents);
+mods.eidolon.Worktable.removeById(String id);
+mods.eidolon.Worktable.removeByOutput(IIngredient output);
+mods.eidolon.Worktable.removeAll();
+
+参数说明：
+- id：配方唯一 ID。
+- output：输出物品。
+- grid：3x3 主输入，必须正好 9 个元素，顺序从左到右、从上到下。
+- reagents：4 个试剂槽，必须正好 4 个元素。
+
+示例：
+
+// 定义 3x3 主输入。
+// null 表示该格必须为空。
+val worktableGrid as crafttweaker.item.IIngredient[] = [
+    <minecraft:stick>, null, null,
+    null, <minecraft:diamond>, null,
+    null, null, <minecraft:stick>
+];
+
+// 定义 4 个试剂槽。
+// 顺序对应工作台周围的四个试剂槽。
+val worktableReagents as crafttweaker.item.IIngredient[] = [
+    <eidolon:soul_shard>,
+    null,
+    null,
+    <eidolon:pewter_inlay>
+];
+
+// 按 ID 删除旧配方，避免重复添加。
+mods.eidolon.Worktable.removeById("pack:test_worktable");
+
+// 添加工作台配方。
+mods.eidolon.Worktable.addRecipe(
+    // 配方 ID。
+    "pack:test_worktable",
+    // 输出物品。
+    <eidolon:test_sigil>,
+    // 3x3 主输入。
+    worktableGrid,
+    // 4 个试剂槽。
+    worktableReagents
+);
+
+// 按输出删除所有产出 test_sigil 的工作台配方。
+// mods.eidolon.Worktable.removeByOutput(<eidolon:test_sigil>);
+
+// 清空全部工作台配方。危险：会删除内置配方。
+// mods.eidolon.Worktable.removeAll();
+
+
+三、Crucible 接口
+
+接口类：
+mods.eidolon.Crucible
+
+用途：
+添加、删除坩埚分步骤配方。
+
+方法：
+mods.eidolon.Crucible.addRecipe(String id, IItemStack output, int[] stirs, IIngredient[][] steps, @Optional IIngredient stirrer, @Optional ILiquidStack fluid);
+mods.eidolon.Crucible.removeById(String id);
+mods.eidolon.Crucible.removeByOutput(IIngredient output);
+mods.eidolon.Crucible.removeAll();
+
+参数说明：
+- id：配方唯一 ID。
+- output：最终输出物品。
+- stirs：每一步需要搅拌的次数。
+- steps：每一步投入的物品。外层数组是步骤，内层数组是该步骤的物品。
+- stirrer：搅拌物，可省略，默认通常是木棍。
+- fluid：坩埚起始流体，可省略，默认通常是一桶水。
+
+限制：
+- stirs 数组长度必须等于 steps 步骤数量。
+- 每一步最多 6 个投入物。
+- 步骤之间必须按顺序完成。
+
+示例：
+
+// 每一步需要搅拌的次数。
+val crucibleStirs as int[] = [
+    0, // 第 1 步不搅拌。
+    2, // 第 2 步搅拌 2 次。
+    1  // 第 3 步搅拌 1 次。
+];
+
+// 每一步投入物。
+val crucibleSteps as crafttweaker.item.IIngredient[][] = [
+    [
+        // 第 1 步：腐肉 + 灵魂碎片。
+        <minecraft:rotten_flesh>,
+        <eidolon:soul_shard>
+    ],
+    [
+        // 第 2 步：骨头 + 红石。
+        <minecraft:bone>,
+        <minecraft:redstone>
+    ],
+    [
+        // 第 3 步：木炭。
+        <minecraft:coal:1>
+    ]
+];
+
+mods.eidolon.Crucible.removeById("pack:test_crucible");
+
+mods.eidolon.Crucible.addRecipe(
+    // 配方 ID。
+    "pack:test_crucible",
+    // 最终产物。
+    <eidolon:death_essence>,
+    // 每一步搅拌次数。
+    crucibleStirs,
+    // 每一步投入物。
+    crucibleSteps,
+    // 搅拌物。
+    <minecraft:stick>,
+    // 起始流体，一桶水。
+    <liquid:water> * 1000
+);
+
+// 删除产出 death_essence 的坩埚配方。
+// mods.eidolon.Crucible.removeByOutput(<eidolon:death_essence>);
+
+// 清空全部坩埚配方。危险。
+// mods.eidolon.Crucible.removeAll();
+
+
+四、Altar 接口：祭坛仪式
+
+接口类：
+mods.eidolon.Altar
+
+用途：
+添加、删除祭坛仪式；添加、删除祭坛供物。
+
+通用概念：
+- capacity：祭坛容量需求。
+- power：祭坛力量需求。
+- sacrifice：火盆祭品。
+- offerings：石手材料列表，仪式会按规则消耗。
+- focus：暗蚀焦点物品。
+- health：生命代价，20.0 等于 10 颗心。
+
+祭坛仪式方法：
+mods.eidolon.Altar.addItemResult(id, output, capacity, power, offerings, sacrifice);
+mods.eidolon.Altar.addTransform(id, output, focus, capacity, power, offerings, health, sacrifice);
+mods.eidolon.Altar.addCharge(id, output, focus, capacity, power, offerings, sacrifice);
+mods.eidolon.Altar.addSummon(id, displayOutput, entityId, focus, capacity, power, offerings, sacrifice);
+mods.eidolon.Altar.addAbsorption(id, output, focus, capacity, power, offerings, sacrifice);
+mods.eidolon.Altar.addSanguine(id, output, focus, sacrifice, capacity, power, health, offerings);
+mods.eidolon.Altar.addPurify(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addCrystal(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addAllure(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addRepelling(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addDeceit(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addDaylight(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.addMoonlight(id, sacrifice, capacity, power, offerings, focus);
+mods.eidolon.Altar.removeById(id);
+mods.eidolon.Altar.removeByOutput(output);
+mods.eidolon.Altar.removeAll();
+
+基础材料数组：
+
+// 常用石手材料。
+val altarOfferings as crafttweaker.item.IIngredient[] = [
+    <eidolon:soul_shard>,
+    <minecraft:bone>
+];
+
+// 场域仪式常用材料。
+val fieldOfferings as crafttweaker.item.IIngredient[] = [
+    <eidolon:soul_shard>,
+    <eidolon:soul_shard>
+];
+
+1. 普通产物仪式
+
+mods.eidolon.Altar.removeById("pack:test_altar_result");
+
+mods.eidolon.Altar.addItemResult(
+    // 仪式 ID。
+    "pack:test_altar_result",
+    // 完成后生成的物品。
+    <minecraft:emerald>,
+    // 容量需求。
+    1.0,
+    // 力量需求。
+    1.0,
+    // 石手材料。
+    altarOfferings,
+    // 火盆祭品。
+    <minecraft:coal>
+);
+
+2. 转化仪式
+
+mods.eidolon.Altar.addTransform(
+    // 仪式 ID。
+    "pack:test_transform",
+    // 焦点被转化后的产物。
+    <minecraft:blaze_rod>,
+    // 暗蚀焦点中需要放入的物品。
+    <minecraft:stick>,
+    // 容量需求。
+    2.0,
+    // 力量需求。
+    2.0,
+    // 石手材料。
+    altarOfferings,
+    // 可选生命代价。省略时为 0。
+    0.0,
+    // 可选火盆祭品。
+    <minecraft:redstone>
+);
+
+3. 充能仪式
+
+mods.eidolon.Altar.addCharge(
+    // 仪式 ID。
+    "pack:test_charge",
+    // HEI/秘典中显示的结果。
+    <eidolon:soulfire_wand>,
+    // 暗蚀焦点中的待充能物品。
+    <eidolon:soulfire_wand>,
+    // 容量需求。
+    3.0,
+    // 力量需求。
+    3.0,
+    // 石手材料。
+    altarOfferings,
+    // 火盆祭品。
+    <eidolon:lesser_soul_gem>
+);
+
+4. 召唤仪式
+
+mods.eidolon.Altar.addSummon(
+    // 仪式 ID。
+    "pack:test_summon_zombie",
+    // 显示物品，不决定实际召唤内容。
+    <minecraft:spawn_egg>.withTag({EntityTag: {id: "minecraft:zombie"}}),
+    // 实际召唤实体 ID。
+    "minecraft:zombie",
+    // 暗蚀焦点物品。
+    <minecraft:rotten_flesh>,
+    // 容量需求。
+    3.0,
+    // 力量需求。
+    3.0,
+    // 石手材料。
+    altarOfferings,
+    // 火盆祭品。
+    <minecraft:coal:1>
+);
+
+5. 吸收仪式
+
+mods.eidolon.Altar.addAbsorption(
+    // 仪式 ID。
+    "pack:test_absorption",
+    // 显示产物。
+    <eidolon:summoning_staff>,
+    // 暗蚀焦点中放入召唤法杖。
+    <eidolon:summoning_staff>,
+    // 容量需求。
+    4.0,
+    // 力量需求。
+    4.0,
+    // 石手材料。
+    altarOfferings,
+    // 火盆祭品。
+    <minecraft:bone>
+);
+
+6. 血契制作
+
+mods.eidolon.Altar.addSanguine(
+    // 仪式 ID。
+    "pack:test_sanguine",
+    // 仪式结果。
+    <eidolon:sapping_sword>,
+    // 暗蚀焦点中的基础物品。
+    <minecraft:iron_sword>,
+    // 火盆祭品。
+    <minecraft:redstone>,
+    // 容量需求。
+    4.0,
+    // 力量需求。
+    4.0,
+    // 生命代价。
+    20.0,
+    // 石手材料。
+    [
+        <eidolon:shadow_gem>,
+        <eidolon:soul_shard>,
+        <minecraft:ghast_tear>
+    ]
+);
+
+7. 净化仪式
+
+mods.eidolon.Altar.addPurify(
+    // 仪式 ID。
+    "pack:test_purify",
+    // 火盆祭品。
+    <minecraft:speckled_melon>,
+    // 容量需求。
+    3.0,
+    // 力量需求。
+    3.0,
+    // 石手材料。
+    fieldOfferings
+);
+
+8. 结晶仪式
+
+mods.eidolon.Altar.addCrystal(
+    // 仪式 ID。
+    "pack:test_crystal",
+    // 火盆祭品。
+    <minecraft:dye:15>,
+    // 容量需求。
+    2.0,
+    // 力量需求。
+    2.0,
+    // 石手材料。
+    fieldOfferings
+);
+
+9. 诱引、驱离、欺瞒、昼光、月光仪式
+
+mods.eidolon.Altar.addAllure("pack:test_allure", <minecraft:double_plant:4>, 3.0, 3.0, fieldOfferings);
+mods.eidolon.Altar.addRepelling("pack:test_repelling", <minecraft:prismarine_crystals>, 3.0, 3.0, fieldOfferings);
+mods.eidolon.Altar.addDeceit("pack:test_deceit", <minecraft:emerald>, 3.0, 3.0, fieldOfferings);
+mods.eidolon.Altar.addDaylight("pack:test_daylight", <minecraft:double_plant:0>, 3.0, 3.0, fieldOfferings);
+mods.eidolon.Altar.addMoonlight("pack:test_moonlight", <minecraft:dye:0>, 3.0, 3.0, fieldOfferings);
+
+这些场域仪式通常没有物品产物：
+- addAllure：吸引附近被动动物。
+- addRepelling：驱离附近敌对生物。
+- addDeceit：影响附近村民和村庄声望。
+- addDaylight：推进到白天。
+- addMoonlight：推进到夜晚。
+
+
+五、Altar 接口：祭坛供物
+
+供物方法：
+mods.eidolon.Altar.addOffering(id, item, capacity, power);
+mods.eidolon.Altar.addBlockOffering(id, item, capacity, power);
+mods.eidolon.Altar.addPlateOffering(id, item, capacity, power);
+mods.eidolon.Altar.addOfferingModes(id, item, capacity, power, blockOffering, plateOffering);
+mods.eidolon.Altar.removeOfferingById(id);
+mods.eidolon.Altar.removeOfferingByItem(item);
+mods.eidolon.Altar.removeAllOfferings();
+
+说明：
+- addOffering 会根据物品是否是方块物品自动决定模式。
+- addBlockOffering 只作为放置在世界里的方块供物生效。
+- addPlateOffering 只作为祭品盘里的物品供物生效。
+- addOfferingModes 可以手动指定两种模式。
+- 祭品盘供物只提供容量/力量，不参与仪式合成。
+
+示例：
+
+mods.eidolon.Altar.removeOfferingById("pack:test_shadow_gem_offering");
+
+mods.eidolon.Altar.addPlateOffering(
+    // 供物 ID，也可理解为供物分组 key。
+    "pack:test_shadow_gem_offering",
+    // 放入祭品盘的物品。
+    <eidolon:shadow_gem>,
+    // 提供容量。
+    2.0,
+    // 提供力量。
+    1.0
+);
+
+mods.eidolon.Altar.addBlockOffering(
+    // 方块供物 ID。
+    "pack:test_lead_block_offering",
+    // 作为方块放在世界里的物品。
+    <eidolon:lead_block>,
+    // 提供容量。
+    1.0,
+    // 提供力量。
+    0.5
+);
+
+mods.eidolon.Altar.addOfferingModes(
+    // 供物 ID。
+    "pack:test_emerald_offering",
+    // 物品。
+    <minecraft:emerald>,
+    // 容量。
+    0.5,
+    // 力量。
+    0.5,
+    // 允许作为方块供物。
+    true,
+    // 允许作为祭品盘供物。
+    true
+);
+
+// 删除某个 ID 的供物。
+// mods.eidolon.Altar.removeOfferingById("pack:test_shadow_gem_offering");
+
+// 删除所有与该物品有关的供物。
+// mods.eidolon.Altar.removeOfferingByItem(<minecraft:emerald>);
+
+// 清空全部供物。危险。
+// mods.eidolon.Altar.removeAllOfferings();
+
+
+六、Athame 接口
+
+接口类：
+mods.eidolon.Athame
+
+用途：
+添加、删除仪式匕首采集规则。
+
+方法：
+mods.eidolon.Athame.addRecipe(String id, IIngredient source, IItemStack output, @Optional String sourceLabel);
+mods.eidolon.Athame.removeById(String id);
+mods.eidolon.Athame.removeByOutput(IIngredient output);
+mods.eidolon.Athame.removeBySource(IIngredient source);
+mods.eidolon.Athame.removeAll();
+
+参数说明：
+- id：采集规则 ID。
+- source：可被仪式匕首采集的来源方块物品。
+- output：额外掉落物。
+- sourceLabel：圣教秘典中显示的来源名称，可省略。
+
+示例：
+
+mods.eidolon.Athame.removeById("pack:test_athame");
+
+mods.eidolon.Athame.addRecipe(
+    // 规则 ID。
+    "pack:test_athame",
+    // 来源。这里是蕨。
+    <minecraft:tallgrass:1>,
+    // 成功时额外掉落。
+    <eidolon:soul_shard>,
+    // 秘典中显示的来源名称。
+    "蕨"
+);
+
+// 按 ID 删除。
+// mods.eidolon.Athame.removeById("pack:test_athame");
+
+// 按产物删除。
+// mods.eidolon.Athame.removeByOutput(<eidolon:soul_shard>);
+
+// 按来源删除。
+// mods.eidolon.Athame.removeBySource(<minecraft:tallgrass:1>);
+
+// 清空全部匕首采集规则。危险。
+// mods.eidolon.Athame.removeAll();
+
+
+七、Research 接口
+
+接口类：
+mods.eidolon.Research
+
+用途：
+添加、删除研究；添加、删除研究笔记触发来源。
+
+方法：
+mods.eidolon.Research.addResearch(id, name, stars, prerequisites, stepItems, source, description);
+mods.eidolon.Research.addResearchLang(id, stars, prerequisites, stepItems, sourceKey);
+mods.eidolon.Research.removeById(id);
+mods.eidolon.Research.removeAll();
+mods.eidolon.Research.addBlockTrigger(blockId, researchId);
+mods.eidolon.Research.addEntityTrigger(entityId, researchId);
+mods.eidolon.Research.addDimensionTrigger(dimension, researchId);
+mods.eidolon.Research.addFluidTrigger(blockId, researchId);
+mods.eidolon.Research.removeBlockTriggers(blockId);
+mods.eidolon.Research.removeEntityTriggers(entityId);
+mods.eidolon.Research.removeDimensionTriggers(dimension);
+mods.eidolon.Research.removeFluidTriggers(blockId);
+mods.eidolon.Research.removeAllTriggers();
+
+参数说明：
+- stars：研究星级，也是阶段数量。
+- prerequisites：前置研究 ID 数组。
+- stepItems：每一阶段可提交物品数组。外层数量必须等于 stars。
+- source：研究来源说明，可直接写中文。
+- description：研究描述，可直接写中文。
+- sourceKey：使用语言文件时的来源文本 key。
+
+示例：直接中文研究
+
+val noPrereqs as string[] = [];
+
+val researchSteps as crafttweaker.item.IItemStack[][] = [
+    [
+        // 第 1 阶段可提交纸或书。
+        <minecraft:paper>,
+        <minecraft:book>
+    ],
+    [
+        // 第 2 阶段提交灵魂碎片。
+        <eidolon:soul_shard>
+    ]
+];
+
+mods.eidolon.Research.removeById("pack:test_research");
+
+mods.eidolon.Research.addResearch(
+    // 研究 ID。
+    "pack:test_research",
+    // 显示名称。
+    "测试研究",
+    // 星级，必须等于 researchSteps 外层数量。
+    2,
+    // 前置研究。这里为空。
+    noPrereqs,
+    // 每阶段任务。
+    researchSteps,
+    // 来源说明。
+    "用笔记工具右键钻石块。",
+    // 研究描述。
+    "这是由 CraftTweaker2 添加的测试研究。"
+);
+
+// 添加方块触发：用笔记工具右键钻石块生成该研究笔记。
+mods.eidolon.Research.addBlockTrigger("minecraft:diamond_block", "pack:test_research");
+
+// 添加实体触发：右键僵尸生成该研究笔记。
+mods.eidolon.Research.addEntityTrigger("minecraft:zombie", "pack:test_research");
+
+// 添加维度触发：在主世界右键空气生成该研究笔记。
+mods.eidolon.Research.addDimensionTrigger(0, "pack:test_research");
+
+// 添加流体触发：右键水生成该研究笔记。
+mods.eidolon.Research.addFluidTrigger("minecraft:water", "pack:test_research");
+
+示例：使用语言 key 的研究
+
+val langSteps as crafttweaker.item.IItemStack[][] = [
+    [
+        <minecraft:book>
+    ]
+];
+
+mods.eidolon.Research.addResearchLang(
+    // 研究 ID。
+    "pack:test_lang_research",
+    // 星级。
+    1,
+    // 前置研究。
+    noPrereqs,
+    // 阶段任务。
+    langSteps,
+    // 来源文本 key。需要整合包自行提供语言文件。
+    "research_source.pack.test_lang_research"
+);
+
+删除示例：
+
+// 删除研究。
+// mods.eidolon.Research.removeById("pack:test_research");
+
+// 删除某个方块的全部触发。
+// mods.eidolon.Research.removeBlockTriggers("minecraft:diamond_block");
+
+// 删除某个实体的全部触发。
+// mods.eidolon.Research.removeEntityTriggers("minecraft:zombie");
+
+// 删除某个维度的全部触发。
+// mods.eidolon.Research.removeDimensionTriggers(0);
+
+// 删除某个流体方块的全部触发。
+// mods.eidolon.Research.removeFluidTriggers("minecraft:water");
+
+// 清空全部研究。危险。
+// mods.eidolon.Research.removeAll();
+
+// 清空全部研究触发。危险。
+// mods.eidolon.Research.removeAllTriggers();
+
+
+八、Incubator 接口
+
+接口类：
+mods.eidolon.Incubator
+
+用途：
+添加、删除培养器配方。
+
+方法：
+mods.eidolon.Incubator.addRecipe(String id, IIngredient input, IIngredient catalyst, IItemStack output, @Optional int ticks);
+mods.eidolon.Incubator.removeById(String id);
+mods.eidolon.Incubator.removeByOutput(IIngredient output);
+mods.eidolon.Incubator.removeAll();
+
+参数说明：
+- id：培养器配方 ID。
+- input：原料，放在培养器上方输入槽。
+- catalyst：催化物，放在培养器下方输入槽。
+- output：输出物品。
+- ticks：处理时间，单位为游戏刻。20 刻约等于 1 秒。省略或小于等于 0 时使用默认 1200 刻。
+
+示例：
+
+mods.eidolon.Incubator.removeById("pack:test_incubator");
+
+mods.eidolon.Incubator.addRecipe(
+    // 配方 ID。
+    "pack:test_incubator",
+    // 原料。
+    <minecraft:rotten_flesh>,
+    // 催化物。
+    <eidolon:soul_shard>,
+    // 输出。
+    <eidolon:zombie_heart>,
+    // 处理时间，200 刻约 10 秒。
+    200
+);
+
+// 不写 ticks 时使用默认处理时间。
+mods.eidolon.Incubator.addRecipe(
+    // 配方 ID。
+    "pack:test_incubator_default_time",
+    // 原料。
+    <minecraft:bone>,
+    // 催化物。
+    <eidolon:death_essence>,
+    // 输出。
+    <minecraft:gold_nugget>
+);
+
+// 按 ID 删除。
+// mods.eidolon.Incubator.removeById("pack:test_incubator");
+
+// 按输出删除。
+// mods.eidolon.Incubator.removeByOutput(<eidolon:zombie_heart>);
+
+// 清空全部培养器配方。危险。
+// mods.eidolon.Incubator.removeAll();
+
+
+九、完整测试建议
+
+1. 把 run/client/scripts/eidolon_ct2_smoke_test.zs 保留在 scripts 目录。
+2. 启动客户端。
+3. 查看 run/client/crafttweaker.log。
+4. 确认出现：
+   Loading Eidolon CraftTweaker2 smoke test script
+   Loaded Eidolon CraftTweaker2 smoke test script
+5. 进游戏用 HEI 搜索 ct2 测试产物：
+   - 工作台：deadbush。
+   - 坩埚：slime_ball。
+   - 祭坛：emerald、blaze_rod、各类 ct2_test_altar_*。
+   - 培养器：gold_nugget。
+   - 匕首采集：wheat_seeds。
+   - 研究：CT2 Test Research。
+6. 如果某类不显示，先看 crafttweaker.log 是否有该行报错，再看 latest.log 是否有注册或运行时错误。
+
+
+十、正式整合包建议
+
+1. 不要把测试脚本长期放在正式包里。
+2. 每个系统单独写一个 .zs 文件，便于定位错误：
+   scripts/eidolon/worktable.zs
+   scripts/eidolon/crucible.zs
+   scripts/eidolon/altar.zs
+   scripts/eidolon/research.zs
+   scripts/eidolon/incubator.zs
+3. 替换内置内容时用 removeById 精确删除。
+4. 只有在完全重写系统时才使用 removeAll。
+5. 给自定义研究和仪式补语言 key，避免游戏内出现未汉化文本。

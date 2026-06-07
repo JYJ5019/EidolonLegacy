@@ -1,0 +1,25 @@
+{
+  "type": "eidolon:altar_ritual",
+  "behavior": "daylight",
+  "capacity": 3,
+  "power": 3,
+  "sacrifice": {
+    "item": "minecraft:double_plant",
+    "data": 0
+  },
+  "offerings": [
+    {
+      "item": "minecraft:coal",
+      "data": 1
+    },
+    {
+      "item": "minecraft:wheat_seeds"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ]
+}

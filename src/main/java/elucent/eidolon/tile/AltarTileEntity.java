@@ -1,14 +1,20 @@
 package elucent.eidolon.tile;
 
+import elucent.eidolon.reagent.IReagentTankProvider;
+import elucent.eidolon.reagent.ReagentTank;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 
-public class AltarTileEntity extends TileEntity {
+public class AltarTileEntity extends TileEntity implements IReagentTankProvider {
+    private static final int REAGENT_CAPACITY = 512;
+
     private ItemStack offering = ItemStack.EMPTY;
+    private final ReagentTank tank = new ReagentTank(REAGENT_CAPACITY);
 
     public boolean hasOffering() {
         return !offering.isEmpty();
@@ -55,11 +61,33 @@ public class AltarTileEntity extends TileEntity {
     }
 
     @Override
+    public ReagentTank getTank() {
+        return tank;
+    }
+
+    @Override
+    public boolean isOutput(EnumFacing direction) {
+        return false;
+    }
+
+    @Override
+    public boolean isInput(EnumFacing direction) {
+        return direction != EnumFacing.UP;
+    }
+
+    @Override
+    public void onContentsChanged() {
+        markDirty();
+        notifyStateChanged();
+    }
+
+    @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         super.writeToNBT(compound);
         if (!offering.isEmpty()) {
             compound.setTag("Offering", offering.writeToNBT(new NBTTagCompound()));
         }
+        compound.setTag("ReagentTank", tank.writeToNBT());
         return compound;
     }
 
@@ -68,6 +96,9 @@ public class AltarTileEntity extends TileEntity {
         super.readFromNBT(compound);
         offering = compound.hasKey("Offering", Constants.NBT.TAG_COMPOUND)
                 ? new ItemStack(compound.getCompoundTag("Offering")) : ItemStack.EMPTY;
+        if (compound.hasKey("ReagentTank", Constants.NBT.TAG_COMPOUND)) {
+            tank.readFromNBT(compound.getCompoundTag("ReagentTank"));
+        }
         notifyStateChanged();
     }
 

@@ -15,5 +15,11 @@ public final class ModNetwork {
         CHANNEL.registerMessage(ResearchActionPacket.Handler.class, ResearchActionPacket.class, 0, Side.SERVER);
         CHANNEL.registerMessage(KnowledgeSyncPacket.Handler.class, KnowledgeSyncPacket.class, 1, Side.CLIENT);
         CHANNEL.registerMessage(DeathbringerSlashEffectPacket.Handler.class, DeathbringerSlashEffectPacket.class, 2, Side.CLIENT);
+        CHANNEL.registerMessage(VisualEffectPacket.Handler.class, VisualEffectPacket.class, 3, Side.CLIENT);
+        CHANNEL.registerMessage(MagicKnowledgeSyncPacket.Handler.class, MagicKnowledgeSyncPacket.class, 4, Side.CLIENT);
+        CHANNEL.registerMessage(SoulSyncPacket.Handler.class, SoulSyncPacket.class, 5, Side.CLIENT);
+        CHANNEL.registerMessage(RavenCloakPacket.Handler.class, RavenCloakPacket.class, 6, Side.SERVER);
+        CHANNEL.registerMessage(KnowledgeResetPacket.Handler.class, KnowledgeResetPacket.class, 7, Side.CLIENT);
+        CHANNEL.registerMessage(AttemptCastPacket.Handler.class, AttemptCastPacket.class, 8, Side.SERVER);
     }
 }

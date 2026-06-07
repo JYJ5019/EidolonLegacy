@@ -17,4 +17,13 @@ public interface IProxy {
 
     default void syncKnownResearchClient(ResourceLocation research, boolean known) {
     }
+
+    default void syncMagicKnowledgeClient(int type, ResourceLocation id, boolean known) {
+    }
+
+    default void resetKnowledgeClient() {
+    }
+
+    default void syncSoulClient(float maxMagic, float magic, float maxEtherealHealth, float etherealHealth) {
+    }
 }

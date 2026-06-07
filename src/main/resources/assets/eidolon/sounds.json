@@ -27,6 +27,19 @@
       "eidolon:splash_bonechill"
     ]
   },
+  "select_rune": {
+    "category": "neutral",
+    "sounds": [
+      "eidolon:select_rune"
+    ]
+  },
+  "chant_word": {
+    "category": "neutral",
+    "subtitle": "eidolon.subtitle.chant_word",
+    "sounds": [
+      "eidolon:chant_word"
+    ]
+  },
   "parousia": {
     "category": "record",
     "stream": true,

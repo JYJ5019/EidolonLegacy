@@ -1,5 +1,6 @@
 package elucent.eidolon.client.render;
 
+import elucent.eidolon.client.render.shader.LegacyShaders;
 import elucent.eidolon.tile.CrucibleTileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
@@ -22,6 +24,7 @@ public class CrucibleTileEntityRenderer extends TileEntitySpecialRenderer<Crucib
                        float partialTicks, int destroyStage, float alpha) {
         FluidStack fluid = te.getFluid();
         if (fluid == null) {
+            renderSteamProgress(te, x, y, z);
             return;
         }
 
@@ -30,6 +33,43 @@ public class CrucibleTileEntityRenderer extends TileEntitySpecialRenderer<Crucib
         float stirProgress = getStirProgress(time, te.getLastStirTime(), partialTicks);
         renderFluidSurface(fluid, te.getCompletedStepCount(), stirProgress, x, y, z);
         renderFloatingItems(te.getCurrentContents(), x, y, z, partialTicks, stirProgress);
+    }
+
+    private void renderSteamProgress(CrucibleTileEntity te, double x, double y, double z) {
+        int steam = te.getSteamProgress() + (te.getTank().isEmpty() ? 0 : te.getTank().getContents().amount);
+        if (steam <= 0) {
+            return;
+        }
+
+        float fill = Math.min(1.0F, (float) steam / (float) Fluid.BUCKET_VOLUME);
+        float alpha = 0.12F + fill * 0.28F;
+        double inset = 0.29D - fill * 0.04D;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, z);
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableCull();
+
+        boolean shader = LegacyShaders.beginColor(1.2F, 1.25F, 1.35F, 1.0F);
+        try {
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+            buffer.pos(inset, 0.84D, inset).color(0.81F, 0.85F, 0.87F, alpha).endVertex();
+            buffer.pos(inset, 0.84D, 1.0D - inset).color(0.81F, 0.85F, 0.87F, alpha).endVertex();
+            buffer.pos(1.0D - inset, 0.84D, 1.0D - inset).color(0.81F, 0.85F, 0.87F, alpha).endVertex();
+            buffer.pos(1.0D - inset, 0.84D, inset).color(0.81F, 0.85F, 0.87F, alpha).endVertex();
+            tessellator.draw();
+        } finally {
+            LegacyShaders.end(shader);
+        }
+
+        GlStateManager.enableCull();
+        GlStateManager.disableBlend();
+        GlStateManager.enableTexture2D();
+        GlStateManager.popMatrix();
     }
 
     private void renderFluidSurface(FluidStack fluid, int completedSteps, float stirProgress, double x, double y, double z) {
@@ -47,14 +87,19 @@ public class CrucibleTileEntityRenderer extends TileEntitySpecialRenderer<Crucib
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.disableCull();
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(inset, 0.86D, inset).color(r, g, b, alpha).endVertex();
-        buffer.pos(inset, 0.86D, 1.0D - inset).color(r, g, b, alpha).endVertex();
-        buffer.pos(1.0D - inset, 0.86D, 1.0D - inset).color(r, g, b, alpha).endVertex();
-        buffer.pos(1.0D - inset, 0.86D, inset).color(r, g, b, alpha).endVertex();
-        tessellator.draw();
+        boolean shader = LegacyShaders.beginColor(1.25F + stirProgress * 0.25F, 1.15F, 1.35F + stirProgress * 0.25F, 1.0F);
+        try {
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+            buffer.pos(inset, 0.86D, inset).color(r, g, b, alpha).endVertex();
+            buffer.pos(inset, 0.86D, 1.0D - inset).color(r, g, b, alpha).endVertex();
+            buffer.pos(1.0D - inset, 0.86D, 1.0D - inset).color(r, g, b, alpha).endVertex();
+            buffer.pos(1.0D - inset, 0.86D, inset).color(r, g, b, alpha).endVertex();
+            tessellator.draw();
+        } finally {
+            LegacyShaders.end(shader);
+        }
 
         GlStateManager.enableCull();
         GlStateManager.disableBlend();

@@ -14,6 +14,8 @@ public final class ModSounds {
     public static final SoundEvent CAST_BONECHILL = sound("cast_bonechill");
     public static final SoundEvent SPLASH_SOULFIRE = sound("splash_soulfire");
     public static final SoundEvent SPLASH_BONECHILL = sound("splash_bonechill");
+    public static final SoundEvent SELECT_RUNE = sound("select_rune");
+    public static final SoundEvent CHANT_WORD = sound("chant_word");
 
     private ModSounds() {
     }
@@ -25,7 +27,9 @@ public final class ModSounds {
                 CAST_SOULFIRE,
                 CAST_BONECHILL,
                 SPLASH_SOULFIRE,
-                SPLASH_BONECHILL
+                SPLASH_BONECHILL,
+                SELECT_RUNE,
+                CHANT_WORD
         );
     }
 

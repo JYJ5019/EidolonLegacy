@@ -1,14 +1,20 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "eidolon",
   "pattern": [
-    "S#S",
-    "S#S"
+    "yxy",
+    "yxy"
   ],
   "key": {
-    "#": { "item": "eidolon:polished_planks" },
-    "S": { "item": "minecraft:stick" }
+    "x": {
+      "item": "eidolon:polished_planks"
+    },
+    "y": {
+      "item": "minecraft:stick"
+    }
   },
   "result": {
-    "item": "eidolon:polished_planks_fence_gate"
+    "item": "eidolon:polished_planks_fence_gate",
+    "count": 1
   }
 }

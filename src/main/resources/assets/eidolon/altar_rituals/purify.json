@@ -1,10 +1,10 @@
 {
   "type": "eidolon:altar_ritual",
-  "behavior": "item_result",
+  "behavior": "purify",
   "capacity": 3,
   "power": 3,
-  "result": {
-    "item": "eidolon:crimson_essence"
+  "sacrifice": {
+    "item": "minecraft:speckled_melon"
   },
   "offerings": [
     {
@@ -12,6 +12,10 @@
     },
     {
       "item": "eidolon:enchanted_ash"
+    },
+    {
+      "item": "minecraft:potion",
+      "nbt": "{Potion:\"minecraft:healing\"}"
     },
     {
       "item": "eidolon:soul_shard"

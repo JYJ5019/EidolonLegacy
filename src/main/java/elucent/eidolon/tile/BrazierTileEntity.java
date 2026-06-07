@@ -1,5 +1,7 @@
 package elucent.eidolon.tile;
 
+import elucent.eidolon.network.VisualEffectPacket;
+import elucent.eidolon.particle.EidolonParticles;
 import elucent.eidolon.spell.AltarRitual;
 import elucent.eidolon.spell.AltarRituals;
 import elucent.eidolon.spell.AltarInfo;
@@ -155,6 +157,7 @@ public class BrazierTileEntity extends TileEntity implements ITickable {
     }
 
     private void complete() {
+        sendBrazierVisual(VisualEffectPacket.RITUAL_COMPLETE, 0.65F, 0.28F, 1.0F);
         burning = false;
         ritual = null;
         activatorId = null;
@@ -165,6 +168,7 @@ public class BrazierTileEntity extends TileEntity implements ITickable {
     }
 
     private void extinguish() {
+        sendBrazierVisual(VisualEffectPacket.EXTINGUISH, 0.5F, 0.5F, 0.55F);
         burning = false;
         ritual = null;
         activatorId = null;
@@ -248,8 +252,7 @@ public class BrazierTileEntity extends TileEntity implements ITickable {
         if (world == null || world.isRemote) {
             return;
         }
-        world.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.9D, pos.getZ() + 0.5D,
-                SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 0.7F, 0.9F);
+        sendBrazierVisual(VisualEffectPacket.IGNITE, 1.0F, 0.45F, 0.18F);
         if (world instanceof WorldServer) {
             ((WorldServer) world).spawnParticle(EnumParticleTypes.FLAME,
                     pos.getX() + 0.5D, pos.getY() + 1.22D, pos.getZ() + 0.5D,
@@ -260,16 +263,45 @@ public class BrazierTileEntity extends TileEntity implements ITickable {
         }
     }
 
+    private void sendBrazierVisual(int effect, float r, float g, float b) {
+        if (world == null || world.isRemote) {
+            return;
+        }
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 1.18D;
+        double z = pos.getZ() + 0.5D;
+        VisualEffectPacket.sendAround(world, x, y, z, VisualEffectPacket.at(effect, x, y, z, r, g, b));
+    }
+
     private void spawnBurningParticles() {
         double x = pos.getX() + 0.5D;
         double y = pos.getY() + 1.24D;
         double z = pos.getZ() + 0.5D;
+        float r = ritual == null ? 1.0F : 0.65F;
+        float g = ritual == null ? 0.5F : 0.28F;
+        float b = ritual == null ? 0.25F : 1.0F;
+        EidolonParticles.spawnFlame(world,
+                x + (world.rand.nextDouble() - 0.5D) * 0.18D,
+                y + world.rand.nextDouble() * 0.08D,
+                z + (world.rand.nextDouble() - 0.5D) * 0.18D,
+                (world.rand.nextDouble() - 0.5D) * 0.012D,
+                0.018D + world.rand.nextDouble() * 0.012D,
+                (world.rand.nextDouble() - 0.5D) * 0.012D,
+                r, g, b);
         world.spawnParticle(EnumParticleTypes.FLAME,
                 x + (world.rand.nextDouble() - 0.5D) * 0.1D,
                 y + world.rand.nextDouble() * 0.08D,
                 z + (world.rand.nextDouble() - 0.5D) * 0.1D,
                 0.0D, 0.018D, 0.0D);
         if (world.rand.nextInt(5) == 0) {
+            EidolonParticles.spawnSmoke(world,
+                    x + (world.rand.nextDouble() - 0.5D) * 0.16D,
+                    y + 0.08D,
+                    z + (world.rand.nextDouble() - 0.5D) * 0.16D,
+                    (world.rand.nextDouble() - 0.5D) * 0.018D,
+                    0.07D,
+                    (world.rand.nextDouble() - 0.5D) * 0.018D,
+                    0.48F, 0.48F, 0.5F);
             world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL,
                     x + (world.rand.nextDouble() - 0.5D) * 0.14D,
                     y + 0.08D,
@@ -277,6 +309,14 @@ public class BrazierTileEntity extends TileEntity implements ITickable {
                     0.0D, 0.035D, 0.0D);
         }
         if (ritual != null && world.rand.nextInt(8) == 0) {
+            EidolonParticles.spawnSparkle(world,
+                    x + (world.rand.nextDouble() - 0.5D) * 0.26D,
+                    y + 0.12D,
+                    z + (world.rand.nextDouble() - 0.5D) * 0.26D,
+                    (world.rand.nextDouble() - 0.5D) * 0.04D,
+                    0.055D,
+                    (world.rand.nextDouble() - 0.5D) * 0.04D,
+                    r, Math.min(1.0F, g * 1.5F), Math.min(1.0F, b * 1.5F));
             world.spawnParticle(EnumParticleTypes.SPELL_MOB,
                     x + (world.rand.nextDouble() - 0.5D) * 0.3D,
                     y + 0.12D,

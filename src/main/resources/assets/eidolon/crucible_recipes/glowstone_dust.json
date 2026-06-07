@@ -1,0 +1,33 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        {
+          "item": "minecraft:speckled_melon"
+        },
+        {
+          "item": "minecraft:speckled_melon"
+        },
+        {
+          "item": "minecraft:speckled_melon"
+        },
+        {
+          "item": "minecraft:speckled_melon"
+        }
+      ]
+    },
+    {
+      "stirs": 2,
+      "items": [
+        {
+          "tag": "forge:dusts/sulfur"
+        }
+      ]
+    }
+  ],
+  "result": {
+    "item": "minecraft:glowstone_dust",
+    "count": 2
+  }
+}

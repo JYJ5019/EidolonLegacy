@@ -6,7 +6,7 @@ EidolonLegacy 是 Eidolon 的 Minecraft 1.12.2 / Cleanroom 移植版本。项目
 
 - Mod 名称：`EidolonLegacy`
 - Mod id：`eidolon`
-- 当前版本：`1.0.0`
+- 当前版本：`2.0.0`
 - 目标环境：Minecraft `1.12.2` / Cleanroom Loader
 - 作者：GingerYJ
 - 移植仓库：[GingerYJ/EidolonLegacy](https://github.com/GingerYJ/EidolonLegacy)
@@ -77,7 +77,7 @@ run/client/scripts/eidolon_ct2_smoke_test.zs
 构建成功后，正式运行 jar 位于：
 
 ```text
-build/libs/EidolonLegacy-1.0.0.jar
+build/libs/EidolonLegacy-2.0.0.jar
 ```
 
 不要把 `-dev.jar` 或 `-sources.jar` 当作正式运行 jar 放入 `mods`。
@@ -99,7 +99,7 @@ EidolonLegacy is a Minecraft 1.12.2 / Cleanroom port of Eidolon. The project is 
 
 - Mod name: `EidolonLegacy`
 - Mod id: `eidolon`
-- Version: `1.0.0`
+- Version: `2.0.0`
 - Target: Minecraft `1.12.2` / Cleanroom Loader
 - Author: GingerYJ
 - Port repository: [GingerYJ/EidolonLegacy](https://github.com/GingerYJ/EidolonLegacy)
@@ -170,7 +170,7 @@ Build the release jar with:
 The release jar will be generated at:
 
 ```text
-build/libs/EidolonLegacy-1.0.0.jar
+build/libs/EidolonLegacy-2.0.0.jar
 ```
 
 Do not use `-dev.jar` or `-sources.jar` as the normal runtime mod jar.

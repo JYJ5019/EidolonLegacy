@@ -55,6 +55,6 @@ public class VillagerSacrificeSpell extends StaticSpell {
         reputation.unlock(player, deity.getId(), DeityLocks.SACRIFICE_VILLAGER);
         BlockPos effigyPos = effigy.getPos();
         reputation.addReputation(player, deity.getId(), 6.0D + SpellHelper.getNearbyAltarPower(world, effigyPos));
-        SpellHelper.playChantSuccess(world, effigyPos, Signs.SOUL_SIGN, Signs.BLOOD_SIGN);
+        SpellHelper.playChantSuccess(world, effigyPos);
     }
 }

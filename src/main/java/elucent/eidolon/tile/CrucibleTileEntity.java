@@ -26,10 +26,12 @@ import net.minecraftforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class CrucibleTileEntity extends TileEntity implements IReagentTankProvider, ITickable {
     private final List<CrucibleRecipe.ProvidedStep> completedSteps = new ArrayList<>();
     private final NonNullList<ItemStack> currentContents = NonNullList.create();
+    private final Random particleRandom = new Random();
     private final ReagentTank reagentTank = new ReagentTank(Fluid.BUCKET_VOLUME) {
         @Override
         public boolean canFill(ReagentStack stack) {
@@ -192,6 +194,18 @@ public class CrucibleTileEntity extends TileEntity implements IReagentTankProvid
         return lastStirTime;
     }
 
+    public float[] getCurrentSteamColor() {
+        if (completedSteps.isEmpty()) {
+            return new float[] { 1.0F, 1.0F, 1.0F };
+        }
+        long seed = getParticleSeed();
+        return new float[] {
+                steamColor(seededFloat(seed)),
+                steamColor(seededFloat(seed * 2L)),
+                steamColor(seededFloat(seed * 3L))
+        };
+    }
+
     private void notifyStateChanged() {
         if (world != null && !world.isRemote) {
             world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
@@ -244,42 +258,70 @@ public class CrucibleTileEntity extends TileEntity implements IReagentTankProvid
     }
 
     private void spawnBoilingParticles() {
-        int contents = completedSteps.size() + currentContents.size() + currentStirs;
-        float bubbleRed = contents > 0 ? 0.75F : 0.25F;
-        float bubbleGreen = contents > 0 ? 0.45F : 0.55F;
-        float bubbleBlue = 1.0F;
-        float steamRed = contents > 0 ? 0.88F : 1.0F;
-        float steamGreen = contents > 0 ? 0.82F : 1.0F;
-        float steamBlue = 1.0F;
+        boolean hasSteps = !completedSteps.isEmpty() || !currentContents.isEmpty() || currentStirs > 0;
+        long seed = getParticleSeed();
+        float red = seededFloat(seed);
+        float green = seededFloat(seed * 2L);
+        float blue = seededFloat(seed * 3L);
+        float bubbleRed = hasSteps ? Math.min(1.0F, red * 1.25F) : 0.25F;
+        float bubbleGreen = hasSteps ? Math.min(1.0F, green * 1.25F) : 0.5F;
+        float bubbleBlue = hasSteps ? Math.min(1.0F, blue * 1.25F) : 1.0F;
+        float steamRed = hasSteps ? steamColor(red) : 1.0F;
+        float steamGreen = hasSteps ? steamColor(green) : 1.0F;
+        float steamBlue = hasSteps ? steamColor(blue) : 1.0F;
 
-        for (int i = 0; i < 2; i++) {
-            EidolonParticles.spawnBubble(world,
-                    pos.getX() + 0.18D + world.rand.nextDouble() * 0.64D,
-                    pos.getY() + 0.69D,
-                    pos.getZ() + 0.18D + world.rand.nextDouble() * 0.64D,
-                    0.0D, 0.018D, 0.0D,
-                    bubbleRed, bubbleGreen, bubbleBlue);
-            if (contents > 0 && world.rand.nextInt(3) == 0) {
-                EidolonParticles.spawnSparkle(world,
-                        pos.getX() + 0.2D + world.rand.nextDouble() * 0.6D,
-                        pos.getY() + 0.74D,
-                        pos.getZ() + 0.2D + world.rand.nextDouble() * 0.6D,
-                        (world.rand.nextDouble() - 0.5D) * 0.035D,
-                        0.035D,
-                        (world.rand.nextDouble() - 0.5D) * 0.035D,
-                        bubbleRed, bubbleGreen, bubbleBlue);
+        for (int i = 0; i < 3; i++) {
+            double x = pos.getX() + 0.25D + 0.5D * world.rand.nextDouble();
+            double z = pos.getZ() + 0.25D + 0.5D * world.rand.nextDouble();
+            EidolonParticles.create(EidolonParticles.BUBBLE)
+                    .scale(0.15F, 0.24F)
+                    .lifetime(20)
+                    .randomVelocity(0.006D, 0.006D)
+                    .addVelocity(0.0D, 0.024D, 0.0D)
+                    .color(bubbleRed, bubbleGreen, bubbleBlue)
+                    .alpha(0.95F, 0.0F)
+                    .spawn(world, x, pos.getY() + 0.82D, z);
+            if (world.rand.nextInt(2) == 0) {
+                EidolonParticles.create(EidolonParticles.SPARKLE)
+                        .scale(0.08F, 0.0F)
+                        .lifetime(12)
+                        .randomVelocity(0.018D, 0.012D)
+                        .addVelocity(0.0D, 0.026D, 0.0D)
+                        .color(bubbleRed, bubbleGreen, bubbleBlue, 1.0F, 1.0F, 1.0F)
+                        .alpha(0.85F, 0.0F)
+                        .spin(0.25F)
+                        .spawn(world, x, pos.getY() + 0.86D, z);
+            }
+            if (world.rand.nextInt(8) == 0) {
+                EidolonParticles.create(EidolonParticles.SMOKE)
+                        .alpha(0.16F, 0.0F)
+                        .scale(0.375F, 0.125F)
+                        .lifetime(80)
+                        .randomOffset(0.375D, 0.125D)
+                        .randomVelocity(0.0125D, 0.025D)
+                        .addVelocity(0.0D, 0.05D, 0.0D)
+                        .color(steamRed, steamGreen, steamBlue)
+                        .sourceSmokeCurve(0.99F)
+                        .spawn(world, pos.getX() + 0.5D, pos.getY() + 0.78D, pos.getZ() + 0.5D);
             }
         }
-        if (world.rand.nextInt(8) == 0) {
-            EidolonParticles.spawnSteam(world,
-                    pos.getX() + 0.5D + (world.rand.nextDouble() - 0.5D) * 0.28D,
-                    pos.getY() + 0.72D,
-                    pos.getZ() + 0.5D + (world.rand.nextDouble() - 0.5D) * 0.28D,
-                    (world.rand.nextDouble() - 0.5D) * 0.018D,
-                    0.055D,
-                    (world.rand.nextDouble() - 0.5D) * 0.018D,
-                    steamRed, steamGreen, steamBlue);
+    }
+
+    private long getParticleSeed() {
+        long seed = 0L;
+        for (CrucibleRecipe.ProvidedStep step : completedSteps) {
+            seed ^= step.hashCode();
         }
+        return seed;
+    }
+
+    private float seededFloat(long seed) {
+        particleRandom.setSeed(seed);
+        return particleRandom.nextFloat();
+    }
+
+    private float steamColor(float value) {
+        return Math.min(1.0F, 1.0F - (float) Math.pow(1.0F - value, 2.0D));
     }
 
     @Override

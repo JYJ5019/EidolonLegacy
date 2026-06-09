@@ -32,6 +32,8 @@ public final class Researches {
     private static final Map<ResourceLocation, List<Research>> FLUID_RESEARCHES = new LinkedHashMap<>();
     private static final List<Function<Random, ResearchTask>> TASK_POOL = new ArrayList<>();
     private static final List<Runnable> CUSTOMIZATIONS = new ArrayList<>();
+    static final int GENERATED_TASKS_PER_STEP = 3;
+    private static final int DIAGNOSTIC_TASK_FACTORY_SAMPLES = 64;
     private static boolean initialized;
 
     private Researches() {
@@ -244,6 +246,34 @@ public final class Researches {
         return TASK_POOL.get(random.nextInt(TASK_POOL.size())).apply(random);
     }
 
+    public static ResearchTaskSlotDiagnostics getTaskSlotDiagnostics(int slotLimit) {
+        ensureInitialized();
+        ResearchTaskSlotDiagnostics result = new ResearchTaskSlotDiagnostics(slotLimit);
+        result.researchCount = RESEARCHES.size();
+        result.taskPoolSize = TASK_POOL.size();
+        result.generatedTasksPerStep = GENERATED_TASKS_PER_STEP;
+        result.taskFactorySamples = DIAGNOSTIC_TASK_FACTORY_SAMPLES;
+        result.maxTaskPoolItemSlots = getMaxTaskPoolItemSlotsForDiagnostics(result);
+        result.maxDefaultStepItemSlots = result.generatedTasksPerStep * result.maxTaskPoolItemSlots;
+
+        for (Research research : RESEARCHES.values()) {
+            for (int step = 0; step < research.getStars(); step++) {
+                int itemSlots = Math.max(result.maxDefaultStepItemSlots,
+                        getTaskItemSlotCount(research.getTasks(0, step)));
+                String stepKey = research.getId() + "#step_" + step;
+                result.stepItemSlots.put(stepKey, itemSlots);
+                if (itemSlots > result.maxStepItemSlots) {
+                    result.maxStepItemSlots = itemSlots;
+                    result.maxStep = stepKey;
+                }
+                if (itemSlots > slotLimit) {
+                    result.overflowingSteps.add(stepKey + " requires " + itemSlots + " item slots");
+                }
+            }
+        }
+        return result;
+    }
+
     public static void ensureDefaultResearch(ItemStack stack) {
         ensureInitialized();
         if (stack.isEmpty() || stack.getItem() != ModItems.RESEARCH_NOTES) {
@@ -317,6 +347,35 @@ public final class Researches {
         }
     }
 
+    private static int getTaskItemSlotCount(List<ResearchTask> tasks) {
+        int slots = 0;
+        for (ResearchTask task : tasks) {
+            slots += Math.max(0, task.getSlotCount());
+        }
+        return slots;
+    }
+
+    private static int getMaxTaskPoolItemSlotsForDiagnostics(ResearchTaskSlotDiagnostics result) {
+        int max = 0;
+        for (int factoryIndex = 0; factoryIndex < TASK_POOL.size(); factoryIndex++) {
+            Function<Random, ResearchTask> factory = TASK_POOL.get(factoryIndex);
+            for (int sample = 0; sample < DIAGNOSTIC_TASK_FACTORY_SAMPLES; sample++) {
+                try {
+                    ResearchTask task = factory.apply(new Random(factoryIndex * 341873128712L + sample));
+                    if (task == null) {
+                        result.factoryFailures.add("task factory " + factoryIndex + " sample " + sample + " returned null");
+                    } else {
+                        max = Math.max(max, task.getSlotCount());
+                    }
+                } catch (RuntimeException e) {
+                    result.factoryFailures.add("task factory " + factoryIndex + " sample " + sample + " failed: "
+                            + e.getClass().getSimpleName() + ": " + e.getMessage());
+                }
+            }
+        }
+        return max;
+    }
+
     private static void addCustomization(Runnable customization) {
         CUSTOMIZATIONS.add(customization);
         if (initialized) {
@@ -372,6 +431,73 @@ public final class Researches {
         }
         for (K key : emptyKeys) {
             map.remove(key);
+        }
+    }
+
+    public static final class ResearchTaskSlotDiagnostics {
+        private final int slotLimit;
+        private int researchCount;
+        private int taskPoolSize;
+        private int generatedTasksPerStep;
+        private int taskFactorySamples;
+        private int maxTaskPoolItemSlots;
+        private int maxDefaultStepItemSlots;
+        private int maxStepItemSlots;
+        private String maxStep = "";
+        private final Map<String, Integer> stepItemSlots = new LinkedHashMap<>();
+        private final List<String> overflowingSteps = new ArrayList<>();
+        private final List<String> factoryFailures = new ArrayList<>();
+
+        private ResearchTaskSlotDiagnostics(int slotLimit) {
+            this.slotLimit = slotLimit;
+        }
+
+        public int getSlotLimit() {
+            return slotLimit;
+        }
+
+        public int getResearchCount() {
+            return researchCount;
+        }
+
+        public int getTaskPoolSize() {
+            return taskPoolSize;
+        }
+
+        public int getGeneratedTasksPerStep() {
+            return generatedTasksPerStep;
+        }
+
+        public int getTaskFactorySamples() {
+            return taskFactorySamples;
+        }
+
+        public int getMaxTaskPoolItemSlots() {
+            return maxTaskPoolItemSlots;
+        }
+
+        public int getMaxDefaultStepItemSlots() {
+            return maxDefaultStepItemSlots;
+        }
+
+        public int getMaxStepItemSlots() {
+            return maxStepItemSlots;
+        }
+
+        public String getMaxStep() {
+            return maxStep;
+        }
+
+        public Map<String, Integer> getStepItemSlots() {
+            return new LinkedHashMap<>(stepItemSlots);
+        }
+
+        public List<String> getOverflowingSteps() {
+            return new ArrayList<>(overflowingSteps);
+        }
+
+        public List<String> getFactoryFailures() {
+            return new ArrayList<>(factoryFailures);
         }
     }
 }

@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class AthameItem extends EidolonSwordItem {
+    private static final int PLANT_DESTROY_CHANCE = 3;
+    private static final int PLANT_ITEM_DROP_CHANCE = 5;
     private static final List<HarvestEntry> HARVEST_ENTRIES = new ArrayList<>();
 
     static {
@@ -112,10 +114,10 @@ public class AthameItem extends EidolonSwordItem {
             spawnPlantBreakParticles(worldIn, pos, state, hitX, hitY, hitZ);
             worldIn.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS,
                     0.5F, 0.9F + itemRand.nextFloat() * 0.2F);
-            if (itemRand.nextInt(5) == 0) {
+            if (itemRand.nextInt(PLANT_DESTROY_CHANCE) == 0) {
                 BlockPos destroyPos = getDestroyPos(state, pos);
                 worldIn.destroyBlock(destroyPos, false);
-                if (itemRand.nextInt(10) == 0) {
+                if (itemRand.nextInt(PLANT_ITEM_DROP_CHANCE) == 0) {
                     if (!harvest.isEmpty()) {
                         worldIn.playSound(null, pos, SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS,
                                 0.5F, 0.9F + itemRand.nextFloat() * 0.2F);

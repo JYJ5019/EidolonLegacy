@@ -4,6 +4,7 @@ import elucent.eidolon.Reference;
 import elucent.eidolon.client.ClientConfig;
 import elucent.eidolon.particle.EidolonParticle.EidolonParticleData;
 import elucent.eidolon.spell.Rune;
+import elucent.eidolon.spell.Runes;
 import elucent.eidolon.spell.Sign;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -34,6 +35,16 @@ public final class EidolonParticles {
     private EidolonParticles() {
     }
 
+    public static ParticleBuilder create(ResourceLocation texture) {
+        ParticleBuilder builder = new ParticleBuilder(texture);
+        if (SMOKE.equals(texture)) {
+            builder.sourceSmokeCurve(0.98F);
+        } else if (BUBBLE.equals(texture)) {
+            builder.yDamping(0.8F).endSprite(BURST);
+        }
+        return builder;
+    }
+
     public static void registerDefaults() {
         texture("blood_sign");
         texture("death_sign");
@@ -60,9 +71,9 @@ public final class EidolonParticles {
         texture("warp_ritual");
         texture("energy_sign");
         texture("feather");
-        register(new ResourceLocation(Reference.MOD_ID, "rune/ascend"));
-        register(new ResourceLocation(Reference.MOD_ID, "rune/crimson_rose"));
-        register(new ResourceLocation(Reference.MOD_ID, "rune/sin"));
+        for (Rune rune : Runes.getRunes()) {
+            register(rune.getSprite());
+        }
     }
 
     private static ResourceLocation texture(String name) {
@@ -129,7 +140,8 @@ public final class EidolonParticles {
                 .alpha(0.55F, 0.0F)
                 .scale(0.18F, 0.45F)
                 .spin(randomSpin(world, 0.025F))
-                .fullbright(false));
+                .fullbright(false)
+                .sourceSmokeCurve(0.98F));
     }
 
     public static void spawnSteam(World world, double x, double y, double z, double vx, double vy, double vz,
@@ -140,7 +152,8 @@ public final class EidolonParticles {
                 .alpha(0.16F, 0.0F)
                 .scale(0.28F, 0.1F)
                 .spin(randomSpin(world, 0.018F))
-                .fullbright(false));
+                .fullbright(false)
+                .sourceSmokeCurve(0.99F));
     }
 
     public static void spawnBubble(World world, double x, double y, double z, double vx, double vy, double vz) {
@@ -153,7 +166,9 @@ public final class EidolonParticles {
                 .lifetime(18)
                 .color(red, green, blue)
                 .alpha(0.6F, 0.0F)
-                .scale(0.1F, 0.16F));
+                .scale(0.1F, 0.16F)
+                .yDamping(0.8F)
+                .endSprite(sprite(BURST)));
     }
 
     public static void spawnSign(World world, Sign sign, double x, double y, double z, double vx, double vy, double vz) {
@@ -212,6 +227,15 @@ public final class EidolonParticles {
         }
     }
 
+    public static void spawnGlowingSlash(World world, double x, double y, double z, double vx, double vy, double vz,
+                                         EidolonSlashParticle.SlashData data) {
+        if (world == null || !world.isRemote || !ClientConfig.visualEffectsEnabled() || particleCount(1) <= 0) {
+            return;
+        }
+        Minecraft.getMinecraft().effectRenderer.addEffect(
+                new EidolonSlashParticle(world, sprite(BEAM), x, y, z, vx, vy, vz, data));
+    }
+
     public static void spawnLine(World world, double x1, double y1, double z1, double x2, double y2, double z2,
                                  float red, float green, float blue, boolean arc) {
         int count = particleCount(26);
@@ -230,6 +254,15 @@ public final class EidolonParticles {
         }
     }
 
+    public static void spawnLineWisp(World world, double x, double y, double z, double targetX, double targetY,
+                                     double targetZ, EidolonParticleData data) {
+        if (world == null || !world.isRemote || !ClientConfig.visualEffectsEnabled() || particleCount(1) <= 0) {
+            return;
+        }
+        Minecraft.getMinecraft().effectRenderer.addEffect(
+                new EidolonLineWispParticle(world, sprite(WISP), x, y, z, targetX, targetY, targetZ, data));
+    }
+
     public static void spawnBurst(World world, double x, double y, double z, float red, float green, float blue,
                                   int baseCount) {
         int count = particleCount(baseCount);
@@ -241,6 +274,178 @@ public final class EidolonParticles {
             if (i % 3 == 0) {
                 spawnSparkle(world, x, y, z, vx * 0.7D, vy * 0.7D, vz * 0.7D, red, green, blue);
             }
+        }
+    }
+
+    public static final class ParticleBuilder {
+        private final ResourceLocation texture;
+        private final EidolonParticleData data = new EidolonParticleData();
+        private double vx;
+        private double vy;
+        private double vz;
+        private double maxXSpeed;
+        private double maxYSpeed;
+        private double maxZSpeed;
+        private double maxXDist;
+        private double maxYDist;
+        private double maxZDist;
+        private boolean hasLineTarget;
+        private double targetX;
+        private double targetY;
+        private double targetZ;
+
+        private ParticleBuilder(ResourceLocation texture) {
+            this.texture = texture;
+        }
+
+        public ParticleBuilder color(float red, float green, float blue) {
+            data.color(red, green, blue);
+            return this;
+        }
+
+        public ParticleBuilder color(float startRed, float startGreen, float startBlue,
+                                     float endRed, float endGreen, float endBlue) {
+            data.color(startRed, startGreen, startBlue, endRed, endGreen, endBlue);
+            return this;
+        }
+
+        public ParticleBuilder alpha(float startAlpha, float endAlpha) {
+            data.alpha(startAlpha, endAlpha);
+            return this;
+        }
+
+        public ParticleBuilder scale(float startScale, float endScale) {
+            data.scale(startScale, endScale);
+            return this;
+        }
+
+        public ParticleBuilder lifetime(int lifetime) {
+            data.lifetime(lifetime);
+            return this;
+        }
+
+        public ParticleBuilder spin(float spin) {
+            data.spin(spin);
+            return this;
+        }
+
+        public ParticleBuilder gravity(float gravity) {
+            data.gravity(gravity);
+            return this;
+        }
+
+        public ParticleBuilder enableGravity() {
+            data.gravity(0.04F);
+            return this;
+        }
+
+        public ParticleBuilder fullbright(boolean fullbright) {
+            data.fullbright(fullbright);
+            return this;
+        }
+
+        public ParticleBuilder sourceSmokeCurve(float yDamping) {
+            data.sourceSmokeCurve(yDamping);
+            return this;
+        }
+
+        public ParticleBuilder yDamping(float yDamping) {
+            data.yDamping(yDamping);
+            return this;
+        }
+
+        public ParticleBuilder endSprite(ResourceLocation texture) {
+            data.endSprite(sprite(texture));
+            return this;
+        }
+
+        public ParticleBuilder randomVelocity(double maxSpeed) {
+            return randomVelocity(maxSpeed, maxSpeed, maxSpeed);
+        }
+
+        public ParticleBuilder randomVelocity(double maxHorizontalSpeed, double maxVerticalSpeed) {
+            return randomVelocity(maxHorizontalSpeed, maxVerticalSpeed, maxHorizontalSpeed);
+        }
+
+        public ParticleBuilder randomVelocity(double maxXSpeed, double maxYSpeed, double maxZSpeed) {
+            this.maxXSpeed = maxXSpeed;
+            this.maxYSpeed = maxYSpeed;
+            this.maxZSpeed = maxZSpeed;
+            return this;
+        }
+
+        public ParticleBuilder addVelocity(double vx, double vy, double vz) {
+            this.vx += vx;
+            this.vy += vy;
+            this.vz += vz;
+            return this;
+        }
+
+        public ParticleBuilder lineTarget(double x, double y, double z) {
+            this.hasLineTarget = true;
+            this.targetX = x;
+            this.targetY = y;
+            this.targetZ = z;
+            return this;
+        }
+
+        public ParticleBuilder setVelocity(double vx, double vy, double vz) {
+            this.vx = vx;
+            this.vy = vy;
+            this.vz = vz;
+            return this;
+        }
+
+        public ParticleBuilder randomOffset(double maxDistance) {
+            return randomOffset(maxDistance, maxDistance, maxDistance);
+        }
+
+        public ParticleBuilder randomOffset(double maxHorizontalDistance, double maxVerticalDistance) {
+            return randomOffset(maxHorizontalDistance, maxVerticalDistance, maxHorizontalDistance);
+        }
+
+        public ParticleBuilder randomOffset(double maxXDistance, double maxYDistance, double maxZDistance) {
+            this.maxXDist = maxXDistance;
+            this.maxYDist = maxYDistance;
+            this.maxZDist = maxZDistance;
+            return this;
+        }
+
+        public ParticleBuilder spawn(World world, double x, double y, double z) {
+            if (world == null) {
+                return this;
+            }
+            double yaw = world.rand.nextDouble() * Math.PI * 2.0D;
+            double pitch = world.rand.nextDouble() * Math.PI - Math.PI / 2.0D;
+            double xSpeed = world.rand.nextDouble() * maxXSpeed;
+            double ySpeed = world.rand.nextDouble() * maxYSpeed;
+            double zSpeed = world.rand.nextDouble() * maxZSpeed;
+            double sx = vx + Math.sin(yaw) * Math.cos(pitch) * xSpeed;
+            double sy = vy + Math.sin(pitch) * ySpeed;
+            double sz = vz + Math.cos(yaw) * Math.cos(pitch) * zSpeed;
+
+            double yaw2 = world.rand.nextDouble() * Math.PI * 2.0D;
+            double pitch2 = world.rand.nextDouble() * Math.PI - Math.PI / 2.0D;
+            double xDist = world.rand.nextDouble() * maxXDist;
+            double yDist = world.rand.nextDouble() * maxYDist;
+            double zDist = world.rand.nextDouble() * maxZDist;
+            double dx = Math.sin(yaw2) * Math.cos(pitch2) * xDist;
+            double dy = Math.sin(pitch2) * yDist;
+            double dz = Math.cos(yaw2) * Math.cos(pitch2) * zDist;
+            if (hasLineTarget) {
+                EidolonParticles.spawnLineWisp(world, x + dx, y + dy, z + dz, targetX + sx, targetY + sy,
+                        targetZ + sz, data);
+            } else {
+                EidolonParticles.spawn(world, texture, x + dx, y + dy, z + dz, sx, sy, sz, data);
+            }
+            return this;
+        }
+
+        public ParticleBuilder repeat(World world, double x, double y, double z, int count) {
+            for (int i = 0; i < count; i++) {
+                spawn(world, x, y, z);
+            }
+            return this;
         }
     }
 

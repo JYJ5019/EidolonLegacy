@@ -30,12 +30,7 @@ public class ReaperScytheItem extends EidolonSwordItem {
             return;
         }
         DamageSource source = event.getSource();
-        if (source == null || !(source.getTrueSource() instanceof EntityLivingBase)) {
-            return;
-        }
-        EntityLivingBase attacker = (EntityLivingBase) source.getTrueSource();
-        ItemStack weapon = attacker.getHeldItemMainhand();
-        if (!(weapon.getItem() instanceof ReaperScytheItem) && source != Eidolon.RITUAL_DAMAGE) {
+        if (!isSoulShardHarvest(source)) {
             return;
         }
         if (target.world.isRemote) {
@@ -51,13 +46,28 @@ public class ReaperScytheItem extends EidolonSwordItem {
             drop.setDefaultPickupDelay();
             event.getDrops().add(drop);
         }
-        VisualEffectPacket.sendAround(target.world, target.posX, target.posY + target.height * 0.5D, target.posZ,
-                VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, target.posX, target.posY + target.height * 0.5D,
-                        target.posZ, 0.97F, 0.61F, 0.86F));
+        VisualEffectPacket.sendAround(target.world, target.getPosition(),
+                VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, target.getPosition(), 0.97F, 0.61F, 0.86F));
     }
 
     private boolean isReapable(EntityLivingBase target) {
         return Eidolon.getCreatureAttribute(target) == EnumCreatureAttribute.UNDEAD;
+    }
+
+    private boolean isSoulShardHarvest(DamageSource source) {
+        if (source == Eidolon.RITUAL_DAMAGE) {
+            return true;
+        }
+        if (source == null || !(source.getTrueSource() instanceof EntityLivingBase)) {
+            return false;
+        }
+        EntityLivingBase attacker = (EntityLivingBase) source.getTrueSource();
+        return isSoulShardHarvestTool(attacker.getHeldItemMainhand());
+    }
+
+    private boolean isSoulShardHarvestTool(ItemStack weapon) {
+        return weapon.getItem() instanceof ReaperScytheItem
+                || weapon.getItem() instanceof DeathbringerScytheItem;
     }
 
     @Override

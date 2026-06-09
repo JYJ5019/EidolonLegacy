@@ -1,6 +1,8 @@
 package elucent.eidolon.proxy;
 
 import elucent.eidolon.client.ClientConfig;
+import elucent.eidolon.client.EidolonHudHandler;
+import elucent.eidolon.client.PlayerLayerRegistry;
 import elucent.eidolon.client.RavenCloakControls;
 import elucent.eidolon.client.render.AltarTileEntityRenderer;
 import elucent.eidolon.client.render.AngelArrowRenderer;
@@ -76,8 +78,10 @@ public class ClientProxy extends CommonProxy {
         RenderingRegistry.registerEntityRenderingHandler(NecromancerEntity.class, NecromancerRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(RavenEntity.class, RavenRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(SlimySlugEntity.class, SlimySlugRenderer::new);
+        PlayerLayerRegistry.register();
         RavenCloakControls.init();
         LegacyShaders.registerReloadListener();
+        MinecraftForge.EVENT_BUS.register(new EidolonHudHandler());
     }
 
     @Override

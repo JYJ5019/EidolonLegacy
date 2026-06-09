@@ -4,19 +4,25 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import elucent.eidolon.CommonConfig;
 import elucent.eidolon.Eidolon;
 import elucent.eidolon.Reference;
 import elucent.eidolon.gui.ModGuiHandler;
+import elucent.eidolon.gui.ResearchTableContainer;
 import elucent.eidolon.recipes.CrucibleRecipes;
 import elucent.eidolon.recipes.IncubatorRecipes;
 import elucent.eidolon.recipes.WorktableRecipes;
 import elucent.eidolon.registries.ModBlocks;
+import elucent.eidolon.research.Researches;
 import elucent.eidolon.spell.AltarEntries;
+import elucent.eidolon.spell.AltarRitual;
 import elucent.eidolon.spell.AltarRituals;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.server.MinecraftServer;
@@ -91,12 +97,16 @@ public final class RuntimeDiagnostics {
         dump.drops = collectDrops();
         dump.gui = collectGui();
         dump.recipes = collectRecipes();
+        dump.researchTasks = collectResearchTasks();
+        dump.worldGen = collectWorldGen();
         dump.resources = collectResources();
         dump.failures.addAll(validateRegistryCoverage(dump));
         dump.failures.addAll(validateDrops(dump));
         dump.failures.addAll(validateGui(dump));
+        dump.failures.addAll(validateResearchTasks(dump));
         dump.failures.addAll(validateAssets(dump));
         dump.failures.addAll(validateResourceBuckets(dump));
+        dump.failures.addAll(validateCompatibility(dump));
         return dump;
     }
 
@@ -244,8 +254,66 @@ public final class RuntimeDiagnostics {
         result.worktable = WorktableRecipes.getRecipes().size();
         result.crucible = CrucibleRecipes.getRecipes().size();
         result.incubator = IncubatorRecipes.getRecipes().size();
-        result.altarRituals = AltarRituals.getRituals().size();
+        for (AltarRitual ritual : AltarRituals.getRituals()) {
+            String id = ritual.getId().toString();
+            result.altarRitualIds.add(id);
+            result.altarRitualDetails.put(id, ritualDump(ritual));
+        }
+        result.altarRitualIds.sort(Comparator.naturalOrder());
+        result.altarRituals = result.altarRitualIds.size();
+        result.expectedModernAltarRituals.addAll(expectedModernAltarRitualIds());
+        result.missingModernAltarRituals = difference(result.expectedModernAltarRituals, result.altarRitualIds);
+        result.legacyExtraAltarRituals = difference(result.altarRitualIds, result.expectedModernAltarRituals);
+        result.modernRecipeTypeCounts.put("eidolon:crucible", 27);
+        result.modernRecipeTypeCounts.put("eidolon:worktable", 21);
+        result.modernRecipeTypeCounts.put("eidolon:worktable_case_sensitive_keys", 2);
+        result.modernRecipeTypeCounts.put("forge:conditional", 4);
+        result.modernRecipeTypeCounts.put("minecraft:blasting", 7);
+        result.modernRecipeTypeCounts.put("minecraft:crafting_shaped", 55);
+        result.modernRecipeTypeCounts.put("minecraft:crafting_shapeless", 14);
+        result.modernRecipeTypeCounts.put("minecraft:smelting", 7);
+        result.modernRecipeTypeCounts.put("minecraft:stonecutting", 12);
+        result.recipeSemanticNotes.add("1.12 has no blasting recipe type; modern smelting/blasting pairs are represented by furnace recipes in ModRecipes.");
+        result.recipeSemanticNotes.add("1.12 has no stonecutting table; the 12 smooth-stone *_stonecutting resource files are represented as Eidolon worktable recipes, not vanilla crafting fallbacks.");
+        result.recipeSemanticNotes.add("Forge conditional dust smelting recipes are approximated through ore dictionary smelting for dustLead and dustSilver.");
+        result.recipeSemanticNotes.add("Modern stone_altar and unholy_effigy are worktable recipes with case-sensitive key entries; PowerShell's JSON parser reports them separately, and Legacy ports them under worktable_recipes.");
         result.altarEntries = AltarEntries.getEntries().size();
+        return result;
+    }
+
+    private static RitualDump ritualDump(AltarRitual ritual) {
+        RitualDump result = new RitualDump();
+        result.behavior = ritual.getBehaviorType().name().toLowerCase(java.util.Locale.ROOT);
+        result.capacity = ritual.getRequiredCapacity();
+        result.power = ritual.getRequiredPower();
+        result.focus.addAll(ingredientStacks(ritual.getFocus()));
+        result.sacrifice.addAll(ingredientStacks(ritual.getSacrifice()));
+        for (Ingredient offering : ritual.getRequiredOfferings()) {
+            result.offerings.addAll(ingredientStacks(offering));
+        }
+        result.offeringCount = ritual.getRequiredOfferings().size();
+        result.healthCost = ritual.getHealthCost();
+        result.entity = ritual.getEntityId() == null ? "" : ritual.getEntityId().toString();
+        result.result = stackLabel(ritual.getResult());
+        return result;
+    }
+
+    private static ResearchTaskDump collectResearchTasks() {
+        ResearchTaskDump result = new ResearchTaskDump();
+        Researches.ResearchTaskSlotDiagnostics diagnostics =
+                Researches.getTaskSlotDiagnostics(ResearchTableContainer.TASK_SLOT_COUNT);
+        result.slotLimit = diagnostics.getSlotLimit();
+        result.researchCount = diagnostics.getResearchCount();
+        result.taskPoolSize = diagnostics.getTaskPoolSize();
+        result.generatedTasksPerStep = diagnostics.getGeneratedTasksPerStep();
+        result.taskFactorySamples = diagnostics.getTaskFactorySamples();
+        result.maxTaskPoolItemSlots = diagnostics.getMaxTaskPoolItemSlots();
+        result.maxDefaultStepItemSlots = diagnostics.getMaxDefaultStepItemSlots();
+        result.maxStepItemSlots = diagnostics.getMaxStepItemSlots();
+        result.maxStep = diagnostics.getMaxStep();
+        result.stepItemSlots.putAll(diagnostics.getStepItemSlots());
+        result.overflowingSteps.addAll(diagnostics.getOverflowingSteps());
+        result.factoryFailures.addAll(diagnostics.getFactoryFailures());
         return result;
     }
 
@@ -293,6 +361,55 @@ public final class RuntimeDiagnostics {
         return result;
     }
 
+    private static WorldGenDump collectWorldGen() {
+        WorldGenDump result = new WorldGenDump();
+        result.values.put("crucibleStepDuration", CommonConfig.crucibleStepDuration());
+        result.values.put("maxEtherealHealth", CommonConfig.maxEtherealHealth());
+        result.values.put("wraithSpawnWeight", CommonConfig.wraithSpawnWeight());
+        result.values.put("zombieBruteSpawnWeight", CommonConfig.zombieBruteSpawnWeight());
+        result.values.put("ravenSpawnWeight", CommonConfig.ravenSpawnWeight());
+        result.values.put("slimySlugSpawnWeight", CommonConfig.slimySlugSpawnWeight());
+        result.values.put("zombieFood", CommonConfig.zombieFood());
+        result.values.put("undeathCreatureAttributeReplacement",
+                "Legacy internal Undeath checks should call Eidolon.getCreatureAttribute(entity); direct vanilla getCreatureAttribute calls are reserved for true/native attribute checks.");
+        result.values.put("undeathCreatureAttributeLimit",
+                "No mixin is installed, so vanilla code and other mods that call EntityLivingBase#getCreatureAttribute directly are not globally overridden.");
+        result.values.put("zombieVillagerFinishConversionReplacement",
+                "1.20 uses a mixin invoker; Legacy uses reflection to call EntityZombieVillager finishConversion/func_190738_dp.");
+        result.values.put("zombieVillagerFinishConversionMethodAvailable",
+                AltarRitual.isZombieVillagerFinishConversionAvailable());
+        result.values.put("zombieVillagerFinishConversionMethodName",
+                AltarRitual.getZombieVillagerFinishConversionMethodName());
+        result.values.put("leadEnabled", CommonConfig.leadEnabled());
+        result.values.put("leadOreMinY", CommonConfig.leadOreMinY());
+        result.values.put("leadOreMaxY", CommonConfig.leadOreMaxY());
+        result.values.put("leadOreVeinSize", CommonConfig.leadOreVeinSize());
+        result.values.put("leadOreVeinCount", CommonConfig.leadOreVeinCount());
+        result.values.put("deepLeadOreMinY", CommonConfig.deepLeadOreMinY());
+        result.values.put("deepLeadOreMaxY", CommonConfig.deepLeadOreMaxY());
+        result.values.put("deepLeadOreVeinSize", CommonConfig.deepLeadOreVeinSize());
+        result.values.put("deepLeadOreVeinCount", CommonConfig.deepLeadOreVeinCount());
+        result.values.put("silverEnabled", CommonConfig.silverEnabled());
+        result.values.put("silverOreMinY", CommonConfig.silverOreMinY());
+        result.values.put("silverOreMaxY", CommonConfig.silverOreMaxY());
+        result.values.put("silverOreVeinSize", CommonConfig.silverOreVeinSize());
+        result.values.put("silverOreVeinCount", CommonConfig.silverOreVeinCount());
+        result.values.put("deepSilverOreMinY", CommonConfig.deepSilverOreMinY());
+        result.values.put("deepSilverOreMaxY", CommonConfig.deepSilverOreMaxY());
+        result.values.put("deepSilverOreVeinSize", CommonConfig.deepSilverOreVeinSize());
+        result.values.put("deepSilverOreVeinCount", CommonConfig.deepSilverOreVeinCount());
+        result.values.put("labEnabled", CommonConfig.labEnabled());
+        result.values.put("labRarity", CommonConfig.labRarity());
+        result.values.put("strayTowerEnabled", CommonConfig.strayTowerEnabled());
+        result.values.put("strayTowerRarity", CommonConfig.strayTowerRarity());
+        result.values.put("strayTowerBiomeKeywords", CommonConfig.strayTowerBiomeKeywords());
+        result.values.put("catacombEnabled", CommonConfig.catacombEnabled());
+        result.values.put("catacombRarity", CommonConfig.catacombRarity());
+        result.values.put("worldgenPortingNote",
+                "1.20 structure_set/template_pool/jigsaw data is approximated by a 1.12 IWorldGenerator; spacing/salt defaults are preserved, but biome tags, jigsaw expansion, and terrain adaptation are not exact.");
+        return result;
+    }
+
     private static List<String> validateRegistryCoverage(Dump dump) {
         List<String> failures = new ArrayList<>();
         appendFailures(failures, "missing item", dump.items.missingExpected);
@@ -317,6 +434,7 @@ public final class RuntimeDiagnostics {
         if (dump.recipes.altarRituals <= 0) {
             failures.add("no altar rituals loaded");
         }
+        appendFailures(failures, "missing modern altar ritual", dump.recipes.missingModernAltarRituals);
         if (dump.recipes.altarEntries <= 0) {
             failures.add("no altar entries loaded");
         }
@@ -360,6 +478,13 @@ public final class RuntimeDiagnostics {
                 }
             }
         }
+        return failures;
+    }
+
+    private static List<String> validateResearchTasks(Dump dump) {
+        List<String> failures = new ArrayList<>();
+        appendFailures(failures, "research task slot overflow", dump.researchTasks.overflowingSteps);
+        appendFailures(failures, "research task factory failure", dump.researchTasks.factoryFailures);
         return failures;
     }
 
@@ -410,6 +535,15 @@ public final class RuntimeDiagnostics {
         requireResourceCount(failures, dump, "chestLootTables", "no chest loot table files");
         requireResourceCount(failures, dump, "entityLootTables", "no entity loot table files");
         requireResourceCount(failures, dump, "structureTemplates", "no structure template files");
+        return failures;
+    }
+
+    private static List<String> validateCompatibility(Dump dump) {
+        List<String> failures = new ArrayList<>();
+        Object available = dump.worldGen.values.get("zombieVillagerFinishConversionMethodAvailable");
+        if (!Boolean.TRUE.equals(available)) {
+            failures.add("zombie villager finishConversion method unavailable");
+        }
         return failures;
     }
 
@@ -481,6 +615,31 @@ public final class RuntimeDiagnostics {
                 "slimy_slug",
                 "wraith",
                 "zombie_brute"
+        );
+    }
+
+    private static List<String> expectedModernAltarRitualIds() {
+        return Arrays.asList(
+                "eidolon:absorption",
+                "eidolon:allure",
+                "eidolon:bonechill_recharging",
+                "eidolon:crystal",
+                "eidolon:daylight",
+                "eidolon:deceit",
+                "eidolon:moonlight",
+                "eidolon:purify",
+                "eidolon:repelling",
+                "eidolon:sanguine_sanguine_amulet",
+                "eidolon:sanguine_sapping_sword",
+                "eidolon:soulfire_recharging",
+                "eidolon:summon_drowned",
+                "eidolon:summon_husk",
+                "eidolon:summon_phantom",
+                "eidolon:summon_skeleton",
+                "eidolon:summon_stray",
+                "eidolon:summon_wither_skeleton",
+                "eidolon:summon_wraith",
+                "eidolon:summon_zombie"
         );
     }
 
@@ -556,6 +715,8 @@ public final class RuntimeDiagnostics {
         json.add("drops", dropJson(dump.drops));
         json.add("gui", guiJson(dump.gui));
         json.add("recipes", recipeJson(dump.recipes));
+        json.add("researchTasks", researchTaskJson(dump.researchTasks));
+        json.add("worldGen", worldGenJson(dump.worldGen));
         json.add("resources", resourceJson(dump.resources));
         json.add("failures", strings(dump.failures));
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
@@ -586,6 +747,48 @@ public final class RuntimeDiagnostics {
             writer.write("| Altar rituals | " + dump.recipes.altarRituals + " |\n");
             writer.write("| Altar entries | " + dump.recipes.altarEntries + " |\n");
             writer.write("| GUI IDs | " + dump.gui.ids.size() + " |\n\n");
+            writer.write("| Altar ritual convergence | Count |\n");
+            writer.write("| --- | ---: |\n");
+            writer.write("| Expected modern ritual IDs | " + dump.recipes.expectedModernAltarRituals.size() + " |\n");
+            writer.write("| Missing modern ritual IDs | " + dump.recipes.missingModernAltarRituals.size() + " |\n");
+            writer.write("| Legacy extra ritual IDs | " + dump.recipes.legacyExtraAltarRituals.size() + " |\n\n");
+            writer.write("| Altar ritual | Behavior | Focus | Sacrifice | Offerings | Health | Entity |\n");
+            writer.write("| --- | --- | --- | --- | ---: | ---: | --- |\n");
+            for (Map.Entry<String, RitualDump> entry : dump.recipes.altarRitualDetails.entrySet()) {
+                RitualDump ritual = entry.getValue();
+                writer.write("| " + entry.getKey()
+                        + " | " + ritual.behavior
+                        + " | " + summaryList(ritual.focus)
+                        + " | " + summaryList(ritual.sacrifice)
+                        + " | " + ritual.offeringCount
+                        + " | " + ritual.healthCost
+                        + " | " + emptyMarker(ritual.entity) + " |\n");
+            }
+            writer.write("\n");
+            writer.write("| Modern recipe type baseline | Source count |\n");
+            writer.write("| --- | ---: |\n");
+            for (Map.Entry<String, Integer> entry : dump.recipes.modernRecipeTypeCounts.entrySet()) {
+                writer.write("| " + entry.getKey() + " | " + entry.getValue() + " |\n");
+            }
+            writer.write("\n");
+            writer.write("| Research task slots | Value |\n");
+            writer.write("| --- | ---: |\n");
+            writer.write("| Legacy item slot limit | " + dump.researchTasks.slotLimit + " |\n");
+            writer.write("| Researches | " + dump.researchTasks.researchCount + " |\n");
+            writer.write("| Task pool factories | " + dump.researchTasks.taskPoolSize + " |\n");
+            writer.write("| Generated tasks per step | " + dump.researchTasks.generatedTasksPerStep + " |\n");
+            writer.write("| Factory samples per task | " + dump.researchTasks.taskFactorySamples + " |\n");
+            writer.write("| Max task pool item slots | " + dump.researchTasks.maxTaskPoolItemSlots + " |\n");
+            writer.write("| Max default step item slots | " + dump.researchTasks.maxDefaultStepItemSlots + " |\n");
+            writer.write("| Max step item slots | " + dump.researchTasks.maxStepItemSlots + " |\n");
+            writer.write("| Overflowing steps | " + dump.researchTasks.overflowingSteps.size() + " |\n");
+            writer.write("| Task factory failures | " + dump.researchTasks.factoryFailures.size() + " |\n\n");
+            writer.write("| Worldgen config | Value |\n");
+            writer.write("| --- | --- |\n");
+            for (Map.Entry<String, Object> entry : dump.worldGen.values.entrySet()) {
+                writer.write("| " + entry.getKey() + " | " + entry.getValue() + " |\n");
+            }
+            writer.write("\n");
             writer.write("| Resource check | Count |\n");
             writer.write("| --- | ---: |\n");
             for (Map.Entry<String, Integer> entry : dump.resources.counts.entrySet()) {
@@ -687,6 +890,73 @@ public final class RuntimeDiagnostics {
         json.addProperty("incubator", dump.incubator);
         json.addProperty("altarRituals", dump.altarRituals);
         json.addProperty("altarEntries", dump.altarEntries);
+        json.add("altarRitualIds", strings(dump.altarRitualIds));
+        json.add("expectedModernAltarRituals", strings(dump.expectedModernAltarRituals));
+        json.add("missingModernAltarRituals", strings(dump.missingModernAltarRituals));
+        json.add("legacyExtraAltarRituals", strings(dump.legacyExtraAltarRituals));
+        json.add("altarRitualDetails", ritualDetailsJson(dump.altarRitualDetails));
+        JsonObject modernRecipeTypes = new JsonObject();
+        for (Map.Entry<String, Integer> entry : dump.modernRecipeTypeCounts.entrySet()) {
+            modernRecipeTypes.addProperty(entry.getKey(), entry.getValue());
+        }
+        json.add("modernRecipeTypeCounts", modernRecipeTypes);
+        json.add("recipeSemanticNotes", strings(dump.recipeSemanticNotes));
+        return json;
+    }
+
+    private static JsonObject ritualDetailsJson(Map<String, RitualDump> details) {
+        JsonObject json = new JsonObject();
+        for (Map.Entry<String, RitualDump> entry : details.entrySet()) {
+            RitualDump ritual = entry.getValue();
+            JsonObject detail = new JsonObject();
+            detail.addProperty("behavior", ritual.behavior);
+            detail.addProperty("capacity", ritual.capacity);
+            detail.addProperty("power", ritual.power);
+            detail.add("focus", strings(ritual.focus));
+            detail.add("sacrifice", strings(ritual.sacrifice));
+            detail.addProperty("offeringCount", ritual.offeringCount);
+            detail.add("offerings", strings(ritual.offerings));
+            detail.addProperty("healthCost", ritual.healthCost);
+            detail.addProperty("entity", ritual.entity);
+            detail.addProperty("result", ritual.result);
+            json.add(entry.getKey(), detail);
+        }
+        return json;
+    }
+
+    private static JsonObject researchTaskJson(ResearchTaskDump dump) {
+        JsonObject json = new JsonObject();
+        json.addProperty("slotLimit", dump.slotLimit);
+        json.addProperty("researchCount", dump.researchCount);
+        json.addProperty("taskPoolSize", dump.taskPoolSize);
+        json.addProperty("generatedTasksPerStep", dump.generatedTasksPerStep);
+        json.addProperty("taskFactorySamples", dump.taskFactorySamples);
+        json.addProperty("maxTaskPoolItemSlots", dump.maxTaskPoolItemSlots);
+        json.addProperty("maxDefaultStepItemSlots", dump.maxDefaultStepItemSlots);
+        json.addProperty("maxStepItemSlots", dump.maxStepItemSlots);
+        json.addProperty("maxStep", dump.maxStep);
+        JsonObject stepSlots = new JsonObject();
+        for (Map.Entry<String, Integer> entry : dump.stepItemSlots.entrySet()) {
+            stepSlots.addProperty(entry.getKey(), entry.getValue());
+        }
+        json.add("stepItemSlots", stepSlots);
+        json.add("overflowingSteps", strings(dump.overflowingSteps));
+        json.add("factoryFailures", strings(dump.factoryFailures));
+        return json;
+    }
+
+    private static JsonObject worldGenJson(WorldGenDump dump) {
+        JsonObject json = new JsonObject();
+        for (Map.Entry<String, Object> entry : dump.values.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Boolean) {
+                json.addProperty(entry.getKey(), (Boolean) value);
+            } else if (value instanceof Number) {
+                json.addProperty(entry.getKey(), (Number) value);
+            } else {
+                json.addProperty(entry.getKey(), String.valueOf(value));
+            }
+        }
         return json;
     }
 
@@ -795,6 +1065,49 @@ public final class RuntimeDiagnostics {
         return index >= 0 ? id.substring(index + 1) : id;
     }
 
+    private static List<String> ingredientStacks(Ingredient ingredient) {
+        List<String> result = new ArrayList<>();
+        if (ingredient == null || ingredient == Ingredient.EMPTY) {
+            return result;
+        }
+        for (ItemStack stack : ingredient.getMatchingStacks()) {
+            if (!stack.isEmpty()) {
+                result.add(stackLabel(stack));
+            }
+        }
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    private static String stackLabel(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return "";
+        }
+        ResourceLocation name = stack.getItem().getRegistryName();
+        String label = name == null ? stack.getItem().getClass().getName() : name.toString();
+        if (stack.getMetadata() != 0) {
+            label += "#" + stack.getMetadata();
+        }
+        if (stack.getCount() != 1) {
+            label += " x" + stack.getCount();
+        }
+        if (stack.hasTagCompound()) {
+            label += " " + stack.getTagCompound().toString();
+        }
+        return label;
+    }
+
+    private static String summaryList(List<String> values) {
+        if (values.isEmpty()) {
+            return "-";
+        }
+        return String.join(", ", values);
+    }
+
+    private static String emptyMarker(String value) {
+        return value == null || value.isEmpty() ? "-" : value;
+    }
+
     private static List<String> difference(List<String> left, List<String> right) {
         List<String> result = new ArrayList<>();
         for (String value : left) {
@@ -821,6 +1134,8 @@ public final class RuntimeDiagnostics {
         DropDump drops;
         GuiDump gui;
         RecipeDump recipes;
+        ResearchTaskDump researchTasks;
+        WorldGenDump worldGen;
         ResourceDump resources;
         List<String> failures = new ArrayList<>();
     }
@@ -869,6 +1184,45 @@ public final class RuntimeDiagnostics {
         int incubator;
         int altarRituals;
         int altarEntries;
+        List<String> altarRitualIds = new ArrayList<>();
+        List<String> expectedModernAltarRituals = new ArrayList<>();
+        List<String> missingModernAltarRituals = new ArrayList<>();
+        List<String> legacyExtraAltarRituals = new ArrayList<>();
+        Map<String, RitualDump> altarRitualDetails = new TreeMap<>();
+        Map<String, Integer> modernRecipeTypeCounts = new LinkedHashMap<>();
+        List<String> recipeSemanticNotes = new ArrayList<>();
+    }
+
+    private static final class RitualDump {
+        String behavior;
+        double capacity;
+        double power;
+        List<String> focus = new ArrayList<>();
+        List<String> sacrifice = new ArrayList<>();
+        int offeringCount;
+        List<String> offerings = new ArrayList<>();
+        float healthCost;
+        String entity;
+        String result;
+    }
+
+    private static final class ResearchTaskDump {
+        int slotLimit;
+        int researchCount;
+        int taskPoolSize;
+        int generatedTasksPerStep;
+        int taskFactorySamples;
+        int maxTaskPoolItemSlots;
+        int maxDefaultStepItemSlots;
+        int maxStepItemSlots;
+        String maxStep;
+        Map<String, Integer> stepItemSlots = new LinkedHashMap<>();
+        List<String> overflowingSteps = new ArrayList<>();
+        List<String> factoryFailures = new ArrayList<>();
+    }
+
+    private static final class WorldGenDump {
+        Map<String, Object> values = new LinkedHashMap<>();
     }
 
     private static final class ResourceDump {

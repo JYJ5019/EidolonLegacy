@@ -1,6 +1,8 @@
 package elucent.eidolon.entity;
 
 import elucent.eidolon.particle.EidolonParticles;
+import elucent.eidolon.network.ModNetwork;
+import elucent.eidolon.network.SpellCastPacket;
 import elucent.eidolon.registries.ModSounds;
 import elucent.eidolon.spell.Chanting;
 import elucent.eidolon.spell.Rune;
@@ -19,13 +21,12 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class ChantCasterEntity extends Entity {
     private UUID casterId;
     private int timer;
     private int deathTimer;
+    private int lastParticleIndex;
 
     public ChantCasterEntity(World worldIn) {
         super(worldIn);
@@ -90,7 +92,7 @@ public class ChantCasterEntity extends Entity {
         motionZ = 0.0D;
 
         if (world.isRemote) {
-            idleParticles();
+            playSyncedRuneSteps();
             return;
         }
         if (deathTimer > 0) {
@@ -147,6 +149,10 @@ public class ChantCasterEntity extends Entity {
         }
         Chanting.Result result = Chanting.castSigns(world, getPosition(), caster, sequence);
         dataManager.set(SUCCEEDED, result.isSuccess());
+        if (result.isSuccess()) {
+            ModNetwork.CHANNEL.sendToAllAround(new SpellCastPacket(caster, getPosition(), result.getSpell(), result.getSequence()),
+                    new NetworkRegistry.TargetPoint(dimension, posX, posY, posZ, 48.0D));
+        }
         deathTimer = 20;
     }
 
@@ -154,69 +160,51 @@ public class ChantCasterEntity extends Entity {
         dataManager.set(SUCCEEDED, false);
         world.playSound(null, posX, posY, posZ, SoundEvents.BLOCK_FIRE_EXTINGUISH,
                 SoundCategory.PLAYERS, 0.85F, 0.85F + rand.nextFloat() * 0.25F);
-        if (world instanceof WorldServer) {
-            ((WorldServer) world).spawnParticle(EnumParticleTypes.SMOKE_NORMAL,
-                    posX, posY, posZ, 18, 0.25D, 0.25D, 0.25D, 0.02D);
-        }
         deathTimer = 20;
     }
 
     private void playRuneStep(Rune rune, AverageColor color) {
         world.playSound(null, posX, posY, posZ, ModSounds.CHANT_WORD, SoundCategory.PLAYERS,
                 0.7F, 0.625F + rand.nextFloat() * 0.375F);
-        if (world instanceof WorldServer) {
-            WorldServer server = (WorldServer) world;
-            server.spawnParticle(EnumParticleTypes.CRIT_MAGIC, posX, posY, posZ,
-                    12, 0.18D, 0.18D, 0.18D, 0.02D);
-            for (int i = 0; i < 8; i++) {
-                server.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                        posX + rand.nextGaussian() * 0.12D,
-                        posY + rand.nextGaussian() * 0.12D,
-                        posZ + rand.nextGaussian() * 0.12D,
-                        0, color.red, color.green, color.blue, 1.0D);
-            }
+    }
+
+    private void playSyncedRuneSteps() {
+        List<Rune> visibleRunes = decodeRunes(dataManager.get(RUNES));
+        int index = Math.min(dataManager.get(INDEX), visibleRunes.size());
+        if (index < lastParticleIndex) {
+            lastParticleIndex = index;
+        }
+        while (lastParticleIndex < index) {
+            spawnRuneStepParticle(visibleRunes, lastParticleIndex);
+            lastParticleIndex++;
         }
     }
 
-    private void idleParticles() {
-        if (ticksExisted % 3 != 0) {
+    private void spawnRuneStepParticle(List<Rune> visibleRunes, int stepIndex) {
+        SignSequence before = new SignSequence();
+        for (int i = 0; i < stepIndex && i < visibleRunes.size(); i++) {
+            if (visibleRunes.get(i).doEffect(before) == Rune.RuneResult.FAIL) {
+                return;
+            }
+        }
+        if (stepIndex < 0 || stepIndex >= visibleRunes.size()) {
             return;
         }
-        SignSequence signs = getSignSequence();
-        AverageColor color = signs.getAverageColor();
-        Sign sign = signs.getSigns().peekLast();
-        float r = color.red;
-        float g = color.green;
-        float b = color.blue;
-        EidolonParticles.spawnWisp(world,
-                posX + (rand.nextDouble() - 0.5D) * 0.2D,
-                posY + (rand.nextDouble() - 0.5D) * 0.2D,
-                posZ + (rand.nextDouble() - 0.5D) * 0.2D,
-                (rand.nextDouble() - 0.5D) * 0.012D,
-                (rand.nextDouble() - 0.5D) * 0.012D,
-                (rand.nextDouble() - 0.5D) * 0.012D,
-                r, g, b);
-        if (sign != null && ticksExisted % 9 == 0) {
-            Vec3d look = getLookDirection();
-            EidolonParticles.spawnSign(world, sign, posX, posY, posZ,
-                    look.x * 0.01D, look.y * 0.01D, look.z * 0.01D);
+        Rune rune = visibleRunes.get(stepIndex);
+        AverageColor start = before.getAverageColor();
+        if (rune.doEffect(before) == Rune.RuneResult.FAIL) {
+            return;
         }
-        List<Rune> visibleRunes = decodeRunes(dataManager.get(RUNES));
-        if (!visibleRunes.isEmpty() && ticksExisted % 6 == 0) {
-            int runeIndex = Math.min(Math.max(0, dataManager.get(INDEX) - 1), visibleRunes.size() - 1);
-            Vec3d look = getLookDirection();
-            EidolonParticles.spawnRune(world, visibleRunes.get(runeIndex),
-                    posX + (rand.nextDouble() - 0.5D) * 0.08D,
-                    posY + (rand.nextDouble() - 0.5D) * 0.08D,
-                    posZ + (rand.nextDouble() - 0.5D) * 0.08D,
-                    look.x * 0.02D, look.y * 0.02D, look.z * 0.02D,
-                    r, g, b);
+        AverageColor end = before.getAverageColor();
+        Vec3d look = getLookDirection();
+        double x = posX + 0.1D * rand.nextGaussian();
+        double y = posY + 0.1D * rand.nextGaussian();
+        double z = posZ + 0.1D * rand.nextGaussian();
+        for (int i = 0; i < 2; i++) {
+            EidolonParticles.spawnRune(world, rune, x, y, z,
+                    look.x * 0.03D, look.y * 0.03D, look.z * 0.03D,
+                    start.red, start.green, start.blue, end.red, end.green, end.blue);
         }
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                posX + (rand.nextDouble() - 0.5D) * 0.2D,
-                posY + (rand.nextDouble() - 0.5D) * 0.2D,
-                posZ + (rand.nextDouble() - 0.5D) * 0.2D,
-                r, g, b);
     }
 
     private EntityPlayer getCaster() {

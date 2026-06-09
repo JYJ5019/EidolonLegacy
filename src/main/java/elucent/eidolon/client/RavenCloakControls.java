@@ -3,6 +3,7 @@ package elucent.eidolon.client;
 import elucent.eidolon.network.ModNetwork;
 import elucent.eidolon.network.RavenCloakPacket;
 import elucent.eidolon.item.RavenCloakItem;
+import elucent.eidolon.client.render.RavenCloakRenderState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -32,6 +33,7 @@ public final class RavenCloakControls {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        RavenCloakRenderState.tick();
         Minecraft minecraft = Minecraft.getMinecraft();
         EntityPlayer player = minecraft.player;
         if (player == null) {

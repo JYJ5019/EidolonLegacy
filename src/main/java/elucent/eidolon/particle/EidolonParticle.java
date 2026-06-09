@@ -6,6 +6,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 
+import java.awt.Color;
+
 public class EidolonParticle extends Particle {
     private final float startRed;
     private final float startGreen;
@@ -19,6 +21,11 @@ public class EidolonParticle extends Particle {
     private final float endScale;
     private final float spin;
     private final boolean fullbright;
+    private final boolean sourceSmokeCurve;
+    private final float yDamping;
+    private final TextureAtlasSprite endSprite;
+    private final float[] hsvStart = new float[3];
+    private final float[] hsvEnd = new float[3];
 
     public EidolonParticle(World world, TextureAtlasSprite sprite, double x, double y, double z,
                            double vx, double vy, double vz, EidolonParticleData data) {
@@ -39,30 +46,64 @@ public class EidolonParticle extends Particle {
         this.endScale = data.endScale;
         this.spin = data.spin;
         this.fullbright = data.fullbright;
+        this.sourceSmokeCurve = data.sourceSmokeCurve;
+        this.yDamping = data.yDamping;
+        this.endSprite = data.endSprite;
         this.particleMaxAge = Math.max(1, data.lifetime);
         this.particleGravity = data.gravity;
         this.canCollide = data.collides;
-        updateTraits(0.0F);
+        Color.RGBtoHSB(toColor(this.startRed), toColor(this.startGreen), toColor(this.startBlue), hsvStart);
+        Color.RGBtoHSB(toColor(this.endRed), toColor(this.endGreen), toColor(this.endBlue), hsvEnd);
+        updateTraits(traitCoeff(0.0F));
     }
 
     @Override
     public void onUpdate() {
-        super.onUpdate();
-        updateTraits((float) this.particleAge / (float) this.particleMaxAge);
+        updateTraits(traitCoeff((float) this.particleAge / (float) this.particleMaxAge));
         this.particleAngle += this.spin;
+        super.onUpdate();
+        if (this.yDamping > 0.0F) {
+            this.motionY *= this.yDamping;
+        }
+        if (this.endSprite != null && this.particleAge >= this.particleMaxAge * 4 / 5) {
+            setParticleTexture(this.endSprite);
+        }
+    }
+
+    private float traitCoeff(float ageCoeff) {
+        return this.sourceSmokeCurve ? 1.0F - (float) Math.sin(Math.PI * ageCoeff) : ageCoeff;
     }
 
     private void updateTraits(float t) {
         float clamped = Math.max(0.0F, Math.min(1.0F, t));
-        this.particleRed = lerp(this.startRed, this.endRed, clamped);
-        this.particleGreen = lerp(this.startGreen, this.endGreen, clamped);
-        this.particleBlue = lerp(this.startBlue, this.endBlue, clamped);
+        float hue = lerpAngle(hsvStart[0], hsvEnd[0], clamped);
+        float saturation = lerp(hsvStart[1], hsvEnd[1], clamped);
+        float brightness = lerp(hsvStart[2], hsvEnd[2], clamped);
+        int packed = Color.HSBtoRGB(hue, saturation, brightness);
+        this.particleRed = ((packed >> 16) & 255) / 255.0F;
+        this.particleGreen = ((packed >> 8) & 255) / 255.0F;
+        this.particleBlue = (packed & 255) / 255.0F;
         this.particleAlpha = lerp(this.startAlpha, this.endAlpha, clamped);
         this.particleScale = lerp(this.startScale, this.endScale, clamped);
     }
 
     private float lerp(float a, float b, float t) {
         return a + (b - a) * t;
+    }
+
+    private float lerpAngle(float a, float b, float t) {
+        float delta = b - a;
+        if (delta > 0.5F) {
+            delta -= 1.0F;
+        } else if (delta < -0.5F) {
+            delta += 1.0F;
+        }
+        float result = a + delta * t;
+        return result < 0.0F ? result + 1.0F : result > 1.0F ? result - 1.0F : result;
+    }
+
+    private int toColor(float value) {
+        return Math.max(0, Math.min(255, (int) (255.0F * Math.min(1.0F, value))));
     }
 
     @Override
@@ -98,6 +139,9 @@ public class EidolonParticle extends Particle {
         private float gravity = 0.0F;
         private boolean collides;
         private boolean fullbright = true;
+        private boolean sourceSmokeCurve;
+        private float yDamping;
+        private TextureAtlasSprite endSprite;
 
         public EidolonParticleData lifetime(int lifetime) {
             this.lifetime = lifetime;
@@ -148,6 +192,22 @@ public class EidolonParticle extends Particle {
 
         public EidolonParticleData fullbright(boolean fullbright) {
             this.fullbright = fullbright;
+            return this;
+        }
+
+        public EidolonParticleData sourceSmokeCurve(float yDamping) {
+            this.sourceSmokeCurve = true;
+            this.yDamping = yDamping;
+            return this;
+        }
+
+        public EidolonParticleData yDamping(float yDamping) {
+            this.yDamping = yDamping;
+            return this;
+        }
+
+        public EidolonParticleData endSprite(TextureAtlasSprite endSprite) {
+            this.endSprite = endSprite;
             return this;
         }
     }

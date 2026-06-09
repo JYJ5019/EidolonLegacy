@@ -3,12 +3,8 @@ package elucent.eidolon.tile;
 import elucent.eidolon.recipes.WorktableRecipe;
 import elucent.eidolon.recipes.WorktableRecipes;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.ITextComponent;
@@ -21,12 +17,6 @@ public class WorktableTileEntity extends TileEntity implements IInventory {
     public static final int GRID_SIZE = 9;
     public static final int REAGENT_SIZE = 4;
     public static final int SLOT_COUNT = GRID_SIZE + REAGENT_SIZE;
-    private static final Container CRAFTING_CONTAINER = new Container() {
-        @Override
-        public boolean canInteractWith(EntityPlayer playerIn) {
-            return false;
-        }
-    };
 
     private final NonNullList<ItemStack> inventory = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
 
@@ -74,8 +64,7 @@ public class WorktableTileEntity extends TileEntity implements IInventory {
         if (recipe != null) {
             return recipe.getResult();
         }
-        IRecipe vanillaRecipe = getMatchingVanillaRecipe();
-        return vanillaRecipe == null ? ItemStack.EMPTY : vanillaRecipe.getCraftingResult(createCraftingInventory()).copy();
+        return ItemStack.EMPTY;
     }
 
     public ItemStack craft(EntityPlayer player) {
@@ -87,31 +76,7 @@ public class WorktableTileEntity extends TileEntity implements IInventory {
             return result;
         }
 
-        IRecipe vanillaRecipe = getMatchingVanillaRecipe();
-        if (vanillaRecipe != null) {
-            InventoryCrafting craftingInventory = createCraftingInventory();
-            ItemStack result = vanillaRecipe.getCraftingResult(craftingInventory).copy();
-            consumeInputs(GRID_SIZE, vanillaRecipe.getRemainingItems(craftingInventory), player);
-            markDirty();
-            return result;
-        }
-
         return ItemStack.EMPTY;
-    }
-
-    private IRecipe getMatchingVanillaRecipe() {
-        if (world == null) {
-            return null;
-        }
-        return CraftingManager.findMatchingRecipe(createCraftingInventory(), world);
-    }
-
-    private InventoryCrafting createCraftingInventory() {
-        InventoryCrafting craftingInventory = new InventoryCrafting(CRAFTING_CONTAINER, 3, 3);
-        for (int i = 0; i < GRID_SIZE; i++) {
-            craftingInventory.setInventorySlotContents(i, inventory.get(i).copy());
-        }
-        return craftingInventory;
     }
 
     public ItemStack[] getGridStacks() {

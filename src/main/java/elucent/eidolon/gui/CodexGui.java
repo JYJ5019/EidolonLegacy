@@ -1,6 +1,7 @@
 package elucent.eidolon.gui;
 
 import elucent.eidolon.Reference;
+import elucent.eidolon.client.render.shader.LegacyShaders;
 import elucent.eidolon.codex.Category;
 import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.CodexChapters;
@@ -48,6 +49,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fluids.FluidRegistry;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -895,11 +897,11 @@ public class CodexGui extends GuiScreen {
     }
 
     private void drawSignIcon(Sign sign, int x, int y, int size) {
-        drawColoredTexture(sign.getSprite(), x, y, size, size, sign.getRed(), sign.getGreen(), sign.getBlue());
+        drawGlowingColoredTexture(sign.getSprite(), x, y, size, size, sign.getRed(), sign.getGreen(), sign.getBlue());
     }
 
     private void drawRuneIcon(Rune rune, int x, int y, int size) {
-        drawColoredTexture(rune.getSprite(), x, y, size, size, 1.0F, 1.0F, 1.0F);
+        drawGlowingColoredTexture(rune.getSprite(), x, y, size, size, 1.0F, 1.0F, 1.0F);
     }
 
     private void drawColoredTexture(ResourceLocation texture, int x, int y, int width, int height,
@@ -909,6 +911,34 @@ public class CodexGui extends GuiScreen {
                 "textures/" + texture.getPath() + ".png"));
         drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, width, height);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    private void drawGlowingColoredTexture(ResourceLocation texture, int x, int y, int width, int height,
+                                           float red, float green, float blue) {
+        drawColoredTexture(texture, x, y, width, height, red, green, blue);
+
+        boolean shaderActive = LegacyShaders.beginSprite(red, green, blue, 0.45F);
+        if (!shaderActive) {
+            return;
+        }
+        boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        try {
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            mc.getTextureManager().bindTexture(new ResourceLocation(texture.getNamespace(),
+                    "textures/" + texture.getPath() + ".png"));
+            drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, width, height);
+        } finally {
+            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            if (blendEnabled) {
+                GlStateManager.enableBlend();
+            } else {
+                GlStateManager.disableBlend();
+            }
+            LegacyShaders.end(shaderActive);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        }
     }
 
     private void drawSelectedRecipePage(int x, int y, int mouseX, int mouseY) {

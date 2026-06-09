@@ -1,0 +1,18 @@
+{
+  "type": "eidolon:worktable",
+  "pattern": [
+    "   ",
+    " s ",
+    "   "
+  ],
+  "reagents": "    ",
+  "key": {
+    "s": {
+      "item": "minecraft:stone",
+      "data": 0
+    }
+  },
+  "result": {
+    "item": "eidolon:smooth_stone_bricks"
+  }
+}

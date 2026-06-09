@@ -1,5 +1,6 @@
 package elucent.eidolon.registries;
 
+import elucent.eidolon.CommonConfig;
 import elucent.eidolon.Eidolon;
 import elucent.eidolon.Reference;
 import elucent.eidolon.entity.AngelArrowEntity;
@@ -72,14 +73,20 @@ public final class ModEntities {
         Biome[] slugBiomes = collectBiomes(ModEntities::isSlugBiome);
 
         if (overworld.length > 0) {
-            EntityRegistry.addSpawn(WraithEntity.class, 60, 1, 2, EnumCreatureType.MONSTER, overworld);
-            EntityRegistry.addSpawn(ZombieBruteEntity.class, 60, 1, 2, EnumCreatureType.MONSTER, overworld);
+            addSpawn(WraithEntity.class, CommonConfig.wraithSpawnWeight(), 1, 2, EnumCreatureType.MONSTER, overworld);
+            addSpawn(ZombieBruteEntity.class, CommonConfig.zombieBruteSpawnWeight(), 1, 2, EnumCreatureType.MONSTER, overworld);
         }
         if (forests.length > 0) {
-            EntityRegistry.addSpawn(RavenEntity.class, 6, 2, 5, EnumCreatureType.CREATURE, forests);
+            addSpawn(RavenEntity.class, CommonConfig.ravenSpawnWeight(), 2, 5, EnumCreatureType.CREATURE, forests);
         }
         if (slugBiomes.length > 0) {
-            EntityRegistry.addSpawn(SlimySlugEntity.class, 7, 2, 5, EnumCreatureType.CREATURE, slugBiomes);
+            addSpawn(SlimySlugEntity.class, CommonConfig.slimySlugSpawnWeight(), 2, 5, EnumCreatureType.CREATURE, slugBiomes);
+        }
+    }
+
+    private static void addSpawn(Class entityClass, int weight, int min, int max, EnumCreatureType type, Biome[] biomes) {
+        if (weight > 0) {
+            EntityRegistry.addSpawn(entityClass, weight, min, max, type, biomes);
         }
     }
 

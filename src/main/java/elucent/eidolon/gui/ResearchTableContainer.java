@@ -1,5 +1,6 @@
 package elucent.eidolon.gui;
 
+import elucent.eidolon.Eidolon;
 import elucent.eidolon.registries.ModBlocks;
 import elucent.eidolon.registries.ModItems;
 import elucent.eidolon.research.Research;
@@ -24,13 +25,14 @@ public class ResearchTableContainer extends Container {
     private static final int TASK_X = 189;
     private static final int TASK_Y = 17;
     private static final int TASK_SPACING = 36;
-    private static final int TASK_SLOT_COUNT = 9;
+    public static final int TASK_SLOT_COUNT = 9;
 
     private final ResearchTableTileEntity tile;
     private final EntityPlayer player;
-    private final InventoryBasic taskInventory = new InventoryBasic("research_tasks", false, 9);
+    private final InventoryBasic taskInventory = new InventoryBasic("research_tasks", false, TASK_SLOT_COUNT);
     private final ResearchTaskSlot[] taskSlots = new ResearchTaskSlot[TASK_SLOT_COUNT];
     private String lastResearchKey = "";
+    private String lastOverflowKey = "";
     private int lastProgress = -1;
     private int lastSeedLow = -1;
     private int lastSeedHigh = -1;
@@ -93,10 +95,12 @@ public class ResearchTableContainer extends Container {
 
         List<ResearchTask> tasks = research.getTasks(getTaskSeed(notes), stepsDone);
         int taskSlot = 0;
+        int requiredTaskSlots = 0;
         for (int i = 0; i < tasks.size(); i++) {
             ResearchTask task = tasks.get(i);
             if (task instanceof ResearchTask.ItemsTask) {
                 List<ItemStack> items = ((ResearchTask.ItemsTask) task).getItems();
+                requiredTaskSlots += items.size();
                 for (int j = 0; j < items.size() && taskSlot < taskSlots.length; j++) {
                     taskSlots[taskSlot].configure(items.get(j), TASK_X + 11 + 17 * j, TASK_Y + i * TASK_SPACING + 7);
                     if (!taskSlots[taskSlot].matchesExpectation()) {
@@ -107,7 +111,24 @@ public class ResearchTableContainer extends Container {
                 }
             }
         }
+        if (requiredTaskSlots > taskSlots.length) {
+            warnTaskSlotOverflow(research.getId(), stepsDone, getTaskSeed(notes), requiredTaskSlots);
+        } else {
+            lastOverflowKey = "";
+        }
         hideUnusedTaskSlots(taskSlot, returnMismatched);
+    }
+
+    private void warnTaskSlotOverflow(ResourceLocation researchId, int stepsDone, int seed, int requiredTaskSlots) {
+        if (player.world.isRemote) {
+            return;
+        }
+        String key = researchId + ":" + stepsDone + ":" + seed + ":" + requiredTaskSlots;
+        if (!key.equals(lastOverflowKey)) {
+            Eidolon.LOGGER.warn("Research task item slot overflow for {} step {} seed {}: requires {} slots, Legacy container has {}",
+                    researchId, stepsDone, seed, requiredTaskSlots, taskSlots.length);
+            lastOverflowKey = key;
+        }
     }
 
     public void refreshVisibleTaskSlots() {

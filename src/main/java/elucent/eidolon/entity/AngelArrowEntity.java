@@ -2,13 +2,13 @@ package elucent.eidolon.entity;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityTippedArrow;
 import net.minecraft.init.Items;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -33,6 +33,7 @@ public class AngelArrowEntity extends EntityTippedArrow {
     public void configureFromAmmo(ItemStack ammo) {
         if (ammo.isEmpty()) {
             pickupStack = new ItemStack(Items.ARROW);
+            spectral = false;
             return;
         }
         pickupStack = ammo.copy();
@@ -43,12 +44,23 @@ public class AngelArrowEntity extends EntityTippedArrow {
         }
     }
 
+    public void configureFromArrow(EntityArrow arrow, ItemStack ammo) {
+        if (arrow != null) {
+            NBTTagCompound arrowData = new NBTTagCompound();
+            arrow.writeEntityToNBT(arrowData);
+            readEntityFromNBT(arrowData);
+            setDamage(arrow.getDamage());
+            setIsCritical(arrow.getIsCritical());
+            pickupStatus = arrow.pickupStatus;
+        }
+        configureFromAmmo(ammo);
+    }
+
     @Override
     public void onUpdate() {
         super.onUpdate();
         if (!inGround) {
             steerTowardTarget();
-            trail();
         }
     }
 
@@ -126,11 +138,4 @@ public class AngelArrowEntity extends EntityTippedArrow {
         return entity != shooter;
     }
 
-    private void trail() {
-        if (!world.isRemote || ticksExisted % 2 != 0) {
-            return;
-        }
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB, posX, posY, posZ, 1.0D, 0.92D, 0.55D);
-        world.spawnParticle(EnumParticleTypes.CRIT_MAGIC, posX, posY, posZ, 0.0D, 0.0D, 0.0D);
-    }
 }

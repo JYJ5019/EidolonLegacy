@@ -1,11 +1,22 @@
 package elucent.eidolon.item;
 
+import elucent.eidolon.Reference;
+import elucent.eidolon.client.render.RavenCloakModel;
+import elucent.eidolon.network.RavenCloakPacket;
+import net.minecraft.client.model.ModelBiped;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
 
 public class RavenCloakItem extends EidolonCurioArmorItem {
     public static final int MAX_CHARGES = 12;
@@ -16,12 +27,52 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
     private static final String FLAP_CHARGES = "EidolonRavenFlapCharges";
     private static final String FLYING = "EidolonRavenFlying";
 
+    private static SimpleNetworkWrapper syncChannel;
+
+    @SideOnly(Side.CLIENT)
+    private RavenCloakModel armorModel;
+
     public RavenCloakItem(ArmorMaterial material) {
         super(material, EntityEquipmentSlot.CHEST, "raven", "tooltip.eidolon.raven_cloak");
     }
 
+    @Override
+    public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
+        return Reference.MOD_ID + ":textures/entity/raven_cloak.png";
+    }
+
+    @Nullable
+    @Override
+    @SideOnly(Side.CLIENT)
+    public ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot armorSlot,
+                                    ModelBiped defaultModel) {
+        if (armorSlot != EntityEquipmentSlot.CHEST) {
+            return defaultModel;
+        }
+        if (armorModel == null) {
+            armorModel = new RavenCloakModel();
+        }
+        setModelState(armorModel, entity, stack);
+        return armorModel;
+    }
+
+    @SideOnly(Side.CLIENT)
+    private static void setModelState(RavenCloakModel model, EntityLivingBase entity, ItemStack stack) {
+        elucent.eidolon.client.render.RavenCloakRenderState.Snapshot state =
+                elucent.eidolon.client.render.RavenCloakRenderState.get(entity, isFlying(stack),
+                        getDashTicks(stack), getFlapCharges(stack));
+        model.setState(state.flying, state.dashTicks, state.flapCharges, state.flapAge);
+    }
+
+    public static void setSyncChannel(SimpleNetworkWrapper channel) {
+        syncChannel = channel;
+    }
+
     public static void tickWings(EntityPlayer player, ItemStack stack) {
         boolean clampedDescent = false;
+        boolean wasFlying = isFlying(stack);
+        boolean wasDashing = getDashTicks(stack) > 0;
+        int oldCharges = getFlapCharges(stack);
         if (player.isSneaking() && player.motionY < -0.10D) {
             setFlying(stack, true);
             player.motionY = -0.10D;
@@ -40,6 +91,7 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
             setFlapCharges(stack, MAX_CHARGES);
             stopFlying(stack);
         }
+        syncStateIfChanged(player, stack, false, wasFlying, wasDashing, oldCharges);
     }
 
     public static boolean tryFlap(EntityPlayer player, ItemStack stack) {
@@ -62,6 +114,7 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
         setFlying(stack, true);
         player.fallDistance = 0.0F;
         player.velocityChanged = true;
+        syncState(player, stack, true);
         return true;
     }
 
@@ -78,6 +131,7 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
         setFlying(stack, true);
         player.fallDistance = 0.0F;
         player.velocityChanged = true;
+        syncState(player, stack, false);
         return true;
     }
 
@@ -88,6 +142,11 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
 
     public static boolean isDashing(ItemStack stack) {
         return !stack.isEmpty() && stack.getItem() instanceof RavenCloakItem && getDashTicks(stack) > 0;
+    }
+
+    public static boolean isFlying(ItemStack stack) {
+        NBTTagCompound tag = stack.getTagCompound();
+        return tag != null && tag.getBoolean(FLYING);
     }
 
     public static int getFlapCharges(ItemStack stack) {
@@ -109,10 +168,6 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
         player.fallDistance = 0.0F;
         player.velocityChanged = true;
         setDashTicks(stack, ticks - 1);
-        if (player.world.isRemote) {
-            player.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, player.posX, player.posY + 0.2D, player.posZ,
-                    -look.x * 0.04D, -look.y * 0.04D, -look.z * 0.04D);
-        }
     }
 
     public static boolean canFlap(EntityPlayer player) {
@@ -127,11 +182,6 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
         getOrCreateTag(stack).setInteger(FLAP_CHARGES, Math.max(0, Math.min(MAX_CHARGES, charges)));
     }
 
-    private static boolean isFlying(ItemStack stack) {
-        NBTTagCompound tag = stack.getTagCompound();
-        return tag != null && tag.getBoolean(FLYING);
-    }
-
     private static void setFlying(ItemStack stack, boolean flying) {
         getOrCreateTag(stack).setBoolean(FLYING, flying);
     }
@@ -143,6 +193,28 @@ public class RavenCloakItem extends EidolonCurioArmorItem {
                 setDashTicks(stack, 0);
             }
         }
+    }
+
+    private static void syncStateIfChanged(EntityPlayer player, ItemStack stack, boolean flapped,
+                                           boolean wasFlying, boolean wasDashing, int oldCharges) {
+        boolean flying = isFlying(stack);
+        boolean dashing = getDashTicks(stack) > 0;
+        int charges = getFlapCharges(stack);
+        if (flapped || flying != wasFlying || dashing != wasDashing || charges != oldCharges || shouldRefreshSync(player)) {
+            syncState(player, stack, flapped);
+        }
+    }
+
+    private static boolean shouldRefreshSync(EntityPlayer player) {
+        return !player.world.isRemote && player.ticksExisted % 20 == 0;
+    }
+
+    private static void syncState(EntityPlayer player, ItemStack stack, boolean flapped) {
+        if (player.world.isRemote || !(player instanceof EntityPlayerMP) || syncChannel == null) {
+            return;
+        }
+        syncChannel.sendToAllTracking(RavenCloakPacket.sync(player, stack, flapped), player);
+        syncChannel.sendTo(RavenCloakPacket.sync(player, stack, flapped), (EntityPlayerMP)player);
     }
 
     private static NBTTagCompound getOrCreateTag(ItemStack stack) {

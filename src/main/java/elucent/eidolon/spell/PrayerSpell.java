@@ -15,6 +15,10 @@ public class PrayerSpell extends StaticSpell {
         this.deity = deity;
     }
 
+    Deity getDeity() {
+        return deity;
+    }
+
     @Override
     public boolean canCast(World world, BlockPos pos, EntityPlayer player) {
         if (world.isRemote) {
@@ -41,6 +45,6 @@ public class PrayerSpell extends StaticSpell {
         reputation.pray(player, getRegistryName(), world.getTotalWorldTime());
         BlockPos effigyPos = effigy.getPos();
         reputation.addReputation(player, deity.getId(), 1.0D + 0.25D * SpellHelper.getNearbyAltarPower(world, effigyPos));
-        SpellHelper.playChantSuccess(world, effigyPos, Signs.WICKED_SIGN, Signs.SACRED_SIGN);
+        SpellHelper.playChantSuccess(world, effigyPos);
     }
 }

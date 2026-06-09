@@ -46,6 +46,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.block.Block;
@@ -53,6 +54,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemAxe;
+import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemHoe;
 import net.minecraft.item.ItemPickaxe;
 import net.minecraft.item.ItemRecord;
@@ -60,6 +62,8 @@ import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
@@ -125,7 +129,9 @@ public final class ModItems {
     public static final Item ELDER_BRICK = item("elder_brick");
     public static final Item SULFUR = item("sulfur");
     public static final Item GOLD_INLAY = item("gold_inlay");
-    public static final Item ZOMBIE_HEART = item("zombie_heart");
+    public static final Item ZOMBIE_HEART = food("zombie_heart", 2, 1.5F,
+            effect(MobEffects.HUNGER, 1800, 0, 875, 1000),
+            effect(MobEffects.POISON, 900, 1));
     public static final Item WRAITH_HEART = item("wraith_heart");
     public static final Item TATTERED_CLOTH = item("tattered_cloth");
     public static final Item SOUL_SHARD = item("soul_shard");
@@ -135,7 +141,9 @@ public final class ModItems {
     public static final Item TALLOW = item("tallow");
     public static final Item LESSER_SOUL_GEM = item("lesser_soul_gem");
     public static final Item WICKED_WEAVE = item("wicked_weave");
-    public static final Item WITHERED_HEART = item("withered_heart");
+    public static final Item WITHERED_HEART = food("withered_heart", 2, 1.5F,
+            effect(MobEffects.HUNGER, 1800, 0, 875, 1000),
+            effect(MobEffects.WITHER, 900, 1));
     public static final Item IMBUED_BONES = item("imbued_bones");
     public static final Item RAVEN_FEATHER = item("raven_feather");
     public static final Item MERAMMER_RESIN = item("merammer_resin");
@@ -149,15 +157,16 @@ public final class ModItems {
     public static final Item OFFERTORY_PLATE = offertoryPlate("offertory_plate", () -> ModBlocks.OFFERTORY_PLATE_BLOCK);
     public static final Item GOLD_OFFERTORY_PLATE = offertoryPlate("gold_offertory_plate", () -> ModBlocks.GOLD_OFFERTORY_PLATE_BLOCK);
     public static final Item PEWTER_OFFERTORY_PLATE = offertoryPlate("pewter_offertory_plate", () -> ModBlocks.PEWTER_OFFERTORY_PLATE_BLOCK);
-    public static final Item RED_CANDY = item("red_candy");
-    public static final Item GRAPE_CANDY = item("grape_candy");
+    public static final Item RED_CANDY = food("red_candy", 2, 2.0F);
+    public static final Item GRAPE_CANDY = food("grape_candy", 2, 2.0F);
     public static final Item CODEX = codex("codex");
     public static final Item ARCHIVE = item("archive");
     public static final Item SCRIPTORIUM = item("scriptorium");
     public static final Item CABINET = item("cabinet");
     public static final Item WOODEN_PODIUM = item("wooden_podium");
-    public static final Item FUNGUS_SPROUTS = item("fungus_sprouts");
-    public static final Item WARPED_SPROUTS = item("warped_sprouts");
+    public static final Item FUNGUS_SPROUTS = food("fungus_sprouts", 2, 0.1F);
+    public static final Item WARPED_SPROUTS = food("warped_sprouts", 4, 0.6F,
+            effect(ModPotions.ANCHORED, 900, 0));
     public static final Item MIRECAP = item("mirecap");
     public static final Item GLASS_HAND = setup(new GlassHandItem(), "glass_hand");
     public static final Item UNHOLY_SYMBOL = setup(new UnholySymbolItem(), "unholy_symbol");
@@ -338,6 +347,18 @@ public final class ModItems {
         item.setTranslationKey(Reference.MOD_ID + "." + name);
         item.setCreativeTab(ModCreativeTabs.EIDOLON);
         return item;
+    }
+
+    private static Item food(String name, int healAmount, float saturationModifier, FoodEffect... effects) {
+        return setup(new EidolonFoodItem(healAmount, saturationModifier, effects), name);
+    }
+
+    private static FoodEffect effect(Potion potion, int duration, int amplifier) {
+        return effect(potion, duration, amplifier, 1, 1);
+    }
+
+    private static FoodEffect effect(Potion potion, int duration, int amplifier, int chanceNumerator, int chanceDenominator) {
+        return new FoodEffect(potion, duration, amplifier, chanceNumerator, chanceDenominator);
     }
 
     private static Item researchNotes(String name) {
@@ -521,6 +542,48 @@ public final class ModItems {
         }
     }
 
+    private static final class EidolonFoodItem extends ItemFood {
+        private final FoodEffect[] effects;
+
+        private EidolonFoodItem(int healAmount, float saturationModifier, FoodEffect... effects) {
+            super(healAmount, saturationModifier, false);
+            this.effects = effects;
+        }
+
+        @Override
+        protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
+            super.onFoodEaten(stack, worldIn, player);
+            if (worldIn.isRemote) {
+                return;
+            }
+            for (FoodEffect effect : effects) {
+                if (effect.shouldApply(worldIn)) {
+                    player.addPotionEffect(new PotionEffect(effect.potion, effect.duration, effect.amplifier));
+                }
+            }
+        }
+    }
+
+    private static final class FoodEffect {
+        private final Potion potion;
+        private final int duration;
+        private final int amplifier;
+        private final int chanceNumerator;
+        private final int chanceDenominator;
+
+        private FoodEffect(Potion potion, int duration, int amplifier, int chanceNumerator, int chanceDenominator) {
+            this.potion = potion;
+            this.duration = duration;
+            this.amplifier = amplifier;
+            this.chanceNumerator = chanceNumerator;
+            this.chanceDenominator = chanceDenominator;
+        }
+
+        private boolean shouldApply(World world) {
+            return chanceNumerator >= chanceDenominator || world.rand.nextInt(chanceDenominator) < chanceNumerator;
+        }
+    }
+
     private static final class OffertoryPlateItem extends Item {
         private final java.util.function.Supplier<Block> blockSupplier;
 
@@ -578,7 +641,10 @@ public final class ModItems {
                 stars.append(i < done ? "*" : "o");
             }
             tooltip.add(stars.toString());
-            tooltip.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + researchName(research));
+            boolean known = done >= research.getStars() || isKnownResearchClient(research);
+            String name = known ? researchName(research) : "???";
+            tooltip.add((known ? TextFormatting.GRAY : TextFormatting.DARK_GRAY).toString()
+                    + TextFormatting.ITALIC + name);
         }
 
         @Override
@@ -606,7 +672,7 @@ public final class ModItems {
                 Research research = Researches.find(new ResourceLocation(tag.getString("research")));
                 String name = research == null ? tag.getString("research") : researchName(research);
                 tooltip.add(TextFormatting.GOLD + "" + TextFormatting.ITALIC + name);
-                if (research != null && isKnownClient(research)) {
+                if (research != null && isKnownResearchClient(research)) {
                     tooltip.add(TextFormatting.GRAY + I18n.translateToLocal("tooltip.eidolon.research_known"));
                 } else {
                     tooltip.add(TextFormatting.DARK_GRAY + I18n.translateToLocal("tooltip.eidolon.research_use"));
@@ -626,17 +692,14 @@ public final class ModItems {
             if (research == null) {
                 return new ActionResult<>(EnumActionResult.PASS, stack);
             }
+            if (KnowledgeUtil.knowsResearch(playerIn, research.getId())) {
+                return new ActionResult<>(EnumActionResult.PASS, stack);
+            }
             if (!worldIn.isRemote && !KnowledgeUtil.knowsResearch(playerIn, research.getId())) {
                 KnowledgeUtil.grantResearch(playerIn, research.getId());
                 stack.shrink(1);
             }
             return new ActionResult<>(EnumActionResult.SUCCESS, stack);
-        }
-
-        @SideOnly(Side.CLIENT)
-        private boolean isKnownClient(Research research) {
-            EntityPlayer player = net.minecraft.client.Minecraft.getMinecraft().player;
-            return player != null && KnowledgeUtil.knowsResearch(player, research.getId());
         }
     }
 
@@ -644,6 +707,12 @@ public final class ModItems {
         return research.hasDisplayNameOverride()
                 ? research.getDisplayNameOverride()
                 : I18n.translateToLocal(research.getTranslationKey());
+    }
+
+    @SideOnly(Side.CLIENT)
+    private static boolean isKnownResearchClient(Research research) {
+        EntityPlayer player = net.minecraft.client.Minecraft.getMinecraft().player;
+        return player != null && KnowledgeUtil.knowsResearch(player, research.getId());
     }
 
     public static ItemStack withSign(ItemStack stack, Sign sign) {

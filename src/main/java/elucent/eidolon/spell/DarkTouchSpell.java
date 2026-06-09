@@ -54,7 +54,7 @@ public class DarkTouchSpell extends StaticSpell {
         }
         item.setItem(result);
         item.setPickupDelay(20);
-        SpellHelper.playChantSuccess(world, item.getPosition(), Signs.WICKED_SIGN, Signs.BLOOD_SIGN);
+        SpellHelper.sendMagicBurst(world, item.posX, item.posY, item.posZ, Signs.WICKED_SIGN, Signs.BLOOD_SIGN);
     }
 
     private EntityItem findTargetItem(World world, EntityPlayer player) {

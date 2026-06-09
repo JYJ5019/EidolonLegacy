@@ -23,7 +23,6 @@ import net.minecraft.network.play.server.SPacketTimeUpdate;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -43,6 +42,14 @@ public class ActiveRituals extends WorldSavedData {
     private static final String DATA_NAME = Reference.MOD_ID + "_active_rituals";
     private static final AxisAlignedBB DEFAULT_CRYSTAL_BOUNDS =
             new AxisAlignedBB(-8.0D, -6.0D, -8.0D, 9.0D, 11.0D, 9.0D);
+    private static final double CENTER_XZ_OFFSET = 0.5D;
+    private static final double ACTIVE_PULSE_HEIGHT = 1.35D;
+    private static final double COMPLETE_PULSE_HEIGHT = 1.55D;
+    private static final double ACTIVE_RING_RADIUS = 1.1D;
+    private static final double COMPLETE_RING_RADIUS = 1.35D;
+    private static final double COMPLETE_OUTER_RING_RADIUS = 2.0D;
+    private static final int ACTIVE_RING_POINTS = 6;
+    private static final int COMPLETE_RING_POINTS = 8;
 
     private final List<Entry> entries = new ArrayList<>();
 
@@ -87,9 +94,8 @@ public class ActiveRituals extends WorldSavedData {
                         && entity.isEntityAlive()
                         && Eidolon.getCreatureAttribute(entity) == EnumCreatureAttribute.UNDEAD);
         for (EntityLivingBase entity : entities) {
-            VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
-                    VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, entity.posX,
-                            entity.posY + entity.height * 0.5D, entity.posZ, 0.97F, 0.61F, 0.86F));
+            VisualEffectPacket.sendAround(world, entity.getPosition(),
+                    VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, entity.getPosition(), 0.97F, 0.61F, 0.86F));
             entity.attackEntityFrom(Eidolon.RITUAL_DAMAGE, entity.getMaxHealth() * 1000.0F);
             if (entity.isEntityAlive()) {
                 entity.setDead();
@@ -186,7 +192,7 @@ public class ActiveRituals extends WorldSavedData {
         long time = positiveDayTime(world);
         if (time < 1000L || time >= 12000L) {
             advanceTimeAndSync(world);
-            pulse(world, pos, 1.0F, 0.96F, 0.51F, EnumParticleTypes.SPELL);
+            pulse(world, pos, 1.0F, 0.96F, 0.51F);
             return TickResult.DIRTY;
         }
         pulseComplete(world, pos, 1.0F, 0.96F, 0.51F);
@@ -197,7 +203,7 @@ public class ActiveRituals extends WorldSavedData {
         long time = positiveDayTime(world);
         if (time < 13000L) {
             advanceTimeAndSync(world);
-            pulse(world, pos, 0.44F, 0.29F, 0.74F, EnumParticleTypes.SPELL_WITCH);
+            pulse(world, pos, 0.44F, 0.29F, 0.74F);
             return TickResult.DIRTY;
         }
         pulseComplete(world, pos, 0.44F, 0.29F, 0.74F);
@@ -222,7 +228,7 @@ public class ActiveRituals extends WorldSavedData {
                 removeGoToPositionGoals(animal);
             }
         }
-        pulse(world, pos, 1.0F, 0.17F, 0.29F, EnumParticleTypes.HEART);
+        pulse(world, pos, 1.0F, 0.17F, 0.29F);
     }
 
     private void tickRepelling(World world, BlockPos pos) {
@@ -255,7 +261,7 @@ public class ActiveRituals extends WorldSavedData {
                 removeGoToPositionGoals(monster);
             }
         }
-        pulse(world, pos, 0.75F, 0.83F, 0.72F, EnumParticleTypes.SPELL);
+        pulse(world, pos, 0.75F, 0.83F, 0.72F);
     }
 
     private boolean hasGoToPositionGoal(EntityCreature creature) {
@@ -300,14 +306,9 @@ public class ActiveRituals extends WorldSavedData {
         for (EntityVillager villager : villagers) {
             if (world.rand.nextInt(120) == 0) {
                 decayVillageReputation(world, villager, bounds);
-                if (world instanceof WorldServer) {
-                    ((WorldServer) world).spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                            villager.posX, villager.posY + villager.height + 0.2D, villager.posZ,
-                            4, 0.18D, 0.12D, 0.18D, 0.01D);
-                }
             }
         }
-        pulse(world, pos, 0.25F, 1.0F, 0.38F, EnumParticleTypes.VILLAGER_HAPPY);
+        pulse(world, pos, 0.25F, 1.0F, 0.38F);
     }
 
     private void decayVillageReputation(World world, EntityVillager villager, AxisAlignedBB bounds) {
@@ -347,27 +348,51 @@ public class ActiveRituals extends WorldSavedData {
     }
 
     private void ambientPulse(World world, BlockPos pos, float r, float g, float b) {
-        if (world.getTotalWorldTime() % 80L == 0L) {
-            pulse(world, pos, r, g, b, EnumParticleTypes.SPELL_MOB_AMBIENT);
+        if (world.getTotalWorldTime() % 20L == 0L) {
+            pulse(world, pos, r, g, b);
         }
     }
 
-    private void pulse(World world, BlockPos pos, float r, float g, float b, EnumParticleTypes particle) {
-        if (world instanceof WorldServer) {
-            ((WorldServer) world).spawnParticle(particle,
-                    pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
-                    8, 0.35D, 0.22D, 0.35D, 0.015D);
+    private void pulse(World world, BlockPos pos, float r, float g, float b) {
+        double x = pos.getX() + CENTER_XZ_OFFSET;
+        double y = pos.getY() + ACTIVE_PULSE_HEIGHT;
+        double z = pos.getZ() + CENTER_XZ_OFFSET;
+        VisualEffectPacket.sendAround(world, x, y, z,
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, x, y, z, r, g, b));
+        if (world.getTotalWorldTime() % 10L == 0L) {
+            sendRingBursts(world, x, y + 0.22D, z, r, g, b, ACTIVE_RING_RADIUS, ACTIVE_RING_POINTS,
+                    world.rand.nextDouble() * Math.PI * 2.0D);
         }
-        VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
-                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST,
-                        pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D, r, g, b));
     }
 
     private void pulseComplete(World world, BlockPos pos, float r, float g, float b) {
         world.playSound(null, pos, SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 0.45F, 1.45F);
-        VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
-                VisualEffectPacket.at(VisualEffectPacket.RITUAL_COMPLETE,
-                        pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D, r, g, b));
+        double x = pos.getX() + CENTER_XZ_OFFSET;
+        double y = pos.getY() + COMPLETE_PULSE_HEIGHT;
+        double z = pos.getZ() + CENTER_XZ_OFFSET;
+        VisualEffectPacket.sendAround(world, x, y, z,
+                VisualEffectPacket.at(VisualEffectPacket.RITUAL_COMPLETE, x, y, z, r, g, b));
+        VisualEffectPacket.sendAround(world, x, y + 0.28D, z,
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, x, y + 0.28D, z, r, g, b));
+        double startAngle = world.rand.nextDouble() * Math.PI * 2.0D;
+        sendRingBursts(world, x, y + 0.12D, z, r, g, b, COMPLETE_RING_RADIUS, COMPLETE_RING_POINTS, startAngle);
+        sendRingBursts(world, x, y + 0.48D, z, r, g, b, COMPLETE_OUTER_RING_RADIUS, COMPLETE_RING_POINTS,
+                startAngle + Math.PI / COMPLETE_RING_POINTS);
+    }
+
+    private void sendRingBursts(World world, double x, double y, double z, float r, float g, float b,
+                                double radius, int points, double startAngle) {
+        for (int i = 0; i < points; i++) {
+            sendOffsetBurst(world, x, y, z, r, g, b, radius, startAngle + i * Math.PI * 2.0D / points);
+        }
+    }
+
+    private void sendOffsetBurst(World world, double x, double y, double z, float r, float g, float b,
+                                 double radius, double angle) {
+        double dx = Math.cos(angle) * radius;
+        double dz = Math.sin(angle) * radius;
+        VisualEffectPacket.sendAround(world, x + dx, y, z + dz,
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, x + dx, y, z + dz, r, g, b));
     }
 
     @Override

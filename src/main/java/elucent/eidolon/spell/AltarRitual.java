@@ -23,13 +23,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +39,53 @@ import java.lang.reflect.Method;
 
 public class AltarRitual {
     private static final Method ZOMBIE_VILLAGER_FINISH_CONVERSION = findZombieVillagerFinishConversion();
+    private static final float ABSORPTION_RITUAL_RED = 123.0F / 255.0F;
+    private static final float ABSORPTION_RITUAL_GREEN = 140.0F / 255.0F;
+    private static final float ABSORPTION_RITUAL_BLUE = 70.0F / 255.0F;
+    private static final float ABSORPTION_BURST_RED = 61.0F / 255.0F;
+    private static final float ABSORPTION_BURST_GREEN = 70.0F / 255.0F;
+    private static final float ABSORPTION_BURST_BLUE = 35.0F / 255.0F;
+    private static final float ABSORPTION_BURST_SECONDARY_RED = 36.0F / 255.0F;
+    private static final float ABSORPTION_BURST_SECONDARY_GREEN = 24.0F / 255.0F;
+    private static final float ABSORPTION_BURST_SECONDARY_BLUE = 41.0F / 255.0F;
+    private static final float DEFAULT_RITUAL_RED = 0.65F;
+    private static final float DEFAULT_RITUAL_GREEN = 0.28F;
+    private static final float DEFAULT_RITUAL_BLUE = 1.0F;
+    private static final float SANGUINE_RITUAL_RED = 255.0F / 255.0F;
+    private static final float SANGUINE_RITUAL_GREEN = 51.0F / 255.0F;
+    private static final float SANGUINE_RITUAL_BLUE = 85.0F / 255.0F;
+    private static final float SUMMON_RITUAL_RED = 121.0F / 255.0F;
+    private static final float SUMMON_RITUAL_GREEN = 94.0F / 255.0F;
+    private static final float SUMMON_RITUAL_BLUE = 255.0F / 255.0F;
+    private static final float PURIFY_RITUAL_RED = 163.0F / 255.0F;
+    private static final float PURIFY_RITUAL_GREEN = 252.0F / 255.0F;
+    private static final float PURIFY_RITUAL_BLUE = 255.0F / 255.0F;
+    private static final float CRYSTAL_RITUAL_RED = 247.0F / 255.0F;
+    private static final float CRYSTAL_RITUAL_GREEN = 156.0F / 255.0F;
+    private static final float CRYSTAL_RITUAL_BLUE = 220.0F / 255.0F;
+    private static final float ALLURE_RITUAL_RED = 255.0F / 255.0F;
+    private static final float ALLURE_RITUAL_GREEN = 43.0F / 255.0F;
+    private static final float ALLURE_RITUAL_BLUE = 75.0F / 255.0F;
+    private static final float REPELLING_RITUAL_RED = 190.0F / 255.0F;
+    private static final float REPELLING_RITUAL_GREEN = 212.0F / 255.0F;
+    private static final float REPELLING_RITUAL_BLUE = 184.0F / 255.0F;
+    private static final float DECEIT_RITUAL_RED = 64.0F / 255.0F;
+    private static final float DECEIT_RITUAL_GREEN = 255.0F / 255.0F;
+    private static final float DECEIT_RITUAL_BLUE = 96.0F / 255.0F;
+    private static final float DAYLIGHT_RITUAL_RED = 255.0F / 255.0F;
+    private static final float DAYLIGHT_RITUAL_GREEN = 245.0F / 255.0F;
+    private static final float DAYLIGHT_RITUAL_BLUE = 130.0F / 255.0F;
+    private static final float MOONLIGHT_RITUAL_RED = 111.0F / 255.0F;
+    private static final float MOONLIGHT_RITUAL_GREEN = 75.0F / 255.0F;
+    private static final float MOONLIGHT_RITUAL_BLUE = 189.0F / 255.0F;
+    private static final double RITUAL_CONSUME_SOURCE_HEIGHT = 1.15D;
+    private static final double RITUAL_CONSUME_DESTINATION_HEIGHT = 1.35D;
+    private static final double RITUAL_PROVIDER_CONSUME_SOURCE_HEIGHT = 1.22D;
+    private static final double RITUAL_PROVIDER_CONSUME_DESTINATION_HEIGHT = 1.62D;
+    private static final double RITUAL_VISUAL_HEIGHT = 1.45D;
+    private static final double RITUAL_COMPLETE_RING_RADIUS = 1.35D;
+    private static final double RITUAL_COMPLETE_OUTER_RING_RADIUS = 2.0D;
+    private static final int RITUAL_COMPLETE_RING_POINTS = 8;
 
     public enum PerformResult {
         SUCCESS,
@@ -116,6 +161,9 @@ public class AltarRitual {
     private final int providerOfferingStart;
     private final ResourceLocation entityId;
     private final float healthCost;
+    private final float red;
+    private final float green;
+    private final float blue;
 
     AltarRitual(ResourceLocation id, double requiredCapacity, double requiredPower,
                 ItemStack result, BehaviorType behaviorType, Ingredient focus, Ingredient... requiredOfferings) {
@@ -149,6 +197,39 @@ public class AltarRitual {
         this.providerOfferingStart = sacrifice == null && requiredOfferings.length > 0 ? 1 : 0;
         this.entityId = entityId;
         this.healthCost = healthCost;
+        float[] color = colorForBehavior(behaviorType);
+        this.red = color[0];
+        this.green = color[1];
+        this.blue = color[2];
+    }
+
+    private static float[] colorForBehavior(BehaviorType behaviorType) {
+        if (behaviorType == BehaviorType.SANGUINE) {
+            return color(SANGUINE_RITUAL_RED, SANGUINE_RITUAL_GREEN, SANGUINE_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
+            return color(SUMMON_RITUAL_RED, SUMMON_RITUAL_GREEN, SUMMON_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.ABSORPTION) {
+            return color(ABSORPTION_RITUAL_RED, ABSORPTION_RITUAL_GREEN, ABSORPTION_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.PURIFY) {
+            return color(PURIFY_RITUAL_RED, PURIFY_RITUAL_GREEN, PURIFY_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.CRYSTAL) {
+            return color(CRYSTAL_RITUAL_RED, CRYSTAL_RITUAL_GREEN, CRYSTAL_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.ALLURE) {
+            return color(ALLURE_RITUAL_RED, ALLURE_RITUAL_GREEN, ALLURE_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.REPELLING) {
+            return color(REPELLING_RITUAL_RED, REPELLING_RITUAL_GREEN, REPELLING_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.DECEIT) {
+            return color(DECEIT_RITUAL_RED, DECEIT_RITUAL_GREEN, DECEIT_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.DAYLIGHT) {
+            return color(DAYLIGHT_RITUAL_RED, DAYLIGHT_RITUAL_GREEN, DAYLIGHT_RITUAL_BLUE);
+        } else if (behaviorType == BehaviorType.MOONLIGHT) {
+            return color(MOONLIGHT_RITUAL_RED, MOONLIGHT_RITUAL_GREEN, MOONLIGHT_RITUAL_BLUE);
+        }
+        return color(DEFAULT_RITUAL_RED, DEFAULT_RITUAL_GREEN, DEFAULT_RITUAL_BLUE);
+    }
+
+    private static float[] color(float red, float green, float blue) {
+        return new float[]{red, green, blue};
     }
 
     private static Ingredient defaultSacrifice(ItemStack result, Ingredient focus, Ingredient[] offerings) {
@@ -253,6 +334,18 @@ public class AltarRitual {
         return healthCost;
     }
 
+    public float getRed() {
+        return red;
+    }
+
+    public float getGreen() {
+        return green;
+    }
+
+    public float getBlue() {
+        return blue;
+    }
+
     public boolean hasHealthCost() {
         return healthCost > 0.0F;
     }
@@ -315,10 +408,9 @@ public class AltarRitual {
             return transformFocusFromProvider(world, origin);
         } else if (behaviorType == BehaviorType.SANGUINE) {
             spawnSanguineResult(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+            playSuccessEffects(world, origin);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
             summonEntity(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
         } else if (behaviorType == BehaviorType.PURIFY) {
             return purifyNearby(world, origin);
         } else if (behaviorType == BehaviorType.CRYSTAL) {
@@ -327,7 +419,7 @@ public class AltarRitual {
             startFieldRitual(world, origin);
         } else if (behaviorType == BehaviorType.ITEM_RESULT) {
             spawnResult(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+            playSuccessEffects(world, origin);
         }
         return PerformResult.SUCCESS;
     }
@@ -345,7 +437,7 @@ public class AltarRitual {
                 return result;
             }
             spawnSanguineResult(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+            playSuccessEffects(world, origin);
         } else if (behaviorType == BehaviorType.ITEM_CHARGE) {
             return rechargeFocusFromProvider(world, origin);
         } else if (behaviorType == BehaviorType.ENTITY_SUMMON) {
@@ -354,7 +446,6 @@ public class AltarRitual {
                 return result;
             }
             summonEntity(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
         } else if (behaviorType == BehaviorType.ABSORPTION) {
             return absorbFromFocusProvider(world, origin);
         } else if (behaviorType == BehaviorType.PURIFY) {
@@ -365,7 +456,7 @@ public class AltarRitual {
             startFieldRitual(world, origin);
         } else {
             spawnResult(world, origin);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+            playSuccessEffects(world, origin);
         }
         return PerformResult.SUCCESS;
     }
@@ -445,33 +536,32 @@ public class AltarRitual {
     private void performItemResult(World world, BlockPos origin, MatchResult match) {
         consumeOfferings(world, match.offerings, origin);
         spawnResult(world, origin);
-        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+        playSuccessEffects(world, origin);
     }
 
     private void performItemTransform(World world, BlockPos origin, MatchResult match) {
         transformFocus(world, match.focus);
         consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
-        playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.VILLAGER_HAPPY, 12);
+        playSuccessEffects(world, match.focus == null ? origin : match.focus);
     }
 
     private void performSanguine(World world, BlockPos origin, MatchResult match) {
         consumeOffering(world, match.focus, origin);
         consumeOfferings(world, match.offerings, origin);
         spawnSanguineResult(world, origin);
-        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+        playSuccessEffects(world, origin);
     }
 
     private void performItemCharge(World world, BlockPos origin, MatchResult match) {
         rechargeFocus(world, match.focus);
         consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
-        playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.SPELL, 18);
+        playSuccessEffects(world, match.focus == null ? origin : match.focus);
     }
 
     private void performEntitySummon(World world, BlockPos origin, MatchResult match) {
         consumeOffering(world, match.focus, origin);
         consumeOfferings(world, match.offerings, origin);
         summonEntity(world, origin);
-        playSuccessEffects(world, origin, EnumParticleTypes.SMOKE_LARGE, 24);
     }
 
     private void performCrystal(World world, BlockPos origin, MatchResult match) {
@@ -487,14 +577,13 @@ public class AltarRitual {
     }
 
     private PerformResult performAbsorption(World world, BlockPos origin, MatchResult match) {
-        AbsorptionResult absorbed = absorbNearbyUndead(world, origin);
+        BlockPos toRecharge = getSummoningStaffFocusPos(world, match.focus);
+        AbsorptionResult absorbed = absorbNearbyUndead(world, origin, toRecharge);
         if (absorbed.size() <= 0) {
             return PerformResult.ABSORPTION_TARGET_TOO_HEALTHY;
         }
         chargeSummoningStaff(world, match.focus, absorbed.charges);
         consumeOfferings(world, match.offerings, match.focus == null ? origin : match.focus);
-        sendRitualVisual(world, match.focus == null ? origin : match.focus, VisualEffectPacket.CRYSTALLIZE, 0.7F, 0.25F, 1.0F);
-        playSuccessEffects(world, match.focus == null ? origin : match.focus, EnumParticleTypes.SPELL_MOB, 24);
         return PerformResult.SUCCESS;
     }
 
@@ -509,12 +598,12 @@ public class AltarRitual {
 
     private void performCrystal(World world, BlockPos origin) {
         ActiveRituals.performCrystal(world, origin);
-        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_MOB, 24);
+        playSuccessEffects(world, origin);
     }
 
     private void startFieldRitual(World world, BlockPos origin) {
         ActiveRituals.activate(world, origin, this);
-        playSuccessEffects(world, origin, EnumParticleTypes.SPELL_WITCH, 18);
+        playSuccessEffects(world, origin);
     }
 
     private void consumeOfferings(World world, List<BlockPos> matchedOfferings, BlockPos destination) {
@@ -597,12 +686,11 @@ public class AltarRitual {
             ((EntityLiving) entity).onInitialSpawn(world.getDifficultyForLocation(origin.up()), null);
         }
         world.spawnEntity(entity);
-        VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
-                VisualEffectPacket.at(VisualEffectPacket.SUMMON_BURST, entity.posX, entity.posY + entity.height * 0.5D,
-                        entity.posZ, 0.55F, 0.25F, 0.85F));
+        VisualEffectPacket.sendAround(world, origin,
+                VisualEffectPacket.at(VisualEffectPacket.CRYSTALLIZE, origin, 0.55F, 0.25F, 0.85F));
     }
 
-    private AbsorptionResult absorbNearbyUndead(World world, BlockPos origin) {
+    private AbsorptionResult absorbNearbyUndead(World world, BlockPos origin, BlockPos toRecharge) {
         AxisAlignedBB bounds = new AxisAlignedBB(origin).grow(8.0D, 4.0D, 8.0D);
         List<EntityLivingBase> entities = world.getEntitiesWithinAABB(EntityLivingBase.class, bounds,
                 entity -> Eidolon.getTrueCreatureAttribute(entity) == EnumCreatureAttribute.UNDEAD
@@ -615,10 +703,8 @@ public class AltarRitual {
             }
             entity.setHealth(entity.getMaxHealth());
             absorbed.add(entity);
-            VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
-                    VisualEffectPacket.line(VisualEffectPacket.LIFESTEAL, entity.posX, entity.posY + entity.height * 0.5D,
-                            entity.posZ, origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D,
-                            0.65F, 0.15F, 0.95F));
+            sendAbsorptionBurst(world, entity);
+            sendAbsorptionConsumeEffect(world, entity, toRecharge);
             entity.setDead();
         }
         return absorbed;
@@ -643,14 +729,9 @@ public class AltarRitual {
                     entity.setDead();
                     world.spawnEntity(pig);
                 }
-                if (world instanceof WorldServer) {
-                    ((WorldServer) world).spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                            entity.posX, entity.posY + entity.height + 0.2D, entity.posZ,
-                            12, 0.32D, 0.18D, 0.32D, 0.02D);
-                }
             }
         }
-        playSuccessEffects(world, origin, EnumParticleTypes.VILLAGER_HAPPY, 24);
+        playSuccessEffects(world, origin);
         return PerformResult.SUCCESS;
     }
 
@@ -665,6 +746,14 @@ public class AltarRitual {
         }
         Eidolon.LOGGER.error("Unable to find EntityZombieVillager finishConversion method.");
         return null;
+    }
+
+    public static boolean isZombieVillagerFinishConversionAvailable() {
+        return ZOMBIE_VILLAGER_FINISH_CONVERSION != null;
+    }
+
+    public static String getZombieVillagerFinishConversionMethodName() {
+        return ZOMBIE_VILLAGER_FINISH_CONVERSION == null ? "" : ZOMBIE_VILLAGER_FINISH_CONVERSION.getName();
     }
 
     private static void finishZombieVillagerConversion(EntityZombieVillager villager) {
@@ -750,19 +839,14 @@ public class AltarRitual {
         VisualEffectPacket.sendAround(world, target.posX, target.posY + target.height * 0.5D, target.posZ,
                 VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME,
                         target.posX, target.posY + target.height * 0.5D, target.posZ,
-                        origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D,
+                        origin.getX() + 0.5D, origin.getY() + RITUAL_CONSUME_DESTINATION_HEIGHT, origin.getZ() + 0.5D,
                         0.85F, 0.05F, 0.12F));
     }
 
-    private void playSuccessEffects(World world, BlockPos pos, EnumParticleTypes particle, int count) {
+    private void playSuccessEffects(World world, BlockPos pos) {
         world.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D,
                 SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 0.45F, 1.35F);
-        sendRitualVisual(world, pos, VisualEffectPacket.RITUAL_COMPLETE, 0.65F, 0.28F, 1.0F);
-        if (world instanceof WorldServer) {
-            ((WorldServer) world).spawnParticle(particle,
-                    pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
-                    count, 0.28D, 0.2D, 0.28D, 0.02D);
-        }
+        sendRitualCompleteVisual(world, pos);
     }
 
     private IRitualItemProvider findProvider(World world, BlockPos origin, Ingredient ingredient) {
@@ -844,7 +928,7 @@ public class AltarRitual {
         focusProvider.replace(result.copy());
         sendProviderConsumeEffect(world, focusProvider, origin);
         playFocusProviderEffect(focusProvider);
-        playSuccessEffects(world, origin, EnumParticleTypes.VILLAGER_HAPPY, 12);
+        playSuccessEffects(world, origin);
         return PerformResult.SUCCESS;
     }
 
@@ -858,7 +942,7 @@ public class AltarRitual {
             focusProvider.replace(((IRechargeableWand) stack.getItem()).recharge(stack));
             sendProviderConsumeEffect(world, focusProvider, origin);
             playFocusProviderEffect(focusProvider);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL, 18);
+            playSuccessEffects(world, origin);
             return PerformResult.SUCCESS;
         }
         return PerformResult.NO_MATCH;
@@ -869,20 +953,18 @@ public class AltarRitual {
         if (focusProvider == null) {
             return PerformResult.NO_MATCH;
         }
-        AbsorptionResult absorbed = absorbNearbyUndead(world, origin);
+        ItemStack stack = focusProvider.provide();
+        if (stack.isEmpty() || !(stack.getItem() instanceof SummoningStaffItem)) {
+            return PerformResult.NO_MATCH;
+        }
+        BlockPos toRecharge = focusProvider instanceof TileEntity ? ((TileEntity) focusProvider).getPos() : null;
+        AbsorptionResult absorbed = absorbNearbyUndead(world, origin, toRecharge);
         if (absorbed.size() <= 0) {
             return PerformResult.ABSORPTION_TARGET_TOO_HEALTHY;
         }
-        ItemStack stack = focusProvider.provide();
-        if (!stack.isEmpty() && stack.getItem() instanceof SummoningStaffItem) {
-            focusProvider.replace(((SummoningStaffItem) stack.getItem()).addAbsorbedUndeadCharges(stack, absorbed.charges));
-            sendProviderConsumeEffect(world, focusProvider, origin);
-            playFocusProviderEffect(focusProvider);
-            sendRitualVisual(world, origin, VisualEffectPacket.CRYSTALLIZE, 0.7F, 0.25F, 1.0F);
-            playSuccessEffects(world, origin, EnumParticleTypes.SPELL_MOB, 24);
-            return PerformResult.SUCCESS;
-        }
-        return PerformResult.NO_MATCH;
+        focusProvider.replace(((SummoningStaffItem) stack.getItem()).addAbsorbedUndeadCharges(stack, absorbed.charges));
+        playFocusProviderEffect(focusProvider);
+        return PerformResult.SUCCESS;
     }
 
     private void playFocusProviderEffect(IRitualItemFocus focusProvider) {
@@ -901,16 +983,88 @@ public class AltarRitual {
         if (source == null || destination == null) {
             return;
         }
-        VisualEffectPacket.sendAround(world, source,
-                VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME, source, destination, 0.62F, 0.22F, 0.9F));
+        double sourceX = source.getX() + 0.5D;
+        double sourceY = source.getY() + RITUAL_PROVIDER_CONSUME_SOURCE_HEIGHT;
+        double sourceZ = source.getZ() + 0.5D;
+        double destinationX = destination.getX() + 0.5D;
+        double destinationY = destination.getY() + RITUAL_PROVIDER_CONSUME_DESTINATION_HEIGHT;
+        double destinationZ = destination.getZ() + 0.5D;
+        VisualEffectPacket.sendAround(world, sourceX, sourceY, sourceZ,
+                VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME,
+                        sourceX, sourceY, sourceZ, destinationX, destinationY, destinationZ, red, green, blue));
+    }
+
+    private BlockPos getSummoningStaffFocusPos(World world, BlockPos focusPos) {
+        if (world == null || focusPos == null) {
+            return null;
+        }
+        TileEntity tile = world.getTileEntity(focusPos);
+        if (tile instanceof AltarTileEntity) {
+            ItemStack stack = ((AltarTileEntity) tile).getOffering();
+            if (!stack.isEmpty() && stack.getItem() instanceof SummoningStaffItem) {
+                return focusPos;
+            }
+        }
+        return null;
+    }
+
+    private void sendAbsorptionBurst(World world, EntityLivingBase entity) {
+        double x = entity.posX;
+        double y = entity.posY + 0.1D;
+        double z = entity.posZ;
+        VisualEffectPacket.sendAround(world, x, y, z,
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, x, y, z,
+                        ABSORPTION_BURST_RED, ABSORPTION_BURST_GREEN, ABSORPTION_BURST_BLUE,
+                        ABSORPTION_BURST_SECONDARY_RED, ABSORPTION_BURST_SECONDARY_GREEN,
+                        ABSORPTION_BURST_SECONDARY_BLUE));
+    }
+
+    private void sendAbsorptionConsumeEffect(World world, EntityLivingBase entity, BlockPos toRecharge) {
+        if (toRecharge == null) {
+            return;
+        }
+        BlockPos source = entity.getPosition().up();
+        VisualEffectPacket.sendAround(world, toRecharge,
+                VisualEffectPacket.line(VisualEffectPacket.RITUAL_CONSUME,
+                        source.getX() + 0.5D, source.getY() + 0.5D, source.getZ() + 0.5D,
+                        toRecharge.getX() + 0.5D, toRecharge.getY() + RITUAL_CONSUME_SOURCE_HEIGHT, toRecharge.getZ() + 0.5D,
+                        ABSORPTION_RITUAL_RED, ABSORPTION_RITUAL_GREEN, ABSORPTION_RITUAL_BLUE));
     }
 
     private void sendRitualVisual(World world, BlockPos pos, int effect, float r, float g, float b) {
         if (pos == null) {
             return;
         }
-        VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D,
-                VisualEffectPacket.at(effect, pos.getX() + 0.5D, pos.getY() + 1.05D, pos.getZ() + 0.5D, r, g, b));
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + RITUAL_VISUAL_HEIGHT;
+        double z = pos.getZ() + 0.5D;
+        VisualEffectPacket.sendAround(world, x, y, z, VisualEffectPacket.at(effect, x, y, z, r, g, b));
+    }
+
+    private void sendRitualCompleteVisual(World world, BlockPos pos) {
+        if (pos == null) {
+            return;
+        }
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + RITUAL_VISUAL_HEIGHT;
+        double z = pos.getZ() + 0.5D;
+        sendRitualVisual(world, pos, VisualEffectPacket.RITUAL_COMPLETE, red, green, blue);
+        VisualEffectPacket.sendAround(world, x, y + 0.32D, z,
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, x, y + 0.32D, z, red, green, blue));
+        double startAngle = world.rand.nextDouble() * Math.PI * 2.0D;
+        sendRitualRing(world, x, y + 0.1D, z, RITUAL_COMPLETE_RING_RADIUS, startAngle);
+        sendRitualRing(world, x, y + 0.45D, z, RITUAL_COMPLETE_OUTER_RING_RADIUS,
+                startAngle + Math.PI / RITUAL_COMPLETE_RING_POINTS);
+    }
+
+    private void sendRitualRing(World world, double x, double y, double z, double radius, double startAngle) {
+        for (int i = 0; i < RITUAL_COMPLETE_RING_POINTS; i++) {
+            double angle = startAngle + i * Math.PI * 2.0D / RITUAL_COMPLETE_RING_POINTS;
+            double px = x + Math.cos(angle) * radius;
+            double pz = z + Math.sin(angle) * radius;
+            VisualEffectPacket.sendAround(world, px, y, pz,
+                    VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, px, y, pz, red, green, blue));
+        }
     }
 
     private MatchResult findMatch(AltarInfo info) {

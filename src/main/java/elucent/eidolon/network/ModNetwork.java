@@ -1,6 +1,7 @@
 package elucent.eidolon.network;
 
 import elucent.eidolon.Reference;
+import elucent.eidolon.item.RavenCloakItem;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -21,5 +22,8 @@ public final class ModNetwork {
         CHANNEL.registerMessage(RavenCloakPacket.Handler.class, RavenCloakPacket.class, 6, Side.SERVER);
         CHANNEL.registerMessage(KnowledgeResetPacket.Handler.class, KnowledgeResetPacket.class, 7, Side.CLIENT);
         CHANNEL.registerMessage(AttemptCastPacket.Handler.class, AttemptCastPacket.class, 8, Side.SERVER);
+        CHANNEL.registerMessage(SpellCastPacket.Handler.class, SpellCastPacket.class, 9, Side.CLIENT);
+        CHANNEL.registerMessage(RavenCloakPacket.ClientHandler.class, RavenCloakPacket.Sync.class, 10, Side.CLIENT);
+        RavenCloakItem.setSyncChannel(CHANNEL);
     }
 }

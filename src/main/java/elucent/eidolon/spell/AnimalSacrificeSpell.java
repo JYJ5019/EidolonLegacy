@@ -51,6 +51,6 @@ public class AnimalSacrificeSpell extends StaticSpell {
         reputation.unlock(player, deity.getId(), DeityLocks.SACRIFICE_MOB);
         BlockPos effigyPos = effigy.getPos();
         reputation.addReputation(player, deity.getId(), 3.0D + 0.5D * SpellHelper.getNearbyAltarPower(world, effigyPos));
-        SpellHelper.playChantSuccess(world, effigyPos, Signs.BLOOD_SIGN, Signs.WICKED_SIGN);
+        SpellHelper.playChantSuccess(world, effigyPos);
     }
 }

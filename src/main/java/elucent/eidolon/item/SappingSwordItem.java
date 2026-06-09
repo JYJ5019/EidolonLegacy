@@ -19,11 +19,12 @@ public class SappingSwordItem extends EidolonSwordItem {
             float healing = before - target.getHealth();
             if (healing > 0.0F) {
                 attacker.heal(healing);
-                VisualEffectPacket.sendAround(attacker.world, target.posX, target.posY + target.height * 0.5D, target.posZ,
+                VisualEffectPacket.sendAround(attacker.world, target.posX, target.posY + target.height * 0.5D,
+                        target.posZ,
                         VisualEffectPacket.line(VisualEffectPacket.LIFESTEAL,
-                                target.posX, target.posY + target.height * 0.5D, target.posZ,
-                                attacker.posX, attacker.posY + attacker.height * 0.5D,
-                                attacker.posZ, 1.0F, 0.12F, 0.18F));
+                                target.posX, target.posY + target.height * 0.55D, target.posZ,
+                                attacker.posX, attacker.posY + attacker.height * 0.55D, attacker.posZ,
+                                1.0F, 0.12F, 0.18F));
             }
         }
         return super.hitEntity(stack, target, attacker);

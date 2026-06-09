@@ -1,5 +1,6 @@
 package elucent.eidolon.client.render;
 
+import elucent.eidolon.reagent.IReagentTankProvider;
 import elucent.eidolon.reagent.ReagentStack;
 import elucent.eidolon.tile.GlassTubeTileEntity;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -7,6 +8,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import org.lwjgl.opengl.GL11;
 
@@ -24,7 +26,9 @@ public class GlassTubeTileEntityRenderer extends TileEntitySpecialRenderer<Glass
         }
 
         float fill = Math.min(1.0F, te.getTank().getPressure());
-        float reagentAlpha = Math.min(0.62F, 0.24F + 0.38F * fill);
+        float reagentAlpha = contents.reagent.isGas()
+                ? Math.min(0.72F, 0.28F + 0.44F * fill)
+                : Math.min(0.88F, 0.46F + 0.42F * fill);
         boolean nx = te.getInput() == EnumFacing.WEST || te.getOutput() == EnumFacing.WEST;
         boolean px = te.getInput() == EnumFacing.EAST || te.getOutput() == EnumFacing.EAST;
         boolean ny = te.getInput() == EnumFacing.DOWN || te.getOutput() == EnumFacing.DOWN;
@@ -34,62 +38,79 @@ public class GlassTubeTileEntityRenderer extends TileEntitySpecialRenderer<Glass
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, z);
-        GlStateManager.disableTexture2D();
+        GlStateManager.enableTexture2D();
+        ReagentRenderHelper.bindTexture(contents.reagent);
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableAlpha();
+        GlStateManager.disableLighting();
         GlStateManager.disableCull();
+        GlStateManager.depthMask(false);
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-        addCenter(buffer, fill, nx, px, ny, py, nz, pz, contents.reagent.getColor(), reagentAlpha);
-        addArm(buffer, te.getInput(), fill, contents.reagent.getColor(), reagentAlpha);
-        addArm(buffer, te.getOutput(), fill, contents.reagent.getColor(), reagentAlpha);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+        float frameV = ReagentRenderHelper.getAnimationFrame(partialTicks);
+        addCenter(buffer, fill, nx, px, ny, py, nz, pz, reagentAlpha, frameV);
+        addArm(buffer, te, te.getInput(), fill, reagentAlpha, frameV);
+        addArm(buffer, te, te.getOutput(), fill, reagentAlpha, frameV);
         tessellator.draw();
 
+        GlStateManager.depthMask(true);
         GlStateManager.enableCull();
+        GlStateManager.enableLighting();
+        GlStateManager.enableAlpha();
         GlStateManager.disableBlend();
-        GlStateManager.enableTexture2D();
         GlStateManager.popMatrix();
     }
 
     private void addCenter(BufferBuilder buffer, float fill, boolean nx, boolean px, boolean ny, boolean py,
-                           boolean nz, boolean pz, int color, float alpha) {
+                           boolean nz, boolean pz, float alpha, float frameV) {
         if (py && ny) {
-            ReagentRenderHelper.addBox(buffer, L, L, L, U, U, U, color, alpha,
+            ReagentRenderHelper.addTexturedBox(buffer, L, L, L, U, U, U, alpha, frameV,
                     !nx, !px, !ny, !py, !nz, !pz);
         } else if (py) {
             if (fill < 1.0F) {
-                ReagentRenderHelper.addBox(buffer, L, L + fill * W, L, U, U, U, color, alpha * 0.55F,
+                ReagentRenderHelper.addTexturedBox(buffer, L, L + fill * W, L, U, U, U, alpha * 0.55F, frameV,
                         true, true, !ny, !py, true, true);
             }
-            ReagentRenderHelper.addBox(buffer, L, L, L, U, L + fill * W, U, color, alpha,
+            ReagentRenderHelper.addTexturedBox(buffer, L, L, L, U, L + fill * W, U, alpha, frameV,
                     !nx, !px, !ny, false, !nz, !pz);
         } else {
-            ReagentRenderHelper.addBox(buffer, L, L, L, U, L + fill * W, U, color, alpha,
+            ReagentRenderHelper.addTexturedBox(buffer, L, L, L, U, L + fill * W, U, alpha, frameV,
                     !nx, !px, !ny, true, !nz, !pz);
         }
     }
 
-    private void addArm(BufferBuilder buffer, EnumFacing facing, float fill, int color, float alpha) {
+    private void addArm(BufferBuilder buffer, GlassTubeTileEntity te, EnumFacing facing,
+                        float fill, float alpha, float frameV) {
+        boolean cap = !attached(te, facing);
         if (facing == EnumFacing.WEST) {
-            ReagentRenderHelper.addBox(buffer, 0.0D, L, L, L, L + W * fill, U, color, alpha,
-                    true, false, true, true, true, true);
+            ReagentRenderHelper.addTexturedBox(buffer, 0.0D, L, L, L, L + W * fill, U, alpha, frameV,
+                    cap, false, true, true, true, true);
         } else if (facing == EnumFacing.EAST) {
-            ReagentRenderHelper.addBox(buffer, U, L, L, 1.0D, L + W * fill, U, color, alpha,
-                    false, true, true, true, true, true);
+            ReagentRenderHelper.addTexturedBox(buffer, U, L, L, 1.0D, L + W * fill, U, alpha, frameV,
+                    false, cap, true, true, true, true);
         } else if (facing == EnumFacing.DOWN) {
-            ReagentRenderHelper.addBox(buffer, L, 0.0D, L, U, L, U, color, alpha,
-                    true, true, true, false, true, true);
+            ReagentRenderHelper.addTexturedBox(buffer, L, 0.0D, L, U, L, U, alpha, frameV,
+                    true, true, cap, false, true, true);
         } else if (facing == EnumFacing.UP) {
-            ReagentRenderHelper.addBox(buffer, L, U, L, U, 1.0D, U, color, alpha,
-                    true, true, false, true, true, true);
+            ReagentRenderHelper.addTexturedBox(buffer, L, U, L, U, 1.0D, U, alpha, frameV,
+                    true, true, false, cap, true, true);
         } else if (facing == EnumFacing.NORTH) {
-            ReagentRenderHelper.addBox(buffer, L, L, 0.0D, U, L + W * fill, L, color, alpha,
-                    true, true, true, true, true, false);
+            ReagentRenderHelper.addTexturedBox(buffer, L, L, 0.0D, U, L + W * fill, L, alpha, frameV,
+                    true, true, true, true, cap, false);
         } else if (facing == EnumFacing.SOUTH) {
-            ReagentRenderHelper.addBox(buffer, L, L, U, U, L + W * fill, 1.0D, color, alpha,
-                    true, true, true, true, false, true);
+            ReagentRenderHelper.addTexturedBox(buffer, L, L, U, U, L + W * fill, 1.0D, alpha, frameV,
+                    true, true, true, true, false, cap);
         }
+    }
+
+    private boolean attached(GlassTubeTileEntity te, EnumFacing facing) {
+        if (te.getWorld() == null) {
+            return false;
+        }
+        TileEntity adjacent = te.getWorld().getTileEntity(te.getPos().offset(facing));
+        return adjacent instanceof IReagentTankProvider;
     }
 }

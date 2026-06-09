@@ -19,6 +19,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityLargeFireball;
 import net.minecraft.entity.projectile.EntityLlamaSpit;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityPotion;
 import net.minecraft.entity.projectile.EntityShulkerBullet;
 import net.minecraft.entity.projectile.EntitySmallFireball;
@@ -35,6 +36,7 @@ import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundCategory;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -200,15 +202,16 @@ public final class CurioEvents {
         if (bow.isEmpty() || !(bow.getItem() instanceof ItemBow)) {
             return;
         }
-        boolean infinite = player.capabilities.isCreativeMode
-                || EnchantmentHelper.getEnchantmentLevel(Enchantments.INFINITY, bow) > 0;
+        boolean hasInfiniteEnchantment = EnchantmentHelper.getEnchantmentLevel(Enchantments.INFINITY, bow) > 0;
         ItemStack ammo = findArrow(player);
-        if (ammo.isEmpty() && !infinite) {
+        if (ammo.isEmpty() && !player.capabilities.isCreativeMode && !hasInfiniteEnchantment) {
             return;
         }
         if (ammo.isEmpty()) {
             ammo = new ItemStack(Items.ARROW);
         }
+        boolean infinite = player.capabilities.isCreativeMode
+                || ammo.getItem() instanceof ItemArrow && ((ItemArrow) ammo.getItem()).isInfinite(ammo, bow, player);
 
         float velocity = ItemBow.getArrowVelocity(event.getCharge());
         if (velocity < 0.1F) {
@@ -221,21 +224,24 @@ public final class CurioEvents {
             return;
         }
 
-        AngelArrowEntity arrow = new AngelArrowEntity(player.world, player);
-        arrow.configureFromAmmo(ammo);
-        arrow.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, velocity * 3.0F, 1.0F);
-        arrow.setIsCritical(velocity >= 1.0F);
+        ItemArrow arrowItem = ammo.getItem() instanceof ItemArrow ? (ItemArrow) ammo.getItem() : (ItemArrow) Items.ARROW;
+        EntityArrow innerArrow = arrowItem.createArrow(player.world, ammo, player);
+        innerArrow.setIsCritical(velocity >= 1.0F);
         int power = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER, bow);
         if (power > 0) {
-            arrow.setDamage(arrow.getDamage() + power * 0.5D + 0.5D);
+            innerArrow.setDamage(innerArrow.getDamage() + power * 0.5D + 0.5D);
         }
         int punch = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, bow);
         if (punch > 0) {
-            arrow.setKnockbackStrength(punch);
+            innerArrow.setKnockbackStrength(punch);
         }
         if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, bow) > 0) {
-            arrow.setFire(100);
+            innerArrow.setFire(100);
         }
+
+        AngelArrowEntity arrow = new AngelArrowEntity(player.world, player);
+        arrow.configureFromArrow(innerArrow, ammo);
+        arrow.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, velocity * 3.0F, 1.0F);
         if (infinite) {
             arrow.pickupStatus = net.minecraft.entity.projectile.EntityArrow.PickupStatus.CREATIVE_ONLY;
         }
@@ -249,6 +255,7 @@ public final class CurioEvents {
                 player.inventory.deleteStack(ammo);
             }
         }
+        player.addStat(StatList.getObjectUseStats(bow.getItem()));
     }
 
     private static ItemStack findArrow(EntityPlayer player) {

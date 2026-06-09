@@ -34,25 +34,31 @@ public class CisternTileEntityRenderer extends TileEntitySpecialRenderer<Cistern
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, z);
-        GlStateManager.disableTexture2D();
+        GlStateManager.enableTexture2D();
+        ReagentRenderHelper.bindTexture(contents.reagent);
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableAlpha();
+        GlStateManager.disableLighting();
         GlStateManager.disableCull();
+        GlStateManager.depthMask(false);
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-        ReagentRenderHelper.addBox(buffer, 0.125D, y1, 0.125D,
-                0.875D, y2, 0.875D, contents.reagent.getColor(), reagentAlpha,
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+        ReagentRenderHelper.addTexturedBox(buffer, 0.125D, y1, 0.125D,
+                0.875D, y2, 0.875D, reagentAlpha, ReagentRenderHelper.getAnimationFrame(partialTicks),
                 true, true,
                 !bottom,
                 fill < 1.0F || !top || te.getUpPressure() <= 0.0F,
                 true, true);
         tessellator.draw();
 
+        GlStateManager.depthMask(true);
         GlStateManager.enableCull();
+        GlStateManager.enableLighting();
+        GlStateManager.enableAlpha();
         GlStateManager.disableBlend();
-        GlStateManager.enableTexture2D();
         GlStateManager.popMatrix();
     }
 }

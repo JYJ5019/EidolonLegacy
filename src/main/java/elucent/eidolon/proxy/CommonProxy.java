@@ -1,5 +1,6 @@
 package elucent.eidolon.proxy;
 
+import elucent.eidolon.CommonConfig;
 import elucent.eidolon.Eidolon;
 import elucent.eidolon.diagnostics.RuntimeDiagnostics;
 import elucent.eidolon.event.GameplayEvents;
@@ -29,6 +30,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 public class CommonProxy implements IProxy {
     @Override
     public void preInit(FMLPreInitializationEvent event) {
+        CommonConfig.init(event.getSuggestedConfigurationFile());
         ModEntities.init();
         ModTileEntities.init();
         ModNetwork.init();

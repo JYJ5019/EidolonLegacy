@@ -68,7 +68,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.stats.StatList;
@@ -88,15 +87,15 @@ public final class ModBlocks {
     public static final Block TEST_STONE = block("test_stone", Material.ROCK);
     public static final Block LEAD_ORE = ore("lead_ore", ModItems.RAW_LEAD);
     public static final Block DEEP_LEAD_ORE = ore("deep_lead_ore", ModItems.RAW_LEAD);
-    public static final Block LEAD_BLOCK = block("lead_block", Material.IRON);
-    public static final Block RAW_LEAD_BLOCK = block("raw_lead_block", Material.ROCK);
+    public static final Block LEAD_BLOCK = ironPickaxeBlock("lead_block", Material.IRON);
+    public static final Block RAW_LEAD_BLOCK = ironPickaxeBlock("raw_lead_block", Material.ROCK);
     public static final Block SILVER_ORE = ore("silver_ore", ModItems.RAW_SILVER);
     public static final Block DEEP_SILVER_ORE = ore("deep_silver_ore", ModItems.RAW_SILVER);
-    public static final Block SILVER_BLOCK = block("silver_block", Material.IRON);
-    public static final Block RAW_SILVER_BLOCK = block("raw_silver_block", Material.ROCK);
-    public static final Block PEWTER_BLOCK = block("pewter_block", Material.IRON);
-    public static final Block ARCANE_GOLD_BLOCK = block("arcane_gold_block", Material.IRON);
-    public static final Block SHADOW_GEM_BLOCK = block("shadow_gem_block", Material.ROCK);
+    public static final Block SILVER_BLOCK = ironPickaxeBlock("silver_block", Material.IRON);
+    public static final Block RAW_SILVER_BLOCK = ironPickaxeBlock("raw_silver_block", Material.ROCK);
+    public static final Block PEWTER_BLOCK = ironPickaxeBlock("pewter_block", Material.IRON);
+    public static final Block ARCANE_GOLD_BLOCK = ironPickaxeBlock("arcane_gold_block", Material.IRON);
+    public static final Block SHADOW_GEM_BLOCK = ironPickaxeBlock("shadow_gem_block", Material.ROCK);
     public static final Block SMOOTH_STONE_BRICKS = block("smooth_stone_bricks", Material.ROCK);
     public static final Block MOSSY_SMOOTH_STONE_BRICKS = block("mossy_smooth_stone_bricks", Material.ROCK);
     public static final Block SMOOTH_STONE_MASONRY = block("smooth_stone_masonry", Material.ROCK);
@@ -148,10 +147,10 @@ public final class ModBlocks {
     public static final Block UNHOLY_EFFIGY = effigy("unholy_effigy", Material.WOOD);
     public static final Block GOBLET = goblet("goblet");
     public static final Block STONE_HAND = ritualHolder("stone_hand", Material.ROCK, false);
-    public static final Block CANDLE = smallDecorBlock("candle", Material.CIRCUITS);
-    public static final Block CANDLESTICK = attachableDecorBlock("candlestick", Material.CIRCUITS);
-    public static final Block MAGIC_CANDLE = smallDecorBlock("magic_candle", Material.CIRCUITS);
-    public static final Block MAGIC_CANDLESTICK = attachableDecorBlock("magic_candlestick", Material.CIRCUITS);
+    public static final Block CANDLE = candle("candle", Material.CIRCUITS);
+    public static final Block CANDLESTICK = candlestick("candlestick", Material.CIRCUITS);
+    public static final Block MAGIC_CANDLE = candle("magic_candle", Material.CIRCUITS);
+    public static final Block MAGIC_CANDLESTICK = candlestick("magic_candlestick", Material.CIRCUITS);
     public static final Block AVENNIAN_SPRIG = herb("avennian_sprig");
     public static final Block MERAMMER_ROOT = herb("merammer_root");
     public static final Block OANNA_BLOOM = herb("oanna_bloom");
@@ -457,6 +456,12 @@ public final class ModBlocks {
         return block;
     }
 
+    private static Block ironPickaxeBlock(String name, Material material) {
+        Block block = block(name, material);
+        block.setHarvestLevel("pickaxe", 1);
+        return block;
+    }
+
     private static Block woodBlock(String name) {
         Block block = block(name, Material.WOOD);
         block.setHardness(2.0F);
@@ -581,6 +586,17 @@ public final class ModBlocks {
         return block;
     }
 
+    private static Block candle(String name, Material material) {
+        Block block = new CandleBlock(material);
+        block.setRegistryName(Reference.MOD_ID, name);
+        block.setTranslationKey(Reference.MOD_ID + "." + name);
+        block.setCreativeTab(ModCreativeTabs.EIDOLON);
+        block.setHardness(0.6F);
+        block.setResistance(0.8F);
+        block.setLightLevel(1.0F);
+        return block;
+    }
+
     private static Block effigy(String name, Material material) {
         Block block = new EffigyBlock(material);
         block.setRegistryName(Reference.MOD_ID, name);
@@ -677,6 +693,17 @@ public final class ModBlocks {
         block.setCreativeTab(ModCreativeTabs.EIDOLON);
         block.setHardness(1.0F);
         block.setResistance(5.0F);
+        return block;
+    }
+
+    private static Block candlestick(String name, Material material) {
+        Block block = new CandlestickBlock(material);
+        block.setRegistryName(Reference.MOD_ID, name);
+        block.setTranslationKey(Reference.MOD_ID + "." + name);
+        block.setCreativeTab(ModCreativeTabs.EIDOLON);
+        block.setHardness(1.2F);
+        block.setResistance(2.0F);
+        block.setLightLevel(1.0F);
         return block;
     }
 
@@ -1607,6 +1634,21 @@ public final class ModBlocks {
         }
     }
 
+    private static final class CandleBlock extends SmallDecorBlock {
+        private CandleBlock(Material material) {
+            super(material);
+        }
+
+        @Override
+        public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
+            double x = pos.getX() + 0.5D;
+            double y = pos.getY() + 0.6D;
+            double z = pos.getZ() + 0.5D;
+            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0D, 0.0D, 0.0D);
+            worldIn.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
     private static final class EffigyBlock extends HorizontalFacingBlock implements ITileEntityProvider {
         private EffigyBlock(Material material) {
             super(material);
@@ -1842,17 +1884,16 @@ public final class ModBlocks {
                         playerIn.setHeldItem(hand, fluidHandler.getContainer());
                     }
                     playCrucibleSound(worldIn, pos, SoundEvents.ITEM_BUCKET_EMPTY, 0.8F, 1.0F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.WATER_SPLASH, 8);
-                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.45F, 0.75F, 1.0F);
                 } else {
                     playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_NOTE_BASS, 0.45F, 0.6F);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_FAIL, 0.45F, 0.45F, 0.45F);
                 }
                 return true;
             }
             if (held.isEmpty()) {
                 if (playerIn.isSneaking()) {
                     crucible.reset();
-                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.EXTINGUISH, 0.55F, 0.55F, 0.6F);
+                    playCrucibleSound(worldIn, pos, SoundEvents.ITEM_BUCKET_EMPTY, 0.8F, 1.0F);
                     return true;
                 }
                 if (!crucible.hasFluid()) {
@@ -1864,9 +1905,11 @@ public final class ModBlocks {
                         return true;
                     }
                     playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_NOTE_BASS, 0.45F, 0.6F);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_FAIL, 0.45F, 0.45F, 0.45F);
                     return true;
                 }
                 boolean hadAction = crucible.hasPendingStepAction();
+                float[] successColor = crucible.getCurrentSteamColor();
                 ItemStack result = crucible.commitStep();
                 if (!result.isEmpty()) {
                     EntityItem item = new EntityItem(worldIn, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, result);
@@ -1875,13 +1918,14 @@ public final class ModBlocks {
                     item.motionZ = (worldIn.rand.nextDouble() - 0.5D) * 0.04D;
                     item.setDefaultPickupDelay();
                     worldIn.spawnEntity(item);
-                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_SUCCESS, 0.65F, 0.35F, 1.0F);
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_SUCCESS,
+                            successColor[0], successColor[1], successColor[2]);
                     playCrucibleSound(worldIn, pos, SoundEvents.ENTITY_PLAYER_LEVELUP, 0.45F, 1.35F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL_WITCH, 10);
                 } else if (hadAction && crucible.hasFluid()) {
+                    float[] stepColor = crucible.getCurrentSteamColor();
+                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_STEP,
+                            stepColor[0], stepColor[1], stepColor[2]);
                     playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_WATER_AMBIENT, 0.45F, 1.6F);
-                    spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL, 8);
-                    sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.55F, 0.8F, 1.0F);
                 } else if (!hadAction || !crucible.hasFluid()) {
                     sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_FAIL, 0.45F, 0.45F, 0.45F);
                 }
@@ -1890,19 +1934,16 @@ public final class ModBlocks {
 
             if (!crucible.hasFluid()) {
                 playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_NOTE_BASS, 0.45F, 0.6F);
+                sendCrucibleVisual(worldIn, pos, VisualEffectPacket.CRUCIBLE_FAIL, 0.45F, 0.45F, 0.45F);
                 return true;
             }
             if (CrucibleRecipes.isStirrer(held)) {
                 crucible.stir(held);
                 playCrucibleSound(worldIn, pos, SoundEvents.BLOCK_WATER_AMBIENT, 0.45F, 1.6F);
-                spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.WATER_SPLASH, 4);
-                sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.55F, 0.8F, 1.0F);
                 return true;
             }
             if (crucible.addOne(held)) {
                 playCrucibleSound(worldIn, pos, SoundEvents.ENTITY_ITEM_PICKUP, 0.35F, 0.6F);
-                spawnCrucibleParticles(worldIn, pos, EnumParticleTypes.SPELL, 3);
-                sendCrucibleVisual(worldIn, pos, VisualEffectPacket.MAGIC_BURST, 0.7F, 0.35F, 1.0F);
                 return true;
             }
             return false;
@@ -1943,17 +1984,12 @@ public final class ModBlocks {
                     sound, SoundCategory.BLOCKS, volume, pitch);
         }
 
-        private void spawnCrucibleParticles(World world, BlockPos pos, EnumParticleTypes particle, int count) {
-            if (world instanceof WorldServer) {
-                ((WorldServer) world).spawnParticle(particle,
-                        pos.getX() + 0.5D, pos.getY() + 0.9D, pos.getZ() + 0.5D,
-                        count, 0.18D, 0.12D, 0.18D, 0.02D);
-            }
-        }
-
         private void sendCrucibleVisual(World world, BlockPos pos, int effect, float r, float g, float b) {
-            VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D,
-                    VisualEffectPacket.at(effect, pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D, r, g, b));
+            double y = effect == VisualEffectPacket.CRUCIBLE_FAIL ? pos.getY() + 0.9D
+                    : effect == VisualEffectPacket.CRUCIBLE_STEP ? pos.getY() + 0.78D
+                    : pos.getY() + 1.0D;
+            VisualEffectPacket.sendAround(world, pos.getX() + 0.5D, y, pos.getZ() + 0.5D,
+                    VisualEffectPacket.at(effect, pos.getX() + 0.5D, y, pos.getZ() + 0.5D, r, g, b));
         }
     }
 
@@ -2042,8 +2078,8 @@ public final class ModBlocks {
         }
     }
 
-    private static final class AttachableDecorBlock extends Block {
-        private static final PropertyDirection FACING =
+    private static class AttachableDecorBlock extends Block {
+        protected static final PropertyDirection FACING =
                 PropertyDirection.create("facing", facing -> facing != EnumFacing.DOWN);
 
         private AttachableDecorBlock(Material material) {
@@ -2090,6 +2126,27 @@ public final class ModBlocks {
         @Override
         protected BlockStateContainer createBlockState() {
             return new BlockStateContainer(this, FACING);
+        }
+    }
+
+    private static final class CandlestickBlock extends AttachableDecorBlock {
+        private CandlestickBlock(Material material) {
+            super(material);
+        }
+
+        @Override
+        public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
+            EnumFacing facing = stateIn.getValue(FACING);
+            double x = pos.getX() + 0.5D;
+            double y = pos.getY() + 0.925D;
+            double z = pos.getZ() + 0.5D;
+            if (facing != EnumFacing.UP) {
+                x -= 0.3D * facing.getXOffset();
+                y += 0.125D;
+                z -= 0.3D * facing.getZOffset();
+            }
+            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0D, 0.0D, 0.0D);
+            worldIn.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
         }
     }
 

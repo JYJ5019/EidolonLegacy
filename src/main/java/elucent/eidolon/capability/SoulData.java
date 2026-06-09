@@ -1,11 +1,11 @@
 package elucent.eidolon.capability;
 
+import elucent.eidolon.CommonConfig;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public final class SoulData {
     private static final String ROOT = "eidolonSoul";
-    private static final float MAX_ETHEREAL_HEALTH = 80.0F;
 
     private SoulData() {
     }
@@ -24,7 +24,7 @@ public final class SoulData {
 
     public static void setMaxEtherealHealth(EntityPlayer player, float max) {
         NBTTagCompound tag = getTag(player);
-        float clamped = clamp(max, 0.0F, MAX_ETHEREAL_HEALTH);
+        float clamped = clamp(max, 0.0F, CommonConfig.maxEtherealHealth());
         tag.setFloat("maxEtherealHealth", clamped);
         tag.setFloat("etherealHealth", Math.min(clamped, tag.getFloat("etherealHealth")));
     }
@@ -91,6 +91,10 @@ public final class SoulData {
         if (!tag.hasKey("maxMagic")) {
             tag.setFloat("maxMagic", 0.0F);
             tag.setFloat("magic", 0.0F);
+        }
+        if (!tag.hasKey("maxEtherealHealth")) {
+            tag.setFloat("maxEtherealHealth", 0.0F);
+            tag.setFloat("etherealHealth", 0.0F);
         }
     }
 

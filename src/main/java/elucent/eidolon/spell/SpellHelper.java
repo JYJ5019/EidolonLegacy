@@ -1,25 +1,33 @@
 package elucent.eidolon.spell;
 
+import elucent.eidolon.deity.Deity;
 import elucent.eidolon.network.VisualEffectPacket;
 import elucent.eidolon.registries.ModBlocks;
 import elucent.eidolon.registries.ModSounds;
 import elucent.eidolon.tile.EffigyTileEntity;
 import elucent.eidolon.tile.GobletTileEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
-final class SpellHelper {
+public final class SpellHelper {
     private SpellHelper() {
     }
 
@@ -133,17 +141,140 @@ final class SpellHelper {
         return items.size() == 1 ? items.get(0) : null;
     }
 
-    static void playChantSuccess(World world, BlockPos pos, Sign primary, Sign secondary) {
+    @SideOnly(Side.CLIENT)
+    public static void playSpellCastVisuals(World world, BlockPos pos, EntityPlayer caster, Spell spell,
+                                            SignSequence sequence) {
+        if (world == null || !world.isRemote || pos == null || spell == null || sequence == null
+                || !spell.matches(sequence)) {
+            return;
+        }
+        if (spell instanceof PrayerSpell) {
+            EffigyTileEntity effigy = findEffigyTile(world, pos);
+            if (effigy != null) {
+                playClientChantSuccessSounds(world, effigy.getPos());
+                playClientChantFlames(world, effigy.getPos(), ((PrayerSpell) spell).getDeity());
+            }
+        } else if (spell instanceof AnimalSacrificeSpell) {
+            EffigyTileEntity effigy = findEffigyTile(world, pos);
+            if (effigy != null) {
+                playClientChantSuccessSounds(world, effigy.getPos());
+                playClientChantFlames(world, effigy.getPos(), Signs.BLOOD_SIGN);
+            }
+        } else if (spell instanceof VillagerSacrificeSpell) {
+            EffigyTileEntity effigy = findUnholyEffigyTile(world, pos);
+            if (effigy != null && SpellHelper.isOnStoneAltar(world, effigy.getPos())) {
+                playClientChantSuccessSounds(world, effigy.getPos());
+                playClientChantFlames(world, effigy.getPos(), Signs.SOUL_SIGN);
+            }
+        } else if (spell instanceof DarkTouchSpell) {
+            BlockPos soundPos = caster == null ? pos : caster.getPosition();
+            world.playSound(caster, soundPos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
+                    SoundCategory.NEUTRAL, 1.0F, 0.6F + world.rand.nextFloat() * 0.2F);
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    private static void playClientChantSuccessSounds(World world, BlockPos pos) {
+        if (world == null || !world.isRemote || pos == null || Minecraft.getMinecraft().player == null) {
+            return;
+        }
+        EntityPlayer localPlayer = Minecraft.getMinecraft().player;
+        world.playSound(localPlayer, pos, SoundEvents.ENTITY_LIGHTNING_THUNDER, SoundCategory.NEUTRAL,
+                10000.0F, 0.6F + world.rand.nextFloat() * 0.2F);
+        world.playSound(localPlayer, pos, SoundEvents.ENTITY_LIGHTNING_IMPACT, SoundCategory.NEUTRAL,
+                2.0F, 0.5F + world.rand.nextFloat() * 0.2F);
+    }
+
+    static void playChantSuccess(World world, BlockPos pos) {
         if (world.isRemote) {
             return;
         }
         world.playSound(null, pos, ModSounds.CHANT_WORD, SoundCategory.PLAYERS, 0.75F,
                 0.75F + world.rand.nextFloat() * 0.25F);
-        VisualEffectPacket.sendAround(world, pos, VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, pos,
-                primary.getRed(), primary.getGreen(), primary.getBlue()));
-        VisualEffectPacket.sendAround(world, pos, VisualEffectPacket.at(VisualEffectPacket.RITUAL_COMPLETE,
-                pos.getX() + 0.5D, pos.getY() + 0.65D, pos.getZ() + 0.5D,
+    }
+
+    static void sendMagicBurst(World world, BlockPos pos, Sign primary, Sign secondary) {
+        if (world == null || world.isRemote || pos == null || primary == null || secondary == null) {
+            return;
+        }
+        sendMagicBurst(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, primary, secondary);
+    }
+
+    static void sendMagicBurst(World world, double x, double y, double z, Sign primary, Sign secondary) {
+        if (world == null || world.isRemote || primary == null || secondary == null) {
+            return;
+        }
+        VisualEffectPacket.sendAround(world, x, y, z, VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST,
+                x, y, z, primary.getRed(), primary.getGreen(), primary.getBlue(),
                 secondary.getRed(), secondary.getGreen(), secondary.getBlue()));
+    }
+
+    static void sendChantFlames(World world, BlockPos pos, Sign color) {
+        if (world == null || world.isRemote || pos == null || color == null) {
+            return;
+        }
+        VisualEffectPacket packet = createChantFlamePacket(world, pos, color.getRed(), color.getGreen(), color.getBlue());
+        if (packet != null) {
+            VisualEffectPacket.sendAround(world, pos, packet);
+        }
+    }
+
+    static void sendChantFlames(World world, BlockPos pos, Deity deity) {
+        if (world == null || world.isRemote || pos == null || deity == null) {
+            return;
+        }
+        VisualEffectPacket packet = createChantFlamePacket(world, pos, deity.getRed(), deity.getGreen(), deity.getBlue());
+        if (packet != null) {
+            VisualEffectPacket.sendAround(world, pos, packet);
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    private static void playClientChantFlames(World world, BlockPos pos, Sign color) {
+        if (world == null || !world.isRemote || pos == null || color == null) {
+            return;
+        }
+        VisualEffectPacket packet = createChantFlamePacket(world, pos, color.getRed(), color.getGreen(), color.getBlue());
+        if (packet != null) {
+            VisualEffectPacket.playClient(packet);
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+    private static void playClientChantFlames(World world, BlockPos pos, Deity deity) {
+        if (world == null || !world.isRemote || pos == null || deity == null) {
+            return;
+        }
+        VisualEffectPacket packet = createChantFlamePacket(world, pos, deity.getRed(), deity.getGreen(), deity.getBlue());
+        if (packet != null) {
+            VisualEffectPacket.playClient(packet);
+        }
+    }
+
+    private static VisualEffectPacket createChantFlamePacket(World world, BlockPos pos,
+                                                             float red, float green, float blue) {
+        EnumFacing facing = EnumFacing.NORTH;
+        IBlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
+        if (block != ModBlocks.STRAW_EFFIGY && block != ModBlocks.UNHOLY_EFFIGY) {
+            return null;
+        }
+        for (IProperty<?> property : state.getPropertyKeys()) {
+            if ("facing".equals(property.getName()) && state.getValue(property) instanceof EnumFacing) {
+                facing = (EnumFacing) state.getValue(property);
+                break;
+            }
+        }
+        EnumFacing tangent = facing.rotateY();
+        double x = pos.getX() + 0.5D + facing.getXOffset() * 0.21875D;
+        double y = pos.getY() + 0.8125D;
+        double z = pos.getZ() + 0.5D + facing.getZOffset() * 0.21875D;
+        double x1 = x + 0.09375D * tangent.getXOffset();
+        double z1 = z + 0.09375D * tangent.getZOffset();
+        double x2 = x - 0.09375D * tangent.getXOffset();
+        double z2 = z - 0.09375D * tangent.getZOffset();
+        return new VisualEffectPacket(VisualEffectPacket.CHANT_FLAME,
+                x1, y, z1, x2, y, z2, red, green, blue, red, green, blue);
     }
 
     static void playChantFail(World world, BlockPos pos) {

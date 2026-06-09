@@ -212,6 +212,7 @@ public final class ModernTemplatePlacer {
             case "minecraft:chain":
             case "minecraft:potted_brown_mushroom":
             case "minecraft:potted_red_mushroom":
+            case "eidolon:knowledge":
                 return Blocks.AIR.getDefaultState();
             case "minecraft:stone_bricks":
                 return Blocks.STONEBRICK.getDefaultState().withProperty(BlockStoneBrick.VARIANT, BlockStoneBrick.EnumType.DEFAULT);
@@ -233,12 +234,16 @@ public final class ModernTemplatePlacer {
                 return Blocks.STONE_STAIRS.getDefaultState();
             case "minecraft:mossy_stone_brick_stairs":
                 return Blocks.STONE_BRICK_STAIRS.getDefaultState();
+            case "minecraft:dark_oak_fence":
+                return Blocks.DARK_OAK_FENCE.getDefaultState();
             case "minecraft:dark_oak_planks":
                 return Blocks.PLANKS.getDefaultState().withProperty(BlockPlanks.VARIANT, BlockPlanks.EnumType.DARK_OAK);
             case "minecraft:oak_planks":
                 return Blocks.PLANKS.getDefaultState().withProperty(BlockPlanks.VARIANT, BlockPlanks.EnumType.OAK);
             case "minecraft:spruce_slab":
                 return Blocks.WOODEN_SLAB.getStateFromMeta(1);
+            case "minecraft:spruce_stairs":
+                return Blocks.SPRUCE_STAIRS.getDefaultState();
             case "minecraft:stripped_oak_log":
                 return Blocks.LOG.getDefaultState();
             case "minecraft:polished_diorite":
@@ -264,6 +269,8 @@ public final class ModernTemplatePlacer {
                 return ModBlocks.LEAD_BLOCK.getDefaultState();
             case "eidolon:smooth_stone_tiles":
                 return ModBlocks.SMOOTH_STONE_TILES.getDefaultState();
+            case "eidolon:enchanted_ash":
+                return ModBlocks.ENCHANTED_ASH.getDefaultState();
             case "eidolon:stone_hand":
                 return ModBlocks.STONE_HAND.getDefaultState();
             case "eidolon:brazier":
@@ -394,7 +401,10 @@ public final class ModernTemplatePlacer {
                 continue;
             }
 
-            Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(id), world);
+            Entity entity = createEntityFromTemplateTag(entityTag, id, world);
+            if (entity == null) {
+                entity = EntityList.createEntityByIDFromName(new ResourceLocation(id), world);
+            }
             if (entity == null) {
                 entity = createEidolonEntity(id, world);
             }
@@ -406,8 +416,22 @@ public final class ModernTemplatePlacer {
             double x = origin.getX() + (relative.tagCount() > 0 ? relative.getDoubleAt(0) : 0.5D);
             double y = origin.getY() + (relative.tagCount() > 1 ? relative.getDoubleAt(1) : 0.0D);
             double z = origin.getZ() + (relative.tagCount() > 2 ? relative.getDoubleAt(2) : 0.5D);
-            entity.setPositionAndRotation(x, y, z, random.nextFloat() * 360.0F, 0.0F);
+            NBTTagList rotation = entityTag.getTagList("Rotation", Constants.NBT.TAG_FLOAT);
+            float yaw = rotation.tagCount() > 0 ? rotation.getFloatAt(0) : random.nextFloat() * 360.0F;
+            float pitch = rotation.tagCount() > 1 ? rotation.getFloatAt(1) : 0.0F;
+            entity.setPositionAndRotation(x, y, z, yaw, pitch);
             world.spawnEntity(entity);
+        }
+    }
+
+    private Entity createEntityFromTemplateTag(NBTTagCompound entityTag, String id, World world) {
+        NBTTagCompound spawnTag = entityTag.copy();
+        spawnTag.setString("id", id);
+        try {
+            return EntityList.createEntityFromNBT(spawnTag, world);
+        } catch (RuntimeException e) {
+            Eidolon.LOGGER.debug("Skipped incompatible structure entity NBT for {}", id, e);
+            return null;
         }
     }
 

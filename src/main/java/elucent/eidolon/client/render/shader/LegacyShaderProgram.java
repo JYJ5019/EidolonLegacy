@@ -56,6 +56,10 @@ final class LegacyShaderProgram {
             GL20.glDeleteProgram(program);
             program = 0;
         }
+        attempted = false;
+        failed = false;
+        colorModulatorUniform = -1;
+        samplerUniform = -1;
     }
 
     private void compile() {

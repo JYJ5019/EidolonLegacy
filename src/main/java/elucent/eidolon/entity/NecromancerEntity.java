@@ -21,14 +21,15 @@ import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 
 public class NecromancerEntity extends EntityMob {
     private int castingTicks;
+    private int castingParticleType;
+    private static final int CAST_BOLTS = 0;
+    private static final int CAST_SUMMON = 1;
 
     public NecromancerEntity(World world) {
         super(world);
@@ -76,43 +77,37 @@ public class NecromancerEntity extends EntityMob {
 
     private void spawnCastingParticles() {
         if (world.isRemote) {
-            for (int i = 0; i < 2; i++) {
-                double angle = ticksExisted * 0.22D + i * Math.PI;
-                EidolonParticles.spawnWisp(world,
-                        posX + Math.cos(angle) * 0.55D,
-                        posY + 1.65D + rand.nextDouble() * 0.25D,
-                        posZ + Math.sin(angle) * 0.55D,
-                        -Math.sin(angle) * 0.012D,
-                        0.008D,
-                        Math.cos(angle) * 0.012D,
-                        0.7F, 0.25F, 0.95F);
-                world.spawnParticle(EnumParticleTypes.SPELL_WITCH,
-                        posX + Math.cos(angle) * 0.55D,
-                        posY + 1.65D + rand.nextDouble() * 0.25D,
-                        posZ + Math.sin(angle) * 0.55D,
-                        0.7D, 0.25D, 0.95D);
-            }
-            if (ticksExisted % 5 == 0) {
-                EidolonParticles.spawnSparkle(world,
-                        posX + (rand.nextDouble() - 0.5D) * 0.65D,
-                        posY + 1.45D + rand.nextDouble() * 0.35D,
-                        posZ + (rand.nextDouble() - 0.5D) * 0.65D,
-                        (rand.nextDouble() - 0.5D) * 0.025D,
-                        0.025D,
-                        (rand.nextDouble() - 0.5D) * 0.025D,
-                        0.95F, 0.55F, 1.0F);
+            float angle = rotationYaw * (float) Math.PI / 180.0F
+                    + (float) Math.cos(ticksExisted * 0.6662F) * 0.25F;
+            double dx = Math.cos(angle) * 0.875D;
+            double dz = Math.sin(angle) * 0.875D;
+            if (castingParticleType == CAST_SUMMON) {
+                EidolonParticles.create(EidolonParticles.WISP)
+                        .color(0.75F, 1.0F, 1.0F, 0.125F, 0.125F, 0.875F)
+                        .randomVelocity(0.05D)
+                        .randomOffset(0.025D)
+                        .scale(0.25F, 0.125F)
+                        .alpha(0.25F, 0.0F)
+                        .spawn(world, posX + dx, posY + 2.0D, posZ + dz)
+                        .spawn(world, posX - dx, posY + 2.0D, posZ - dz);
+            } else {
+                EidolonParticles.create(EidolonParticles.SPARKLE)
+                        .color(1.0F, 0.3125F, 0.375F, 0.75F, 0.375F, 1.0F)
+                        .randomVelocity(0.05D)
+                        .randomOffset(0.025D)
+                        .scale(0.25F, 0.125F)
+                        .alpha(0.25F, 0.0F)
+                        .spin(0.4F)
+                        .spawn(world, posX + dx, posY + 2.0D, posZ + dz)
+                        .spawn(world, posX - dx, posY + 2.0D, posZ - dz);
             }
         }
     }
 
-    private void startCasting(int ticks) {
+    private void startCasting(int ticks, int particleType) {
         castingTicks = ticks;
+        castingParticleType = particleType;
         playSound(SoundEvents.ENTITY_EVOCATION_ILLAGER_AMBIENT, 1.0F, 0.9F + rand.nextFloat() * 0.2F);
-        if (!world.isRemote) {
-            VisualEffectPacket.sendAround(world, posX, posY + 1.35D, posZ,
-                    VisualEffectPacket.at(VisualEffectPacket.NECROMANCER_BURST, posX, posY + 1.35D, posZ,
-                            0.7F, 0.2F, 0.95F));
-        }
     }
 
     private void castBolts(EntityLivingBase target) {
@@ -129,13 +124,6 @@ public class NecromancerEntity extends EntityMob {
                     dir.z + (rand.nextDouble() - 0.5D) * 0.1D, 0.9F, 0.4F);
             world.spawnEntity(spell);
         }
-        if (world instanceof WorldServer) {
-            ((WorldServer) world).spawnParticle(EnumParticleTypes.SPELL_WITCH, posX, posY + 1.2D, posZ,
-                    18, 0.4D, 0.4D, 0.4D, 0.02D);
-        }
-        VisualEffectPacket.sendAround(world, posX, posY + 1.2D, posZ,
-                VisualEffectPacket.at(VisualEffectPacket.NECROMANCER_BURST, posX, posY + 1.2D, posZ,
-                        0.7F, 0.2F, 0.95F));
         playSound(SoundEvents.ENTITY_EVOCATION_ILLAGER_AMBIENT, 1.0F, 1.0F);
     }
 
@@ -151,13 +139,11 @@ public class NecromancerEntity extends EntityMob {
         summon.getEntityData().setBoolean(SummoningStaffItem.SUMMONED_TAG, true);
         summon.getEntityData().setString(SummoningStaffItem.OWNER_TAG, getUniqueID().toString());
         world.spawnEntity(summon);
-        if (world instanceof WorldServer) {
-            ((WorldServer) world).spawnParticle(EnumParticleTypes.SMOKE_LARGE, summon.posX, summon.posY + 0.7D, summon.posZ,
-                    24, 0.35D, 0.35D, 0.35D, 0.04D);
-        }
         VisualEffectPacket.sendAround(world, summon.posX, summon.posY + summon.height * 0.5D, summon.posZ,
-                VisualEffectPacket.at(VisualEffectPacket.SUMMON_BURST, summon.posX,
-                        summon.posY + summon.height * 0.5D, summon.posZ, 0.55F, 0.25F, 0.85F));
+                VisualEffectPacket.at(VisualEffectPacket.MAGIC_BURST, summon.posX,
+                        summon.posY + summon.height * 0.5D, summon.posZ,
+                        181.0F / 255.0F, 1.0F, 1.0F,
+                        28.0F / 255.0F, 31.0F / 255.0F, 212.0F / 255.0F));
         playSound(SoundEvents.ENTITY_EVOCATION_ILLAGER_AMBIENT, 1.0F, 0.85F);
     }
 
@@ -213,7 +199,7 @@ public class NecromancerEntity extends EntityMob {
         public void startExecuting() {
             cast = castTime;
             cooldown = cooldownTime;
-            startCasting(castTime);
+            startCasting(castTime, particleType());
         }
 
         @Override
@@ -230,6 +216,10 @@ public class NecromancerEntity extends EntityMob {
 
         protected boolean canCast(EntityLivingBase target) {
             return true;
+        }
+
+        protected int particleType() {
+            return CAST_BOLTS;
         }
 
         protected abstract void perform(EntityLivingBase target);
@@ -254,6 +244,11 @@ public class NecromancerEntity extends EntityMob {
         @Override
         protected boolean canCast(EntityLivingBase target) {
             return true;
+        }
+
+        @Override
+        protected int particleType() {
+            return CAST_SUMMON;
         }
 
         @Override

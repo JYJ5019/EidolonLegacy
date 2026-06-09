@@ -1,5 +1,6 @@
 package elucent.eidolon.world;
 
+import elucent.eidolon.CommonConfig;
 import elucent.eidolon.registries.ModBlocks;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -40,10 +41,22 @@ public final class EidolonWorldGenerator implements IWorldGenerator {
     }
 
     private void generateOres(Random random, int chunkX, int chunkZ, World world) {
-        generateOre(world, random, chunkX, chunkZ, ModBlocks.LEAD_ORE.getDefaultState(), 6, 4, 32, 72);
-        generateOre(world, random, chunkX, chunkZ, ModBlocks.DEEP_LEAD_ORE.getDefaultState(), 6, 2, 12, 36);
-        generateOre(world, random, chunkX, chunkZ, ModBlocks.SILVER_ORE.getDefaultState(), 6, 3, 20, 52);
-        generateOre(world, random, chunkX, chunkZ, ModBlocks.DEEP_SILVER_ORE.getDefaultState(), 6, 2, 8, 32);
+        if (CommonConfig.leadEnabled()) {
+            generateOre(world, random, chunkX, chunkZ, ModBlocks.LEAD_ORE.getDefaultState(),
+                    CommonConfig.leadOreVeinSize(), CommonConfig.leadOreVeinCount(),
+                    CommonConfig.leadOreMinY(), CommonConfig.leadOreMaxY());
+            generateOre(world, random, chunkX, chunkZ, ModBlocks.DEEP_LEAD_ORE.getDefaultState(),
+                    CommonConfig.deepLeadOreVeinSize(), CommonConfig.deepLeadOreVeinCount(),
+                    CommonConfig.deepLeadOreMinY(), CommonConfig.deepLeadOreMaxY());
+        }
+        if (CommonConfig.silverEnabled()) {
+            generateOre(world, random, chunkX, chunkZ, ModBlocks.SILVER_ORE.getDefaultState(),
+                    CommonConfig.silverOreVeinSize(), CommonConfig.silverOreVeinCount(),
+                    CommonConfig.silverOreMinY(), CommonConfig.silverOreMaxY());
+            generateOre(world, random, chunkX, chunkZ, ModBlocks.DEEP_SILVER_ORE.getDefaultState(),
+                    CommonConfig.deepSilverOreVeinSize(), CommonConfig.deepSilverOreVeinCount(),
+                    CommonConfig.deepSilverOreMinY(), CommonConfig.deepSilverOreMaxY());
+        }
     }
 
     private void generateOre(World world, Random random, int chunkX, int chunkZ, IBlockState state,
@@ -96,14 +109,26 @@ public final class EidolonWorldGenerator implements IWorldGenerator {
     }
 
     public static StructureCandidate getSurfaceCandidate(World world, int chunkX, int chunkZ) {
+        if (!CommonConfig.labEnabled() && !CommonConfig.strayTowerEnabled()) {
+            return null;
+        }
+
         int x = chunkX * 16 + 8;
         int z = chunkZ * 16 + 8;
         BlockPos surface = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
         Random random = createStructureRandom(world.getSeed(), chunkX, chunkZ, SURFACE_SALT);
         boolean towerPick = random.nextInt(6) < 3;
+        double rarity = surfaceRarity();
 
-        if (towerPick && isStrayTowerBiome(world, surface)) {
+        if (CommonConfig.strayTowerEnabled() && towerPick && isStrayTowerBiome(world, surface)
+                && passesRarity(random, CommonConfig.strayTowerRarity(), rarity)) {
             return new StructureCandidate(StructureType.STRAY_TOWER, surface, chunkX, chunkZ);
+        }
+        if (!CommonConfig.labEnabled()) {
+            return null;
+        }
+        if (!passesRarity(random, CommonConfig.labRarity(), rarity)) {
+            return null;
         }
 
         int y = clamp(18 + random.nextInt(14), 10, Math.max(10, surface.getY() - 12));
@@ -111,6 +136,10 @@ public final class EidolonWorldGenerator implements IWorldGenerator {
     }
 
     public static StructureCandidate getCatacombCandidate(World world, int chunkX, int chunkZ) {
+        if (!CommonConfig.catacombEnabled()) {
+            return null;
+        }
+
         int x = chunkX * 16 + 8;
         int z = chunkZ * 16 + 8;
         BlockPos surface = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
@@ -121,21 +150,30 @@ public final class EidolonWorldGenerator implements IWorldGenerator {
 
     public static boolean isStrayTowerBiome(World world, BlockPos pos) {
         String name = world.getBiome(pos).getBiomeName().toLowerCase(Locale.ROOT);
-        return name.contains("taiga")
-                || name.contains("snow")
-                || name.contains("ice")
-                || name.contains("cold")
-                || name.contains("frozen")
-                || name.contains("spruce")
-                || name.contains("pine");
+        for (String keyword : CommonConfig.strayTowerBiomeKeywords()) {
+            if (keyword != null && !keyword.isEmpty() && name.contains(keyword.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isSurfaceStructureChunk(long worldSeed, int chunkX, int chunkZ) {
-        return isRandomSpreadChunk(worldSeed, chunkX, chunkZ, SURFACE_SPACING, SURFACE_SEPARATION, SURFACE_SALT);
+        if (!CommonConfig.labEnabled() && !CommonConfig.strayTowerEnabled()) {
+            return false;
+        }
+        int spacing = surfaceSpacing();
+        int separation = scaleSeparation(SURFACE_SEPARATION, SURFACE_SPACING, spacing);
+        return isRandomSpreadChunk(worldSeed, chunkX, chunkZ, spacing, separation, SURFACE_SALT);
     }
 
     public static boolean isCatacombStructureChunk(long worldSeed, int chunkX, int chunkZ) {
-        return isRandomSpreadChunk(worldSeed, chunkX, chunkZ, CATACOMB_SPACING, CATACOMB_SEPARATION, CATACOMB_SALT);
+        if (!CommonConfig.catacombEnabled()) {
+            return false;
+        }
+        int spacing = catacombSpacing();
+        int separation = scaleSeparation(CATACOMB_SEPARATION, CATACOMB_SPACING, spacing);
+        return isRandomSpreadChunk(worldSeed, chunkX, chunkZ, spacing, separation, CATACOMB_SALT);
     }
 
     public static Random createStructureRandom(long worldSeed, int chunkX, int chunkZ, int salt) {
@@ -147,6 +185,45 @@ public final class EidolonWorldGenerator implements IWorldGenerator {
             return min;
         }
         return Math.max(min, Math.min(max, value));
+    }
+
+    private static int surfaceSpacing() {
+        return scaleSpacing(SURFACE_SPACING, surfaceRarity(), CommonConfig.DEFAULT_LAB_RARITY);
+    }
+
+    private static double surfaceRarity() {
+        double rarity = Double.MAX_VALUE;
+        if (CommonConfig.labEnabled()) {
+            rarity = Math.min(rarity, CommonConfig.labRarity());
+        }
+        if (CommonConfig.strayTowerEnabled()) {
+            rarity = Math.min(rarity, CommonConfig.strayTowerRarity());
+        }
+        if (rarity == Double.MAX_VALUE) {
+            rarity = CommonConfig.DEFAULT_LAB_RARITY;
+        }
+        return rarity;
+    }
+
+    private static int catacombSpacing() {
+        return scaleSpacing(CATACOMB_SPACING, CommonConfig.catacombRarity(), CommonConfig.DEFAULT_CATACOMB_RARITY);
+    }
+
+    private static int scaleSpacing(int baseSpacing, double rarity, double defaultRarity) {
+        double scale = Math.sqrt(Math.max(1.0D, rarity) / defaultRarity);
+        return Math.max(2, (int) Math.round(baseSpacing * scale));
+    }
+
+    private static int scaleSeparation(int baseSeparation, int baseSpacing, int spacing) {
+        int separation = (int) Math.round((double) baseSeparation * spacing / baseSpacing);
+        return Math.max(1, Math.min(spacing - 1, separation));
+    }
+
+    private static boolean passesRarity(Random random, double rarity, double defaultRarity) {
+        if (rarity <= defaultRarity) {
+            return true;
+        }
+        return random.nextDouble() < defaultRarity / rarity;
     }
 
     private static boolean isRandomSpreadChunk(long worldSeed, int chunkX, int chunkZ,

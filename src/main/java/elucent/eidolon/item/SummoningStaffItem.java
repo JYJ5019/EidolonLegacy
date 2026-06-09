@@ -1,6 +1,7 @@
 package elucent.eidolon.item;
 
 import elucent.eidolon.network.VisualEffectPacket;
+import elucent.eidolon.particle.EidolonParticles;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -17,11 +18,12 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
@@ -107,25 +109,75 @@ public class SummoningStaffItem extends Item {
             return;
         }
         int used = getMaxItemUseDuration(stack) - count;
-        float alpha = Math.min(1.0F, used / 40.0F);
+        float alpha = Math.max(0.35F, Math.min(1.0F, used / 30.0F));
+        Vec3d pos = visualSummonTarget(hit);
         double angle = Math.toRadians((world.getTotalWorldTime() % 360L) + 12.0D * used);
-        double radius = 0.3D + 0.3D * alpha;
+        double radius = 0.42D + 0.5D * alpha;
         double dx = Math.sin(angle) * radius;
         double dz = Math.cos(angle) * radius;
         if (used == 40) {
-            entity.playSound(SoundEvents.BLOCK_NOTE_PLING, 0.6F, 0.75F);
+            entity.playSound(SoundEvents.ENTITY_ARROW_SHOOT, 1.0F, 1.0F);
         }
-        for (int i = 0; i < 2; i++) {
-            world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL,
-                    hit.hitVec.x + dx, hit.hitVec.y, hit.hitVec.z + dz,
-                    (world.rand.nextDouble() - 0.5D) * 0.025D * alpha,
-                    world.rand.nextDouble() * 0.0125D * alpha,
-                    (world.rand.nextDouble() - 0.5D) * 0.025D * alpha);
-            world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL,
-                    hit.hitVec.x - dx, hit.hitVec.y, hit.hitVec.z - dz,
-                    (world.rand.nextDouble() - 0.5D) * 0.025D * alpha,
-                    world.rand.nextDouble() * 0.0125D * alpha,
-                    (world.rand.nextDouble() - 0.5D) * 0.025D * alpha);
+        if (used % 2 == 0) {
+            spawnChargingRing(world, pos, angle, 0.72D + 0.34D * alpha, alpha, 16,
+                    0.08D, pos.y + 0.42D, true);
+        }
+        if (used % 3 == 1) {
+            spawnChargingRing(world, pos, -angle * 0.65D, 0.36D + 0.24D * alpha, alpha, 10,
+                    0.22D, pos.y + 0.34D, false);
+        }
+        if (used % 5 == 0) {
+            EidolonParticles.create(EidolonParticles.RING)
+                    .randomVelocity(0.012D * alpha, 0.008D * alpha)
+                    .color(0.42F, 0.64F, 0.24F, 0.7F, 0.34F, 1.0F)
+                    .alpha(0.8F * alpha, 0.0F)
+                    .scale(1.15F + 0.55F * alpha, 0.42F)
+                    .lifetime(18)
+                    .spin(0.05F + 0.04F * alpha)
+                    .repeat(world, pos.x, pos.y + 0.3D, pos.z, 1);
+        }
+        EidolonParticles.create(EidolonParticles.SMOKE)
+                .randomVelocity(0.04D * alpha, 0.02D * alpha)
+                .addVelocity(0.0D, 0.016D, 0.0D)
+                .color(38.0F / 255.0F, 34.0F / 255.0F, 26.0F / 255.0F,
+                        16.0F / 255.0F, 10.0F / 255.0F, 22.0F / 255.0F)
+                .alpha(0.5F * alpha, 0.0F)
+                .randomOffset(0.16D + 0.12D * alpha, 0.1D + 0.1D * alpha)
+                .scale(0.45F + 0.36F * alpha, alpha * 0.18F)
+                .fullbright(false)
+                .repeat(world, pos.x + dx, pos.y + 0.08D, pos.z + dz, 4)
+                .repeat(world, pos.x - dx, pos.y + 0.08D, pos.z - dz, 4);
+        EidolonParticles.create(EidolonParticles.WISP)
+                .randomVelocity(0.04D * alpha, 0.03D * alpha)
+                .addVelocity(0.0D, 0.02D, 0.0D)
+                .color(0.54F, 0.78F, 0.3F, 0.72F, 0.32F, 0.98F)
+                .alpha(1.0F * alpha, 0.0F)
+                .scale(0.32F + 0.2F * alpha, 0.05F)
+                .lifetime(22)
+                .randomOffset(0.1D + 0.1D * alpha, 0.08D + 0.1D * alpha)
+                .repeat(world, pos.x + dx, pos.y + 0.18D, pos.z + dz, 4)
+                .repeat(world, pos.x - dx, pos.y + 0.18D, pos.z - dz, 4);
+        EidolonParticles.create(EidolonParticles.WISP)
+                .lineTarget(pos.x, pos.y + 0.45D, pos.z)
+                .randomVelocity(0.04D, 0.04D)
+                .color(0.68F, 0.9F, 0.36F, 0.76F, 0.32F, 1.0F)
+                .alpha(1.0F * alpha, 0.0F)
+                .scale(0.26F + 0.18F * alpha, 0.0F)
+                .lifetime(14 + Math.min(14, used / 4))
+                .randomOffset(0.05D, 0.05D)
+                .spawn(world, pos.x + dx * 1.16D, pos.y + 0.08D, pos.z + dz * 1.16D)
+                .spawn(world, pos.x - dx * 1.16D, pos.y + 0.08D, pos.z - dz * 1.16D);
+        if (used % 3 == 0) {
+            EidolonParticles.create(EidolonParticles.SPARKLE)
+                    .randomVelocity(0.055D * alpha, 0.05D * alpha)
+                    .addVelocity(0.0D, 0.06D, 0.0D)
+                    .color(0.72F, 0.96F, 0.38F, 0.9F, 0.62F, 1.0F)
+                    .alpha(1.0F, 0.0F)
+                    .scale(0.15F + 0.08F * alpha, 0.0F)
+                    .lifetime(24)
+                    .randomOffset(0.28D + 0.14D * alpha, 0.12D)
+                    .spin(0.24F)
+                    .repeat(world, pos.x, pos.y + 0.34D, pos.z, 5);
         }
     }
 
@@ -142,11 +194,12 @@ public class SummoningStaffItem extends Item {
             return;
         }
         EntityPlayer player = (EntityPlayer) entityLiving;
+        Vec3d summonPos = visualSummonTarget(hit);
         if (hasCharges(stack)) {
             int selectedCharge = getSelectedChargeIndex(stack);
             Entity entity = createEntityFromCharge(stack, selectedCharge, worldIn);
             if (entity != null) {
-                spawnSummonedEntity(worldIn, player, entity, false, hit.hitVec);
+                spawnSummonedEntity(worldIn, player, entity, false, summonPos);
             }
             if (!player.capabilities.isCreativeMode) {
                 consumeCharge(stack, selectedCharge);
@@ -165,7 +218,7 @@ public class SummoningStaffItem extends Item {
         }
         Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(selected), worldIn);
         if (entity != null) {
-            spawnSummonedEntity(worldIn, player, entity, true, hit.hitVec);
+            spawnSummonedEntity(worldIn, player, entity, true, summonPos);
             if (!player.capabilities.isCreativeMode) {
                 setAbsorbedUndead(stack, selected, absorbed - 1);
             }
@@ -425,9 +478,61 @@ public class SummoningStaffItem extends Item {
             ((EntityLiving) entity).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(entity)), null);
         }
         world.spawnEntity(entity);
-        VisualEffectPacket.sendAround(world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ,
+        double centerY = entity.posY + entity.height * 0.5D;
+        VisualEffectPacket.sendAround(world, entity.posX, centerY, entity.posZ,
                 VisualEffectPacket.at(VisualEffectPacket.SUMMON_BURST, entity.posX,
-                        entity.posY + entity.height * 0.5D, entity.posZ, 0.55F, 0.25F, 0.85F));
+                        centerY, entity.posZ,
+                        61.0F / 255.0F, 70.0F / 255.0F, 35.0F / 255.0F,
+                        36.0F / 255.0F, 24.0F / 255.0F, 41.0F / 255.0F));
+        VisualEffectPacket.sendAround(world, entity.posX, entity.posY + 0.12D, entity.posZ,
+                VisualEffectPacket.at(VisualEffectPacket.SUMMON_BURST, entity.posX,
+                        entity.posY + 0.12D, entity.posZ,
+                        61.0F / 255.0F, 70.0F / 255.0F, 35.0F / 255.0F,
+                        36.0F / 255.0F, 24.0F / 255.0F, 41.0F / 255.0F));
+        world.playSound(null, entity.posX, entity.posY, entity.posZ, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
+                SoundCategory.PLAYERS, 0.75F, 0.1F);
+    }
+
+    private void spawnChargingRing(World world, Vec3d pos, double angleOffset, double radius, float alpha, int amount,
+                                   double yOffset, double targetY, boolean brightCore) {
+        for (int i = 0; i < amount; i++) {
+            double angle = angleOffset + Math.PI * 2.0D * i / amount;
+            double x = pos.x + Math.sin(angle) * radius;
+            double z = pos.z + Math.cos(angle) * radius;
+            double y = pos.y + yOffset + (i % 3) * 0.045D;
+            EidolonParticles.create(EidolonParticles.WISP)
+                    .lineTarget(pos.x, targetY, pos.z)
+                    .randomVelocity(0.018D * alpha, 0.024D * alpha)
+                    .color(brightCore ? 0.62F : 0.52F, brightCore ? 0.86F : 0.64F,
+                            brightCore ? 0.34F : 0.86F, 0.78F, 0.34F, 1.0F)
+                    .alpha((brightCore ? 1.0F : 0.84F) * alpha, 0.0F)
+                    .scale((brightCore ? 0.24F : 0.18F) + 0.12F * alpha, 0.0F)
+                    .lifetime(16 + (int) (10.0F * alpha))
+                    .randomOffset(0.035D, 0.04D)
+                    .spawn(world, x, y, z);
+            if (brightCore && i % 4 == 0) {
+                EidolonParticles.create(EidolonParticles.SPARKLE)
+                        .randomVelocity(0.03D * alpha, 0.04D * alpha)
+                        .addVelocity(0.0D, 0.035D, 0.0D)
+                        .color(0.8F, 1.0F, 0.46F, 0.9F, 0.64F, 1.0F)
+                        .alpha(1.0F, 0.0F)
+                        .scale(0.12F + 0.05F * alpha, 0.0F)
+                        .lifetime(20)
+                        .spin(0.22F)
+                        .spawn(world, x, y + 0.04D, z);
+            }
+        }
+    }
+
+    private Vec3d visualSummonTarget(RayTraceResult hit) {
+        Vec3d pos = hit.hitVec;
+        if (hit.sideHit != null) {
+            Vec3i direction = hit.sideHit.getDirectionVec();
+            pos = new Vec3d(pos.x + direction.getX() * 0.08D,
+                    pos.y + direction.getY() * 0.08D,
+                    pos.z + direction.getZ() * 0.08D);
+        }
+        return new Vec3d(pos.x, pos.y + 0.12D, pos.z);
     }
 
     private RayTraceResult rayTraceSummonTarget(EntityLivingBase entity) {

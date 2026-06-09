@@ -59,13 +59,6 @@ run/client/scripts/eidolon_ct2_smoke_test.zs
 
 启动客户端后可查看 `run/client/crafttweaker.log`，确认脚本是否成功加载。
 
-## 尚未实现或暂缓内容
-
-- 玻璃管只完成模型和方向交互，尚未完成完整传输网络。
-- 储罐、灵魂附魔台等部分方块目前未完成完整功能；培养器已具备基础配方处理和 CraftTweaker2 接口，但仍可能继续调整交互和表现。
-- 部分实体、药水、视觉效果和高级仪式反馈仍不完整。
-- 与 1.20 源码相比，仍有大量原版 Eidolon 后期内容尚未移植。
-
 ## 构建
 
 正式构建：
@@ -151,13 +144,6 @@ run/client/scripts/eidolon_ct2_smoke_test.zs
 ```
 
 After launching the client, check `run/client/crafttweaker.log` to confirm whether the script loaded.
-
-## Not Implemented Yet
-
-- Glass tubes currently have model and direction interaction only; the full transfer network is not implemented.
-- Some blocks such as cistern and soul enchanter do not yet have their full gameplay behavior. The incubator has basic recipe processing and CraftTweaker2 support, but may still receive interaction and presentation refinements.
-- Some entities, potion behavior, visuals, and advanced ritual feedback are incomplete.
-- Compared with the 1.20 source, many late-game Eidolon features are still not ported.
 
 ## Building
 
